@@ -12,6 +12,7 @@ type Gauge struct {
 	Description string    `json:"description"`
 	Target      float64   `json:"target"`
 	Unit        string    `json:"unit"`
+	Icon        string    `json:"icon"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }

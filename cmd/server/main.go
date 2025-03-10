@@ -23,6 +23,8 @@ import (
 //go:embed web/static
 var staticFiles embed.FS
 
+var queries *db.Queries
+
 func toGauge(g db.Gauge) *models.Gauge {
 	return &models.Gauge{
 		ID:          g.ID,
@@ -30,6 +32,7 @@ func toGauge(g db.Gauge) *models.Gauge {
 		Description: g.Description.String,
 		Target:      g.Target,
 		Unit:        g.Unit,
+		Icon:        g.Icon,
 		CreatedAt:   g.CreatedAt.Time,
 		UpdatedAt:   g.UpdatedAt.Time,
 	}
@@ -70,7 +73,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	queries := db.New(database)
+	queries = db.New(database)
 
 	r := chi.NewRouter()
 
@@ -298,71 +301,9 @@ func main() {
 		}
 	})
 
-	r.Post("/admin/gauges", func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseForm(); err != nil {
-			log.Printf("Error parsing form: %v", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+	r.Post("/admin/gauges", handleCreateGauge)
 
-		target, err := strconv.ParseFloat(r.FormValue("target"), 64)
-		if err != nil {
-			log.Printf("Error parsing target value: %v", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		_, err = queries.CreateGauge(r.Context(), db.CreateGaugeParams{
-			Name:        r.FormValue("name"),
-			Description: sql.NullString{String: r.FormValue("description"), Valid: true},
-			Column3:     target,
-			Unit:        r.FormValue("unit"),
-		})
-		if err != nil {
-			log.Printf("Error creating gauge: %v", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		http.Redirect(w, r, "/admin", http.StatusSeeOther)
-	})
-
-	r.Put("/admin/gauges/{id}", func(w http.ResponseWriter, r *http.Request) {
-		id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-		if err != nil {
-			log.Printf("Error parsing gauge ID: %v", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		if err := r.ParseForm(); err != nil {
-			log.Printf("Error parsing form: %v", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		target, err := strconv.ParseFloat(r.FormValue("target"), 64)
-		if err != nil {
-			log.Printf("Error parsing target value: %v", err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		err = queries.UpdateGauge(r.Context(), db.UpdateGaugeParams{
-			ID:          id,
-			Name:        r.FormValue("name"),
-			Description: sql.NullString{String: r.FormValue("description"), Valid: true},
-			Column3:     target,
-			Unit:        r.FormValue("unit"),
-		})
-		if err != nil {
-			log.Printf("Error updating gauge %d: %v", id, err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		http.Redirect(w, r, "/admin", http.StatusSeeOther)
-	})
+	r.Put("/admin/gauges/{id}", handleUpdateGauge)
 
 	r.Delete("/admin/gauges/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
@@ -389,4 +330,65 @@ func main() {
 
 	log.Printf("Server starting on port %s", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
+}
+
+func handleCreateGauge(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+
+	target, err := strconv.ParseFloat(r.FormValue("target"), 64)
+	if err != nil {
+		http.Error(w, "Invalid target value", http.StatusBadRequest)
+		return
+	}
+
+	_, err = queries.CreateGauge(r.Context(), db.CreateGaugeParams{
+		Name:        r.FormValue("name"),
+		Description: sql.NullString{String: r.FormValue("description"), Valid: true},
+		Column3:     target,
+		Unit:        r.FormValue("unit"),
+		Icon:        r.FormValue("icon"),
+	})
+	if err != nil {
+		http.Error(w, "Failed to create gauge", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/admin", http.StatusSeeOther)
+}
+
+func handleUpdateGauge(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Failed to parse form", http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid gauge ID", http.StatusBadRequest)
+		return
+	}
+
+	target, err := strconv.ParseFloat(r.FormValue("target"), 64)
+	if err != nil {
+		http.Error(w, "Invalid target value", http.StatusBadRequest)
+		return
+	}
+
+	err = queries.UpdateGauge(r.Context(), db.UpdateGaugeParams{
+		ID:          id,
+		Name:        r.FormValue("name"),
+		Description: sql.NullString{String: r.FormValue("description"), Valid: true},
+		Column3:     target,
+		Unit:        r.FormValue("unit"),
+		Icon:        r.FormValue("icon"),
+	})
+	if err != nil {
+		http.Error(w, "Failed to update gauge", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/admin", http.StatusSeeOther)
 }

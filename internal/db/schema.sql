@@ -7,6 +7,7 @@ CREATE TABLE gauges (
     description TEXT,
     target REAL NOT NULL,
     unit TEXT NOT NULL,
+    icon TEXT NOT NULL DEFAULT 'chart-bar',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
