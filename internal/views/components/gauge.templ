@@ -59,7 +59,7 @@ templ GaugeCard(gauge *models.Gauge, value float64) {
 		</div>
 		<div class="bg-gray-50 px-5 py-3">
 			<div class="text-sm text-center">
-				<a href={ templ.SafeURL(fmt.Sprintf("/admin/gauges/%d/edit", gauge.ID)) } class="font-medium text-indigo-600 hover:text-indigo-500">
+				<a href={ templ.SafeURL(fmt.Sprintf("/admin/gauges/%d", gauge.ID)) } class="font-medium text-indigo-600 hover:text-indigo-500">
 					Edit
 				</a>
 			</div>
