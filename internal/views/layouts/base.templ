@@ -1,0 +1,44 @@
+package layouts
+
+templ Base(title string) {
+    <!DOCTYPE html>
+    <html lang="en" data-theme="light">
+        <head>
+            <meta charset="UTF-8"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <title>{ title } - Health Monitor</title>
+            <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.css" rel="stylesheet" type="text/css"/>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <style>
+                .gauge-green { color: #4ade80; }
+                .gauge-red { color: #ef4444; }
+            </style>
+        </head>
+        <body class="min-h-screen bg-base-200">
+            <div class="navbar bg-base-100 shadow-lg">
+                <div class="flex-1">
+                    <a href="/" class="btn btn-ghost text-xl">Health Monitor</a>
+                </div>
+                <div class="flex-none">
+                    <ul class="menu menu-horizontal px-1">
+                        <li><a href="/">Dashboard</a></li>
+                        <li><a href="/trends">Trends</a></li>
+                        <li><a href="/admin">Admin</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="container mx-auto px-4 py-8">
+                { children... }
+            </div>
+
+            <footer class="footer footer-center p-4 bg-base-100 text-base-content">
+                <div>
+                    <p>Personal Health Monitor</p>
+                </div>
+            </footer>
+        </body>
+    </html>
+}

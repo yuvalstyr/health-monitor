@@ -1,0 +1,20 @@
+DROP TABLE IF EXISTS gauges;
+DROP TABLE IF EXISTS gauge_values;
+
+CREATE TABLE gauges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    target REAL NOT NULL,
+    unit TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE gauge_values (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    gauge_id INTEGER NOT NULL,
+    value REAL NOT NULL,
+    date DATETIME NOT NULL,
+    FOREIGN KEY (gauge_id) REFERENCES gauges(id) ON DELETE CASCADE
+);

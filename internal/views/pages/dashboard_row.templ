@@ -1,0 +1,39 @@
+package pages
+
+import (
+	"fmt"
+	"health-monitor/internal/models"
+)
+
+templ DashboardRow(g models.GaugeWithValue) {
+	<tr>
+		<td>{ g.Name }</td>
+		<td>{ fmt.Sprintf("%.2f %s", g.Value, g.Unit) }</td>
+		<td>{ fmt.Sprintf("%.2f %s", g.Target, g.Unit) }</td>
+		<td>
+			<span class={ templ.KV("badge badge-success", g.Value <= g.Target), templ.KV("badge badge-error", g.Value > g.Target) }>
+				if g.Value <= g.Target {
+					On Track
+				} else {
+					Above Target
+				}
+			</span>
+		</td>
+		<td>
+			<div class="join">
+				<button 
+					class="btn btn-sm join-item" 
+					hx-post={ fmt.Sprintf("/dashboard/gauges/%d/decrement", g.ID) }
+					hx-target="closest tr"
+					hx-swap="outerHTML"
+				>-</button>
+				<button 
+					class="btn btn-sm join-item" 
+					hx-post={ fmt.Sprintf("/dashboard/gauges/%d/increment", g.ID) }
+					hx-target="closest tr"
+					hx-swap="outerHTML"
+				>+</button>
+			</div>
+		</td>
+	</tr>
+}

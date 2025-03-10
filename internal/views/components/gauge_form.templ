@@ -1,0 +1,82 @@
+package components
+
+import (
+	"fmt"
+	"health-monitor/internal/models"
+)
+
+templ GaugeForm(action string, method string, gauge *models.Gauge) {
+	<form
+		class="space-y-4"
+		action={ templ.SafeURL(action) }
+		method={ method }
+		hx-post={ action }
+		hx-target="#main-content"
+		hx-swap="innerHTML"
+	>
+		<div>
+			<label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+			<input
+				type="text"
+				name="name"
+				id="name"
+				required
+				value={ gauge.Name }
+				class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+			/>
+		</div>
+
+		<div>
+			<label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+			<textarea
+				name="description"
+				id="description"
+				rows="3"
+				class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+			>{ gauge.Description }</textarea>
+		</div>
+
+		<div>
+			<label for="target" class="block text-sm font-medium text-gray-700">Target</label>
+			<input
+				type="number"
+				step="0.1"
+				name="target"
+				id="target"
+				required
+				value={ fmt.Sprintf("%.1f", gauge.Target) }
+				class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+			/>
+		</div>
+
+		<div>
+			<label for="unit" class="block text-sm font-medium text-gray-700">Unit</label>
+			<input
+				type="text"
+				name="unit"
+				id="unit"
+				required
+				value={ gauge.Unit }
+				class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+			/>
+		</div>
+
+		<div class="flex justify-end space-x-3">
+			<a
+				href="/admin"
+				hx-get="/admin"
+				hx-target="#main-content"
+				hx-swap="innerHTML"
+				class="inline-flex justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+			>
+				Cancel
+			</a>
+			<button
+				type="submit"
+				class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+			>
+				Save
+			</button>
+		</div>
+	</form>
+}

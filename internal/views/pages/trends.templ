@@ -1,0 +1,113 @@
+package pages
+
+import (
+	"fmt"
+	"health-monitor/internal/views/layouts"
+	"health-monitor/internal/models"
+)
+
+type TrendsData struct {
+	Gauges        []models.Gauge
+	SelectedGauge *models.Gauge
+	MonthlyValues []models.MonthlyValue
+	Year          int
+}
+
+templ TrendsPage(data TrendsData) {
+	@layouts.Base("Trends") {
+		<div class="container mx-auto p-4">
+			<div class="flex justify-between items-center mb-8">
+				<h1 class="text-2xl font-bold">Trends</h1>
+				<div class="flex gap-4 items-center">
+					<select 
+						class="select select-bordered"
+						hx-get="/trends"
+						hx-push-url="true"
+						hx-target="body"
+						name="gauge_id"
+					>
+						<option value="">Select a gauge...</option>
+						for _, gauge := range data.Gauges {
+							<option 
+								value={ fmt.Sprintf("%d", gauge.ID) }
+								if data.SelectedGauge != nil && data.SelectedGauge.ID == gauge.ID {
+									selected
+								}
+							>
+								{ gauge.Name }
+							</option>
+						}
+					</select>
+
+					<div class="join">
+						<button 
+							class="btn join-item"
+							hx-get="/trends"
+							hx-push-url="true"
+							hx-target="body"
+							hx-vals={ fmt.Sprintf(`{"year": %d}`, data.Year-1) }
+						>
+							Previous Year
+						</button>
+						<span class="btn join-item">{ fmt.Sprintf("%d", data.Year) }</span>
+						<button 
+							class="btn join-item"
+							hx-get="/trends"
+							hx-push-url="true"
+							hx-target="body"
+							hx-vals={ fmt.Sprintf(`{"year": %d}`, data.Year+1) }
+						>
+							Next Year
+						</button>
+					</div>
+				</div>
+			</div>
+
+			if data.SelectedGauge != nil {
+				<div class="card bg-base-100 shadow-xl">
+					<div class="card-body">
+						<h2 class="card-title">{ data.SelectedGauge.Name }</h2>
+						if data.SelectedGauge.Description != "" {
+							<p class="text-sm opacity-70">{ data.SelectedGauge.Description }</p>
+						}
+						
+						<div class="overflow-x-auto">
+							<table class="table w-full">
+								<thead>
+									<tr>
+										<th>Month</th>
+										<th>Average Value</th>
+										<th>Target</th>
+										<th>Status</th>
+									</tr>
+								</thead>
+								<tbody>
+									for _, mv := range data.MonthlyValues {
+										<tr>
+											<td>{ fmt.Sprintf("%d", mv.Month) }</td>
+											<td>{ fmt.Sprintf("%.2f %s", mv.Value, data.SelectedGauge.Unit) }</td>
+											<td>{ fmt.Sprintf("%.2f %s", mv.Target, data.SelectedGauge.Unit) }</td>
+											<td>
+												<span class={ templ.KV("badge badge-success", mv.Value <= mv.Target), templ.KV("badge badge-error", mv.Value > mv.Target) }>
+													if mv.Value <= mv.Target {
+														Below Target
+													} else {
+														Above Target
+													}
+												</span>
+											</td>
+										</tr>
+									}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			} else {
+				<div class="text-center py-12">
+					<h3 class="text-xl">Select a gauge to view trends</h3>
+				</div>
+			}
+		</div>
+	}
+}

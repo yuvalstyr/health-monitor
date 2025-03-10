@@ -1,0 +1,30 @@
+package components
+
+import (
+	"fmt"
+	"health-monitor/internal/models"
+)
+
+templ GaugeHistory(history []models.GaugeHistory) {
+	<div class="p-4">
+		<h2 class="text-2xl font-bold mb-4">Gauge History</h2>
+		<div class="overflow-x-auto">
+			<table class="table w-full">
+				<thead>
+					<tr>
+						<th>Month</th>
+						<th>Average Value</th>
+					</tr>
+				</thead>
+				<tbody>
+					for _, h := range history {
+						<tr>
+							<td>{ h.Month }</td>
+							<td>{ fmt.Sprintf("%.1f", h.AverageValue) }</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	</div>
+}
