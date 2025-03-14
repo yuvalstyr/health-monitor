@@ -14,6 +14,7 @@ type Gauge struct {
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
 	Target      float64        `json:"target"`
+	Value       float64        `json:"value"`
 	Unit        string         `json:"unit"`
 	Icon        string         `json:"icon"`
 	CreatedAt   sql.NullTime   `json:"created_at"`

@@ -1,11 +1,12 @@
-DROP TABLE IF EXISTS gauges;
 DROP TABLE IF EXISTS gauge_values;
+DROP TABLE IF EXISTS gauges;
 
 CREATE TABLE gauges (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     description TEXT,
     target REAL NOT NULL,
+    value REAL NOT NULL DEFAULT 0,
     unit TEXT NOT NULL,
     icon TEXT NOT NULL DEFAULT 'chart-bar',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

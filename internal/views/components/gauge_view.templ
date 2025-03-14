@@ -1,0 +1,108 @@
+package components
+
+import (
+	"fmt"
+	"health-monitor/internal/db"
+)
+
+templ GaugeView(gauge *db.Gauge) {
+	<div class="max-w-4xl mx-auto py-8">
+		<div class="flex justify-between items-center mb-8">
+			<div>
+				<h1 class="text-4xl font-bold mb-2">{ gauge.Name }</h1>
+				if gauge.Description.Valid {
+					<p class="text-base-content/70 text-lg">{ gauge.Description.String }</p>
+				}
+			</div>
+			<div class="flex space-x-4">
+				<a href="/admin/gauges" class="btn btn-ghost">Back to Gauges</a>
+				<a href={ templ.SafeURL(fmt.Sprintf("/admin/gauges/%d", gauge.ID)) } class="btn btn-primary">
+					Edit Gauge
+				</a>
+			</div>
+		</div>
+
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+			<div class="card bg-base-100 shadow-xl">
+				<div class="card-body">
+					<div class="flex items-center justify-center py-8">
+						<div class="text-center">
+							<div class="flex items-center justify-center h-32 w-32 mb-4">
+								if gauge.Value > gauge.Target {
+									<div class="text-error">
+										@Icon(gauge.Icon, "h-24 w-24")
+									</div>
+								} else {
+									<div class="text-primary">
+										@Icon(gauge.Icon, "h-24 w-24")
+									</div>
+								}
+							</div>
+							<div class="stats shadow text-center">
+								<div class="stat">
+									<div class="stat-title">Current Value</div>
+									<div class="stat-value">{ fmt.Sprintf("%.1f", gauge.Value) }</div>
+									<div class="stat-desc">{ gauge.Unit }</div>
+								</div>
+								<div class="stat">
+									<div class="stat-title">Target</div>
+									<div class="stat-value">{ fmt.Sprintf("%.1f", gauge.Target) }</div>
+									<div class="stat-desc">{ gauge.Unit }</div>
+								</div>
+							</div>
+							<div class="flex items-center justify-center space-x-4 mt-6">
+								<button 
+									class="btn btn-primary btn-circle"
+									hx-post={ fmt.Sprintf("/gauges/%d/decrement", gauge.ID) }
+									hx-target="#current-value"
+									hx-swap="innerHTML"
+								>-</button>
+								<div id="current-value" class="text-4xl font-bold min-w-24 text-center">
+									{ fmt.Sprintf("%.1f %s", gauge.Value, gauge.Unit) }
+								</div>
+								<button 
+									class="btn btn-primary btn-circle"
+									hx-post={ fmt.Sprintf("/gauges/%d/increment", gauge.ID) }
+									hx-target="#current-value"
+									hx-swap="innerHTML"
+								>+</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="card bg-base-100 shadow-xl">
+				<div class="card-body">
+					<h2 class="card-title mb-4">History</h2>
+					<div class="overflow-x-auto">
+						<table class="table">
+							<thead>
+								<tr>
+									<th>Date</th>
+									<th>Value</th>
+									<th>Status</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>Today</td>
+									<td>{ fmt.Sprintf("%.1f %s", gauge.Value, gauge.Unit) }</td>
+									<td>
+										if gauge.Value > gauge.Target {
+											<span class="text-error">Above Target</span>
+										} else if gauge.Value < gauge.Target {
+											<span class="text-warning">Below Target</span>
+										} else {
+											<span class="text-success">On Target</span>
+										}
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}

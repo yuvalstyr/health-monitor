@@ -17,6 +17,7 @@ type Querier interface {
 	GetGaugeHistory(ctx context.Context, gaugeID int64) ([]GetGaugeHistoryRow, error)
 	ListGauges(ctx context.Context) ([]Gauge, error)
 	UpdateGauge(ctx context.Context, arg UpdateGaugeParams) error
+	UpdateGaugeValue(ctx context.Context, arg UpdateGaugeValueParams) error
 }
 
 var _ Querier = (*Queries)(nil)

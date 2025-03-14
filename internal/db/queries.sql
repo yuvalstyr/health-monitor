@@ -5,17 +5,23 @@ SELECT * FROM gauges WHERE id = ? LIMIT 1;
 SELECT * FROM gauges ORDER BY name;
 
 -- name: CreateGauge :one
-INSERT INTO gauges (name, description, target, unit, icon)
-VALUES (?, ?, CAST(? AS REAL), ?, ?)
+INSERT INTO gauges (name, description, target, value, unit, icon)
+VALUES (?, ?, ?, 0, ?, ?)
 RETURNING *;
 
 -- name: UpdateGauge :exec
 UPDATE gauges
 SET name = ?,
     description = ?,
-    target = CAST(? AS REAL),
+    target = ?,
     unit = ?,
     icon = ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?;
+
+-- name: UpdateGaugeValue :exec
+UPDATE gauges
+SET value = ?,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = ?;
 

@@ -1,34 +1,29 @@
 package components
 
-templ Layout(title string) {
+templ Layout(content templ.Component) {
 	<!DOCTYPE html>
-	<html lang="en">
+	<html lang="en" data-theme="night">
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<title>{ title } - Health Monitor</title>
-			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+			<title>Health Monitor</title>
+			<script src="https://unpkg.com/htmx.org@2.0.0-alpha1"></script>
+			<script src="https://unpkg.com/htmx.org@2.0.0-alpha1/dist/ext/response-targets.js"></script>
+			<link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
 			<script src="https://cdn.tailwindcss.com"></script>
-			<link rel="stylesheet" href="/static/style.css"/>
 		</head>
-		<body class="bg-gray-100" hx-boost="true">
-			<nav class="bg-white shadow-lg">
-				<div class="max-w-7xl mx-auto px-4">
-					<div class="flex justify-between h-16">
-						<div class="flex">
-							<div class="flex-shrink-0 flex items-center">
-								<a href="/" class="text-xl font-bold text-gray-800">Health Monitor</a>
-							</div>
-							<div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-								<a href="/" class="inline-flex items-center px-1 pt-1 text-gray-900">Dashboard</a>
-								<a href="/admin" class="inline-flex items-center px-1 pt-1 text-gray-500 hover:text-gray-900">Admin</a>
-							</div>
-						</div>
-					</div>
+		<body class="min-h-screen bg-base-300" hx-boost="true">
+			<div class="navbar bg-base-100">
+				<div class="flex-1">
+					<a href="/" class="btn btn-ghost text-xl">Health Monitor</a>
 				</div>
-			</nav>
-			<main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8" id="main-content">
-				{ children... }
+				<div class="flex-none">
+					<a href="/" class="btn btn-primary">Dashboard</a>
+					<a href="/admin" class="btn btn-primary">Admin</a>
+				</div>
+			</div>
+			<main id="main-content" class="container mx-auto px-4 py-8">
+				@content
 			</main>
 		</body>
 	</html>

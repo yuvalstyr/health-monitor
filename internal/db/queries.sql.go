@@ -12,15 +12,15 @@ import (
 )
 
 const createGauge = `-- name: CreateGauge :one
-INSERT INTO gauges (name, description, target, unit, icon)
-VALUES (?, ?, CAST(? AS REAL), ?, ?)
-RETURNING id, name, description, target, unit, icon, created_at, updated_at
+INSERT INTO gauges (name, description, target, value, unit, icon)
+VALUES (?, ?, ?, 0, ?, ?)
+RETURNING id, name, description, target, value, unit, icon, created_at, updated_at
 `
 
 type CreateGaugeParams struct {
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
-	Column3     float64        `json:"column_3"`
+	Target      float64        `json:"target"`
 	Unit        string         `json:"unit"`
 	Icon        string         `json:"icon"`
 }
@@ -29,7 +29,7 @@ func (q *Queries) CreateGauge(ctx context.Context, arg CreateGaugeParams) (Gauge
 	row := q.db.QueryRowContext(ctx, createGauge,
 		arg.Name,
 		arg.Description,
-		arg.Column3,
+		arg.Target,
 		arg.Unit,
 		arg.Icon,
 	)
@@ -39,6 +39,7 @@ func (q *Queries) CreateGauge(ctx context.Context, arg CreateGaugeParams) (Gauge
 		&i.Name,
 		&i.Description,
 		&i.Target,
+		&i.Value,
 		&i.Unit,
 		&i.Icon,
 		&i.CreatedAt,
@@ -87,7 +88,7 @@ func (q *Queries) GetCurrentValue(ctx context.Context, gaugeID int64) (float64, 
 }
 
 const getGauge = `-- name: GetGauge :one
-SELECT id, name, description, target, unit, icon, created_at, updated_at FROM gauges WHERE id = ? LIMIT 1
+SELECT id, name, description, target, value, unit, icon, created_at, updated_at FROM gauges WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetGauge(ctx context.Context, id int64) (Gauge, error) {
@@ -98,6 +99,7 @@ func (q *Queries) GetGauge(ctx context.Context, id int64) (Gauge, error) {
 		&i.Name,
 		&i.Description,
 		&i.Target,
+		&i.Value,
 		&i.Unit,
 		&i.Icon,
 		&i.CreatedAt,
@@ -144,7 +146,7 @@ func (q *Queries) GetGaugeHistory(ctx context.Context, gaugeID int64) ([]GetGaug
 }
 
 const listGauges = `-- name: ListGauges :many
-SELECT id, name, description, target, unit, icon, created_at, updated_at FROM gauges ORDER BY name
+SELECT id, name, description, target, value, unit, icon, created_at, updated_at FROM gauges ORDER BY name
 `
 
 func (q *Queries) ListGauges(ctx context.Context) ([]Gauge, error) {
@@ -161,6 +163,7 @@ func (q *Queries) ListGauges(ctx context.Context) ([]Gauge, error) {
 			&i.Name,
 			&i.Description,
 			&i.Target,
+			&i.Value,
 			&i.Unit,
 			&i.Icon,
 			&i.CreatedAt,
@@ -183,7 +186,7 @@ const updateGauge = `-- name: UpdateGauge :exec
 UPDATE gauges
 SET name = ?,
     description = ?,
-    target = CAST(? AS REAL),
+    target = ?,
     unit = ?,
     icon = ?,
     updated_at = CURRENT_TIMESTAMP
@@ -193,7 +196,7 @@ WHERE id = ?
 type UpdateGaugeParams struct {
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
-	Column3     float64        `json:"column_3"`
+	Target      float64        `json:"target"`
 	Unit        string         `json:"unit"`
 	Icon        string         `json:"icon"`
 	ID          int64          `json:"id"`
@@ -203,10 +206,27 @@ func (q *Queries) UpdateGauge(ctx context.Context, arg UpdateGaugeParams) error 
 	_, err := q.db.ExecContext(ctx, updateGauge,
 		arg.Name,
 		arg.Description,
-		arg.Column3,
+		arg.Target,
 		arg.Unit,
 		arg.Icon,
 		arg.ID,
 	)
+	return err
+}
+
+const updateGaugeValue = `-- name: UpdateGaugeValue :exec
+UPDATE gauges
+SET value = ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+`
+
+type UpdateGaugeValueParams struct {
+	Value float64 `json:"value"`
+	ID    int64   `json:"id"`
+}
+
+func (q *Queries) UpdateGaugeValue(ctx context.Context, arg UpdateGaugeValueParams) error {
+	_, err := q.db.ExecContext(ctx, updateGaugeValue, arg.Value, arg.ID)
 	return err
 }
