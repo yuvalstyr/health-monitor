@@ -5,156 +5,92 @@ import (
 	"health-monitor/internal/db"
 )
 
-templ GaugeForm(method string, action string, gauge *db.Gauge) {
-	<div class="max-w-2xl mx-auto py-8">
-		<div class="card bg-base-100 shadow-xl">
-			<div class="card-body">
-				<h2 class="card-title text-2xl mb-4">
-					if gauge == nil {
-						New Gauge
-					} else {
-						Edit Gauge
-					}
-				</h2>
-				<form 
-					if method == "PUT" {
-						hx-put={ action }
-						hx-target="body"
-						hx-swap="outerHTML"
-						hx-push-url="/admin"
-					} else {
-						hx-post={ action }
-						hx-target="body"
-						hx-swap="outerHTML"
-						hx-push-url="/admin"
-					}
-					class="space-y-6"
-				>
-					@gaugeFormFields(gauge)
-				</form>
-			</div>
-		</div>
-	</div>
-}
+templ GaugeForm(action string, method string, gauge *db.Gauge) {
+	<form
+		class="form-control w-full"
+		if method == "PUT" {
+			hx-put={ action }
+		} else if method == "POST" {
+			hx-post={ action }
+		}
+		hx-target="body"
+		hx-swap="outerHTML"
+		hx-push-url="/admin"
+	>
+		if method != "POST" {
+			<input type="hidden" name="_method" value={ method }/>
+		}
 
-templ gaugeFormFields(gauge *db.Gauge) {
-	<div class="form-control w-full">
-		<label class="label" for="name">
-			<span class="label-text">Name</span>
-		</label>
-		<input
-			type="text"
-			name="name"
-			id="name"
-			required
-			class="input input-bordered w-full"
-			if gauge != nil {
+		<div class="mb-4">
+			<label class="label" for="name">
+				<span class="label-text">Name</span>
+			</label>
+			<input
+				type="text"
+				id="name"
+				name="name"
+				class="input input-bordered w-full"
 				value={ gauge.Name }
-			}
-		/>
-	</div>
+				required
+			/>
+		</div>
 
-	<div class="form-control w-full">
-		<label class="label" for="description">
-			<span class="label-text">Description</span>
-		</label>
-		<textarea
-			name="description"
-			id="description"
-			class="textarea textarea-bordered h-24"
-		>
-			if gauge != nil && gauge.Description.Valid {
-				{ gauge.Description.String }
-			}
-		</textarea>
-	</div>
+		<div class="mb-4">
+			<label class="label" for="description">
+				<span class="label-text">Description</span>
+			</label>
+			<textarea
+				id="description"
+				name="description"
+				class="textarea textarea-bordered w-full"
+			>{ gauge.Description.String }</textarea>
+		</div>
 
-	<div class="grid grid-cols-2 gap-4">
-		<div class="form-control w-full">
+		<div class="mb-4">
 			<label class="label" for="target">
 				<span class="label-text">Target</span>
 			</label>
 			<input
 				type="number"
-				name="target"
 				id="target"
-				required
-				step="0.1"
+				name="target"
 				class="input input-bordered w-full"
-				if gauge != nil {
-					value={ fmt.Sprintf("%.1f", gauge.Target) }
-				}
+				value={ fmt.Sprintf("%.2f", gauge.Target) }
+				required
 			/>
 		</div>
 
-		<div class="form-control w-full">
+		<div class="mb-4">
 			<label class="label" for="unit">
 				<span class="label-text">Unit</span>
 			</label>
 			<input
 				type="text"
-				name="unit"
 				id="unit"
-				required
+				name="unit"
 				class="input input-bordered w-full"
-				if gauge != nil {
-					value={ gauge.Unit }
-				}
+				value={ gauge.Unit }
+				required
 			/>
 		</div>
-	</div>
 
-	<div class="form-control w-full">
-		<label class="label" for="icon">
-			<span class="label-text">Icon</span>
-		</label>
-		<select name="icon" id="icon" class="select select-bordered w-full" required>
-			<option value="">Select an icon</option>
-			<option 
-				value="water"
-				if gauge != nil && gauge.Icon == "water" {
-					selected
-				}
-			>Water</option>
-			<option 
-				value="fire"
-				if gauge != nil && gauge.Icon == "fire" {
-					selected
-				}
-			>Fire</option>
-			<option 
-				value="heart"
-				if gauge != nil && gauge.Icon == "heart" {
-					selected
-				}
-			>Heart</option>
-			<option 
-				value="star"
-				if gauge != nil && gauge.Icon == "star" {
-					selected
-				}
-			>Star</option>
-			<option 
-				value="bolt"
-				if gauge != nil && gauge.Icon == "bolt" {
-					selected
-				}
-			>Bolt</option>
-		</select>
-	</div>
+		<div class="mb-4">
+			<label class="label" for="icon">
+				<span class="label-text">Icon</span>
+			</label>
+			<select name="icon" id="icon" class="select select-bordered w-full" required>
+				<option value="">Select an icon</option>
+				<option value="water" selected?={ gauge.Icon == "water" }>Water</option>
+				<option value="fire" selected?={ gauge.Icon == "fire" }>Fire</option>
+				<option value="heart" selected?={ gauge.Icon == "heart" }>Heart</option>
+				<option value="star" selected?={ gauge.Icon == "star" }>Star</option>
+				<option value="bolt" selected?={ gauge.Icon == "bolt" }>Bolt</option>
+			</select>
+		</div>
 
-	<div class="card-actions justify-end space-x-2">
-		<a href="/admin" class="btn btn-ghost">Cancel</a>
-		if gauge != nil {
-			<button
-				type="button"
-				class="btn btn-error"
-				hx-delete={ fmt.Sprintf("/admin/gauges/%d", gauge.ID) }
-				hx-target="body"
-				hx-swap="outerHTML"
-				hx-confirm="Are you sure you want to delete this gauge?"
-			>Delete</button>
-		}
-		<button type="submit" class="btn btn-primary">Save</button>
-	</div>
+		<div class="flex justify-end gap-4">
+			<a href="/admin" class="btn btn-ghost">Cancel</a>
+			<button type="submit" class="btn btn-primary">Save</button>
+		</div>
+	</form>
 }

@@ -1,9 +1,10 @@
 package pages
 
 import (
-    "fmt"
-    "health-monitor/internal/views/components"
-    "health-monitor/internal/models"
+	"fmt"
+	"health-monitor/internal/db"
+	"health-monitor/internal/models"
+	"health-monitor/internal/views/components"
 )
 
 script showEditModal(id int64) {
@@ -11,22 +12,22 @@ script showEditModal(id int64) {
 }
 
 templ AdminPage(gauges []models.GaugeWithValue) {
-    @components.Layout("Admin Dashboard") {
-        <div class="container mx-auto px-4 py-8">
-            <div class="flex justify-between items-center mb-8">
-                <h1 class="text-3xl font-bold">Manage Gauges</h1>
-                <a href="/admin/gauges/new" class="btn btn-primary">New Gauge</a>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                for _, g := range gauges {
-                    @components.GaugeCard(g.Gauge, g.Value)
-                }
-            </div>
-        </div>
-    }
+	@components.Layout(components.Title("Admin Dashboard")) {
+		<div class="container mx-auto px-4 py-8">
+			<div class="flex justify-between items-center mb-8">
+				@components.Title("Manage Gauges")
+				<a href="/admin/gauges/new" class="btn btn-primary">New Gauge</a>
+			</div>
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+				for _, g := range gauges {
+					@components.GaugeCard(g.Gauge, g.Value)
+				}
+			</div>
+		</div>
+	}
 }
 
-templ EditGaugeForm(gauge models.Gauge) {
-    <h3 class="font-bold text-lg mb-4">Edit Gauge</h3>
-    @components.GaugeForm(fmt.Sprintf("/admin/gauges/%d", gauge.ID), "PUT", &gauge)
+templ EditGaugeForm(gauge *db.Gauge) {
+	<h3 class="font-bold text-lg mb-4">Edit Gauge</h3>
+	@components.GaugeForm(fmt.Sprintf("/admin/gauges/%d", gauge.ID), "PUT", gauge)
 }

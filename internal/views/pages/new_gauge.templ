@@ -1,17 +1,15 @@
 package pages
 
 import (
-	"health-monitor/internal/models"
+	"health-monitor/internal/db"
 	"health-monitor/internal/views/components"
 )
 
 templ NewGaugePage() {
-	@components.Layout("New Gauge") {
+	@components.Layout(components.Title("New Gauge")) {
 		<div class="container mx-auto px-4 py-8">
-			<div class="max-w-lg mx-auto bg-white p-6 rounded-lg shadow">
-				<h1 class="text-2xl font-bold mb-6">Create New Gauge</h1>
-				@components.GaugeForm("/admin/gauges", "POST", &models.Gauge{})
-			</div>
+			<h1 class="text-2xl font-bold mb-8">Create New Gauge</h1>
+			@components.GaugeForm("/admin/gauges", "POST", &db.Gauge{})
 		</div>
 	}
 }

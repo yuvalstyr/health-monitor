@@ -5,12 +5,10 @@ import (
 	"health-monitor/internal/views/components"
 )
 
-type DashboardData []models.GaugeWithValue
-
-templ DashboardPage(data DashboardData) {
-	@components.Layout("Dashboard") {
+templ DashboardPage(gauges []models.GaugeWithValue) {
+	@components.Layout(components.Title("Dashboard")) {
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-			for _, g := range data {
+			for _, g := range gauges {
 				@components.GaugeCard(g.Gauge, g.Value)
 			}
 		</div>

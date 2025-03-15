@@ -7,12 +7,12 @@ import (
 
 templ DashboardRow(g models.GaugeWithValue) {
 	<tr>
-		<td>{ g.Name }</td>
-		<td>{ fmt.Sprintf("%.2f %s", g.Value, g.Unit) }</td>
-		<td>{ fmt.Sprintf("%.2f %s", g.Target, g.Unit) }</td>
+		<td>{ g.Gauge.Name }</td>
+		<td>{ fmt.Sprintf("%.2f %s", g.Value, g.Gauge.Unit) }</td>
+		<td>{ fmt.Sprintf("%.2f %s", g.Gauge.Target, g.Gauge.Unit) }</td>
 		<td>
-			<span class={ templ.KV("badge badge-success", g.Value <= g.Target), templ.KV("badge badge-error", g.Value > g.Target) }>
-				if g.Value <= g.Target {
+			<span class={ templ.KV("badge badge-success", g.Value <= g.Gauge.Target), templ.KV("badge badge-error", g.Value > g.Gauge.Target) }>
+				if g.Value <= g.Gauge.Target {
 					On Track
 				} else {
 					Above Target
@@ -23,13 +23,13 @@ templ DashboardRow(g models.GaugeWithValue) {
 			<div class="join">
 				<button 
 					class="btn btn-sm join-item" 
-					hx-post={ fmt.Sprintf("/dashboard/gauges/%d/decrement", g.ID) }
+					hx-post={ fmt.Sprintf("/dashboard/gauges/%d/decrement", g.Gauge.ID) }
 					hx-target="closest tr"
 					hx-swap="outerHTML"
 				>-</button>
 				<button 
 					class="btn btn-sm join-item" 
-					hx-post={ fmt.Sprintf("/dashboard/gauges/%d/increment", g.ID) }
+					hx-post={ fmt.Sprintf("/dashboard/gauges/%d/increment", g.Gauge.ID) }
 					hx-target="closest tr"
 					hx-swap="outerHTML"
 				>+</button>
