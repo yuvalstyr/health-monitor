@@ -38,6 +38,11 @@ SELECT CAST(COALESCE(
 INSERT INTO gauge_values (gauge_id, value, date)
 VALUES (?, CAST(? AS REAL), ?);
 
+-- name: GetGaugeValues :many
+SELECT * FROM gauge_values 
+WHERE gauge_id = ?
+ORDER BY date DESC;
+
 -- name: GetGaugeHistory :many
 SELECT strftime('%Y-%m', date) as month,
        CAST(AVG(value) AS REAL) as average_value

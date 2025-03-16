@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"health-monitor/internal/db"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -59,15 +60,12 @@ func CreateTestGauge(t *testing.T, q *db.Queries) db.Gauge {
 }
 
 // CreateTestGaugeValue creates a test gauge value
-func CreateTestGaugeValue(t *testing.T, q *db.Queries, gaugeID int64, value float64) {
+func CreateTestGaugeValue(t *testing.T, q *db.Queries, gaugeID int64, value float64, date time.Time) error {
 	params := db.CreateGaugeValueParams{
 		GaugeID: gaugeID,
 		Column2: value,
-		Date:    time.Now(),
+		Date:    date,
 	}
 
-	err := q.CreateGaugeValue(context.Background(), params)
-	if err != nil {
-		t.Fatalf("Failed to create test gauge value: %v", err)
-	}
+	return q.CreateGaugeValue(context.Background(), params)
 }

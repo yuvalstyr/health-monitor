@@ -28,8 +28,8 @@ type GaugeWithValue struct {
 // GaugeHistory represents historical data for a gauge
 type GaugeHistory struct {
 	*db.Gauge
-	Month        string  `json:"month"`
-	AverageValue float64 `json:"average_value"`
+	Month        string         `json:"month"`
+	AverageValue float64        `json:"average_value"`
 	Values       []MonthlyValue `json:"values"`
 }
 
@@ -56,8 +56,14 @@ func NewGaugeWithValue(gauge *db.Gauge) *GaugeWithValue {
 func NewGaugeHistory(gauge *db.Gauge, history []db.GetGaugeHistoryRow) *GaugeHistory {
 	values := make([]MonthlyValue, len(history))
 	for i, h := range history {
+		month := ""
+		if h.Month != nil {
+			if str, ok := h.Month.(string); ok {
+				month = str
+			}
+		}
 		values[i] = MonthlyValue{
-			Month:        h.Month.(string),
+			Month:        month,
 			AverageValue: h.AverageValue,
 		}
 	}

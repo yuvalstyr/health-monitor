@@ -45,6 +45,12 @@ func (h *GaugeHandler) CreateGauge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate required fields
+	if params.Name == "" || params.Unit == "" || params.Icon == "" {
+		http.Error(w, "missing required fields", http.StatusBadRequest)
+		return
+	}
+
 	gauge, err := h.queries.CreateGauge(r.Context(), params)
 	if err != nil {
 		http.Error(w, "failed to create gauge", http.StatusInternalServerError)
@@ -62,6 +68,13 @@ func (h *GaugeHandler) UpdateGauge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if gauge exists
+	_, err = h.queries.GetGauge(r.Context(), id)
+	if err != nil {
+		http.Error(w, "gauge not found", http.StatusNotFound)
+		return
+	}
+
 	var params db.UpdateGaugeParams
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
@@ -74,7 +87,14 @@ func (h *GaugeHandler) UpdateGauge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteJSON(w, map[string]string{"status": "ok"})
+	// Return updated gauge
+	gauge, err := h.queries.GetGauge(r.Context(), id)
+	if err != nil {
+		http.Error(w, "failed to get updated gauge", http.StatusInternalServerError)
+		return
+	}
+
+	WriteJSON(w, gauge)
 }
 
 // DeleteGauge handles deleting a gauge
@@ -82,6 +102,13 @@ func (h *GaugeHandler) DeleteGauge(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid gauge id", http.StatusBadRequest)
+		return
+	}
+
+	// Check if gauge exists
+	_, err = h.queries.GetGauge(r.Context(), id)
+	if err != nil {
+		http.Error(w, "gauge not found", http.StatusNotFound)
 		return
 	}
 
@@ -112,6 +139,13 @@ func (h *GaugeHandler) CreateGaugeValue(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Check if gauge exists
+	_, err = h.queries.GetGauge(r.Context(), id)
+	if err != nil {
+		http.Error(w, "gauge not found", http.StatusNotFound)
+		return
+	}
+
 	var input struct {
 		Value float64   `json:"value"`
 		Date  time.Time `json:"date"`
@@ -133,6 +167,30 @@ func (h *GaugeHandler) CreateGaugeValue(w http.ResponseWriter, r *http.Request) 
 	}
 
 	WriteJSON(w, map[string]string{"status": "ok"})
+}
+
+// GetGaugeHistory handles retrieving historical data for a gauge
+func (h *GaugeHandler) GetGaugeHistory(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid gauge id", http.StatusBadRequest)
+		return
+	}
+
+	// First check if gauge exists
+	_, err = h.queries.GetGauge(r.Context(), id)
+	if err != nil {
+		http.Error(w, "gauge not found", http.StatusNotFound)
+		return
+	}
+
+	history, err := h.queries.GetGaugeHistory(r.Context(), id)
+	if err != nil {
+		http.Error(w, "failed to get gauge history", http.StatusInternalServerError)
+		return
+	}
+
+	WriteJSON(w, history)
 }
 
 // WriteJSON writes JSON to response writer

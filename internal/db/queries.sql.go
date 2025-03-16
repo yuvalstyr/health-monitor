@@ -145,6 +145,40 @@ func (q *Queries) GetGaugeHistory(ctx context.Context, gaugeID int64) ([]GetGaug
 	return items, nil
 }
 
+const getGaugeValues = `-- name: GetGaugeValues :many
+SELECT id, gauge_id, value, date FROM gauge_values 
+WHERE gauge_id = ?
+ORDER BY date DESC
+`
+
+func (q *Queries) GetGaugeValues(ctx context.Context, gaugeID int64) ([]GaugeValue, error) {
+	rows, err := q.db.QueryContext(ctx, getGaugeValues, gaugeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GaugeValue{}
+	for rows.Next() {
+		var i GaugeValue
+		if err := rows.Scan(
+			&i.ID,
+			&i.GaugeID,
+			&i.Value,
+			&i.Date,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listGauges = `-- name: ListGauges :many
 SELECT id, name, description, target, value, unit, icon, created_at, updated_at FROM gauges ORDER BY name
 `

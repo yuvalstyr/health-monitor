@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"strconv"
 
+	"health-monitor/internal/db"
+	"health-monitor/internal/views/components"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	_ "modernc.org/sqlite"
-	"health-monitor/internal/db"
-	"health-monitor/internal/views/components"
 )
 
 func main() {

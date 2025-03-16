@@ -1,4 +1,4 @@
-.PHONY: all build run clean generate
+.PHONY: all build run clean generate test
 
 all: generate build
 
@@ -14,6 +14,9 @@ clean:
 generate:
 	templ generate
 	sqlc generate
+
+test:
+	go test -v ./...
 
 install-tools:
 	go install github.com/a-h/templ/cmd/templ@latest
