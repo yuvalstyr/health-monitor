@@ -6,23 +6,24 @@ import (
 )
 
 templ GaugeValue(gauge *db.Gauge, value float64) {
-	<div id={ fmt.Sprintf("gauge-value-%d", gauge.ID) } class="space-y-2">
+	<div id={ fmt.Sprintf("gauge-value-%d", gauge.ID) } class="space-y-1 sm:space-y-2">
 		<div class="flex justify-between items-baseline">
-			<div class={ "text-4xl font-bold transition-all", templ.KV("text-primary", value <= gauge.Target), templ.KV("text-error animate-pulse", value > gauge.Target) }>
+			<div class={ "text-3xl sm:text-4xl font-bold transition-all", templ.KV("text-primary", value <= gauge.Target), templ.KV("text-error animate-pulse", value > gauge.Target) }>
 				{ fmt.Sprintf("%.1f", value) }
-				<span class="text-base font-normal text-base-content/60 ml-1">{ gauge.Unit }</span>
+				<span class="text-sm sm:text-base font-normal text-base-content/60 ml-1">{ gauge.Unit }</span>
 			</div>
-			<div class="text-sm text-base-content/60">
-				Target: { fmt.Sprintf("%.1f %s", gauge.Target, gauge.Unit) }
+			<div class="text-xs sm:text-sm text-base-content/60">
+				Target: { fmt.Sprintf("%.1f", gauge.Target) }
+				<span class="hidden sm:inline">{ gauge.Unit }</span>
 			</div>
 		</div>
-		<div class="w-full h-2 bg-base-200/50 rounded-full overflow-hidden">
+		<div class="w-full h-1.5 sm:h-2 bg-base-200/50 rounded-full overflow-hidden">
 			<div 
 				class={ "h-full rounded-full transition-all", templ.KV("bg-primary", value <= gauge.Target), templ.KV("bg-error", value > gauge.Target) }
 				style={ fmt.Sprintf("width: %d%%", min(int(value/gauge.Target*100), 100)) }
 			></div>
 		</div>
-		<div class="text-xs text-base-content/40">
+		<div class="text-xs text-base-content/40 hidden sm:block">
 			{ fmt.Sprintf("%d%% of target", min(int(value/gauge.Target*100), 100)) }
 		</div>
 	</div>
@@ -30,23 +31,23 @@ templ GaugeValue(gauge *db.Gauge, value float64) {
 
 templ GaugeCard(gauge *db.Gauge) {
 	<div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all group">
-		<div class="card-body p-6">
+		<div class="card-body p-3 sm:p-6">
 			// Header with icon and menu
 			<div class="flex justify-between items-start">
-				<div class="flex items-center gap-3">
-					<div class={ "p-3 rounded-xl transition-all", templ.KV("bg-primary/10", gauge.Value <= gauge.Target), templ.KV("bg-error/10", gauge.Value > gauge.Target) }>
-						@Icon(gauge.Icon, "w-6 h-6 text-primary group-hover:scale-110 transition-all")
+				<div class="flex items-center gap-2 sm:gap-3">
+					<div class={ "p-2 sm:p-3 rounded-xl transition-all", templ.KV("bg-primary/10", gauge.Value <= gauge.Target), templ.KV("bg-error/10", gauge.Value > gauge.Target) }>
+						@Icon(gauge.Icon, "w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:scale-110 transition-all")
 					</div>
 					<div>
-						<h2 class="card-title mb-1">{ gauge.Name }</h2>
+						<h2 class="card-title text-base sm:text-lg mb-0 sm:mb-1">{ gauge.Name }</h2>
 						if gauge.Description.Valid {
-							<p class="text-sm text-base-content/60">{ gauge.Description.String }</p>
+							<p class="text-xs sm:text-sm text-base-content/60 hidden sm:block">{ gauge.Description.String }</p>
 						}
 					</div>
 				</div>
 				<div class="dropdown dropdown-end">
-					<label tabindex="0" class="btn btn-ghost btn-sm btn-circle opacity-50 hover:opacity-100">
-						@Icon("more-vertical", "w-4 h-4")
+					<label tabindex="0" class="btn btn-ghost btn-xs sm:btn-sm btn-circle opacity-50 hover:opacity-100">
+						@Icon("more-vertical", "w-3 h-3 sm:w-4 sm:h-4")
 					</label>
 					<ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
 						<li>
@@ -76,24 +77,24 @@ templ GaugeCard(gauge *db.Gauge) {
 			</div>
 
 			// Value display and progress
-			<div id={ fmt.Sprintf("gauge-value-%d", gauge.ID) } class="mt-6">
+			<div id={ fmt.Sprintf("gauge-value-%d", gauge.ID) } class="mt-3 sm:mt-6">
 				@GaugeValue(gauge, gauge.Value)
 			</div>
 
 			// Controls
-			<div class="card-actions justify-center items-center mt-4 pt-4 border-t border-base-200 gap-4">
+			<div class="card-actions justify-center items-center mt-3 pt-3 sm:mt-4 sm:pt-4 border-t border-base-200 gap-3 sm:gap-4">
 				<button
 					hx-post={ fmt.Sprintf("/gauges/%d/decrement", gauge.ID) }
 					hx-target={ fmt.Sprintf("#gauge-value-%d", gauge.ID) }
 					hx-swap="innerHTML"
-					class="btn btn-error btn-sm font-bold w-20">
+					class="btn btn-error btn-xs sm:btn-sm font-bold w-16 sm:w-20">
 					-
 				</button>
 				<button
 					hx-post={ fmt.Sprintf("/gauges/%d/increment", gauge.ID) }
 					hx-target={ fmt.Sprintf("#gauge-value-%d", gauge.ID) }
 					hx-swap="innerHTML"
-					class="btn btn-success btn-sm font-bold w-20">
+					class="btn btn-success btn-xs sm:btn-sm font-bold w-16 sm:w-20">
 					+
 				</button>
 			</div>
