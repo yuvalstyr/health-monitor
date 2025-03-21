@@ -9,7 +9,6 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"health-monitor/internal/db"
 	"health-monitor/internal/views/components"
 )
 
@@ -50,7 +49,7 @@ func NewGaugePage() templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = components.GaugeForm("/admin/gauges", "POST", &db.Gauge{}).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = components.GaugeForm("POST", "/admin/gauges", nil, []components.FormError{}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

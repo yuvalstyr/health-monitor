@@ -1,200 +1,136 @@
 package handlers
 
 import (
-	"encoding/json"
+	"context"
+	"fmt"
+	"health-monitor/internal/db"
+	"health-monitor/internal/views/pages"
 	"net/http"
 	"strconv"
-	"time"
-
-	"github.com/go-chi/chi/v5"
-	"health-monitor/internal/db"
+	"github.com/a-h/templ"
 )
 
-type GaugeHandler struct {
-	queries *db.Queries
+type Querier interface {
+	GetAllGauges(ctx context.Context) ([]db.Gauge, error)
+	GetGauge(ctx context.Context, id int64) (db.Gauge, error)
+	CreateGauge(ctx context.Context, params db.CreateGaugeParams) (db.Gauge, error)
+	UpdateGauge(ctx context.Context, params db.UpdateGaugeParams) error
+	DeleteGauge(ctx context.Context, id int64) error
+	UpdateGaugeValue(ctx context.Context, params db.UpdateGaugeValueParams) error
 }
 
-func NewGaugeHandler(queries *db.Queries) *GaugeHandler {
+type GaugeHandler struct {
+	queries Querier
+}
+
+func NewGaugeHandler(queries Querier) *GaugeHandler {
 	return &GaugeHandler{
 		queries: queries,
 	}
 }
 
-// GetGauge handles retrieving a single gauge by ID
-func (h *GaugeHandler) GetGauge(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+func (h *GaugeHandler) Admin(r *http.Request) (templ.Component, error) {
+	gauges, err := h.queries.GetAllGauges(r.Context())
 	if err != nil {
-		http.Error(w, "invalid gauge id", http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("failed to get gauges: %w", err)
+	}
+	return pages.Admin(gauges), nil
+}
+
+func (h *GaugeHandler) Create(r *http.Request) (templ.Component, error) {
+	if err := r.ParseForm(); err != nil {
+		return nil, fmt.Errorf("failed to parse form: %w", err)
 	}
 
+	name := r.FormValue("name")
+	icon := r.FormValue("icon")
+	unit := r.FormValue("unit")
+	target, err := strconv.ParseFloat(r.FormValue("target"), 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid target value: %w", err)
+	}
+
+	_, err = h.queries.CreateGauge(r.Context(), db.CreateGaugeParams{
+		Name:   name,
+		Icon:   icon,
+		Unit:   unit,
+		Target: target,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create gauge: %w", err)
+	}
+
+	return h.Admin(r)
+}
+
+func (h *GaugeHandler) Update(id int64, r *http.Request) (templ.Component, error) {
+	if err := r.ParseForm(); err != nil {
+		return nil, fmt.Errorf("failed to parse form: %w", err)
+	}
+
+	name := r.FormValue("name")
+	icon := r.FormValue("icon")
+	unit := r.FormValue("unit")
+	target, err := strconv.ParseFloat(r.FormValue("target"), 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid target value: %w", err)
+	}
+
+	err = h.queries.UpdateGauge(r.Context(), db.UpdateGaugeParams{
+		ID:     id,
+		Name:   name,
+		Icon:   icon,
+		Unit:   unit,
+		Target: target,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update gauge: %w", err)
+	}
+
+	return h.Admin(r)
+}
+
+func (h *GaugeHandler) Delete(r *http.Request, id int64) (templ.Component, error) {
+	err := h.queries.DeleteGauge(r.Context(), id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete gauge: %w", err)
+	}
+
+	return h.Admin(r)
+}
+
+func (h *GaugeHandler) Increment(r *http.Request, id int64) (templ.Component, error) {
 	gauge, err := h.queries.GetGauge(r.Context(), id)
 	if err != nil {
-		http.Error(w, "gauge not found", http.StatusNotFound)
-		return
+		return nil, fmt.Errorf("failed to get gauge: %w", err)
 	}
 
-	WriteJSON(w, gauge)
+	err = h.queries.UpdateGaugeValue(r.Context(), db.UpdateGaugeValueParams{
+		ID:    id,
+		Value: gauge.Value + 1,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to increment gauge: %w", err)
+	}
+
+	return h.Admin(r)
 }
 
-// CreateGauge handles creating a new gauge
-func (h *GaugeHandler) CreateGauge(w http.ResponseWriter, r *http.Request) {
-	var params db.CreateGaugeParams
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	// Validate required fields
-	if params.Name == "" || params.Unit == "" || params.Icon == "" {
-		http.Error(w, "missing required fields", http.StatusBadRequest)
-		return
-	}
-
-	gauge, err := h.queries.CreateGauge(r.Context(), params)
-	if err != nil {
-		http.Error(w, "failed to create gauge", http.StatusInternalServerError)
-		return
-	}
-
-	WriteJSON(w, gauge)
-}
-
-// UpdateGauge handles updating an existing gauge
-func (h *GaugeHandler) UpdateGauge(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	if err != nil {
-		http.Error(w, "invalid gauge id", http.StatusBadRequest)
-		return
-	}
-
-	// Check if gauge exists
-	_, err = h.queries.GetGauge(r.Context(), id)
-	if err != nil {
-		http.Error(w, "gauge not found", http.StatusNotFound)
-		return
-	}
-
-	var params db.UpdateGaugeParams
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
-	}
-	params.ID = id
-
-	if err := h.queries.UpdateGauge(r.Context(), params); err != nil {
-		http.Error(w, "failed to update gauge", http.StatusInternalServerError)
-		return
-	}
-
-	// Return updated gauge
+func (h *GaugeHandler) Decrement(r *http.Request, id int64) (templ.Component, error) {
 	gauge, err := h.queries.GetGauge(r.Context(), id)
 	if err != nil {
-		http.Error(w, "failed to get updated gauge", http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("failed to get gauge: %w", err)
 	}
 
-	WriteJSON(w, gauge)
-}
-
-// DeleteGauge handles deleting a gauge
-func (h *GaugeHandler) DeleteGauge(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	if err != nil {
-		http.Error(w, "invalid gauge id", http.StatusBadRequest)
-		return
+	if gauge.Value > 0 {
+		err = h.queries.UpdateGaugeValue(r.Context(), db.UpdateGaugeValueParams{
+			ID:    id,
+			Value: gauge.Value - 1,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to decrement gauge: %w", err)
+		}
 	}
 
-	// Check if gauge exists
-	_, err = h.queries.GetGauge(r.Context(), id)
-	if err != nil {
-		http.Error(w, "gauge not found", http.StatusNotFound)
-		return
-	}
-
-	if err := h.queries.DeleteGauge(r.Context(), id); err != nil {
-		http.Error(w, "failed to delete gauge", http.StatusInternalServerError)
-		return
-	}
-
-	WriteJSON(w, map[string]string{"status": "ok"})
-}
-
-// GetAllGauges handles retrieving all gauges
-func (h *GaugeHandler) GetAllGauges(w http.ResponseWriter, r *http.Request) {
-	gauges, err := h.queries.ListGauges(r.Context())
-	if err != nil {
-		http.Error(w, "failed to list gauges", http.StatusInternalServerError)
-		return
-	}
-
-	WriteJSON(w, gauges)
-}
-
-// CreateGaugeValue handles creating a new gauge value
-func (h *GaugeHandler) CreateGaugeValue(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	if err != nil {
-		http.Error(w, "invalid gauge id", http.StatusBadRequest)
-		return
-	}
-
-	// Check if gauge exists
-	_, err = h.queries.GetGauge(r.Context(), id)
-	if err != nil {
-		http.Error(w, "gauge not found", http.StatusNotFound)
-		return
-	}
-
-	var input struct {
-		Value float64   `json:"value"`
-		Date  time.Time `json:"date"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	params := db.CreateGaugeValueParams{
-		GaugeID: id,
-		Column2: input.Value,
-		Date:    input.Date,
-	}
-
-	if err := h.queries.CreateGaugeValue(r.Context(), params); err != nil {
-		http.Error(w, "failed to create gauge value", http.StatusInternalServerError)
-		return
-	}
-
-	WriteJSON(w, map[string]string{"status": "ok"})
-}
-
-// GetGaugeHistory handles retrieving historical data for a gauge
-func (h *GaugeHandler) GetGaugeHistory(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
-	if err != nil {
-		http.Error(w, "invalid gauge id", http.StatusBadRequest)
-		return
-	}
-
-	// First check if gauge exists
-	_, err = h.queries.GetGauge(r.Context(), id)
-	if err != nil {
-		http.Error(w, "gauge not found", http.StatusNotFound)
-		return
-	}
-
-	history, err := h.queries.GetGaugeHistory(r.Context(), id)
-	if err != nil {
-		http.Error(w, "failed to get gauge history", http.StatusInternalServerError)
-		return
-	}
-
-	WriteJSON(w, history)
-}
-
-// WriteJSON writes JSON to response writer
-func WriteJSON(w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(data)
+	return h.Admin(r)
 }

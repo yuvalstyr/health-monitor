@@ -24,3 +24,4 @@ vendor/
 
 # Generated files
 *.templ.go
+coverage.html

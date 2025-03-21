@@ -1,4 +1,4 @@
-.PHONY: all build run clean generate test
+.PHONY: all build run clean generate test test-coverage
 
 all: generate build
 
@@ -10,6 +10,7 @@ run: generate
 
 clean:
 	rm -rf bin/
+	rm -f coverage.out
 
 generate:
 	templ generate
@@ -17,6 +18,11 @@ generate:
 
 test:
 	go test -v ./...
+
+test-coverage:
+	go test -v -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated at coverage.html"
 
 install-tools:
 	go install github.com/a-h/templ/cmd/templ@latest

@@ -5,92 +5,197 @@ import (
 	"health-monitor/internal/db"
 )
 
-templ GaugeForm(action string, method string, gauge *db.Gauge) {
-	<form
-		class="form-control w-full"
-		if method == "PUT" {
-			hx-put={ action }
-		} else if method == "POST" {
-			hx-post={ action }
-		}
-		hx-target="body"
-		hx-swap="outerHTML"
-		hx-push-url="/admin"
-	>
-		if method != "POST" {
-			<input type="hidden" name="_method" value={ method }/>
-		}
+type FormError struct {
+	Field   string
+	Message string
+}
 
-		<div class="mb-4">
+templ GaugeForm(method string, action string, gauge *db.Gauge, errors []FormError) {
+	<div class="max-w-2xl mx-auto p-6">
+		<div class="bg-base-100 shadow-xl rounded-box p-8">
+			<h1 class="text-2xl font-bold mb-6">
+				if gauge == nil {
+					{ "New Gauge" }
+				} else {
+					{ "Edit Gauge" }
+				}
+			</h1>
+			
+			if len(errors) > 0 {
+				<div class="alert alert-error mb-6">
+					<div>
+						<svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+						<div>
+							<h3 class="font-bold">Please fix the following errors:</h3>
+							<ul class="list-disc list-inside">
+								for _, err := range errors {
+									<li>{ err.Message }</li>
+								}
+							</ul>
+						</div>
+					</div>
+				</div>
+			}
+			
+			if method == "PUT" {
+				<form
+					class="form-control w-full space-y-6"
+					hx-put={ action }
+					hx-target="body"
+					hx-swap="outerHTML"
+					hx-push-url="/admin"
+				>
+					<input type="hidden" name="_method" value={ method }/>
+					@formFields(gauge, errors)
+				</form>
+			} else {
+				<form
+					class="form-control w-full space-y-6"
+					hx-post={ action }
+					hx-target="body"
+					hx-swap="outerHTML"
+					hx-push-url="/admin"
+				>
+					@formFields(gauge, errors)
+				</form>
+			}
+		</div>
+	</div>
+}
+
+templ formFields(gauge *db.Gauge, errors []FormError) {
+	<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+		<div>
 			<label class="label" for="name">
-				<span class="label-text">Name</span>
+				<span class="label-text font-medium">Name</span>
 			</label>
 			<input
 				type="text"
 				id="name"
 				name="name"
-				class="input input-bordered w-full"
-				value={ gauge.Name }
+				class={ "input input-bordered w-full", templ.KV("input-error", hasError(errors, "name")) }
+				if gauge != nil {
+					value={ gauge.Name }
+				}
+				placeholder="Enter gauge name"
 				required
 			/>
+			if err := getError(errors, "name"); err != nil {
+				<label class="label">
+					<span class="label-text-alt text-error">{ err.Message }</span>
+				</label>
+			}
 		</div>
 
-		<div class="mb-4">
-			<label class="label" for="description">
-				<span class="label-text">Description</span>
+		<div>
+			<label class="label" for="icon">
+				<span class="label-text font-medium">Icon</span>
 			</label>
-			<textarea
-				id="description"
-				name="description"
-				class="textarea textarea-bordered w-full"
-			>{ gauge.Description.String }</textarea>
+			<select 
+				name="icon" 
+				id="icon" 
+				class={ "select select-bordered w-full", templ.KV("select-error", hasError(errors, "icon")) }
+				required
+			>
+				<option value="">Select an icon</option>
+				<option value="water" selected?={ gauge != nil && gauge.Icon == "water" }>Water</option>
+				<option value="fire" selected?={ gauge != nil && gauge.Icon == "fire" }>Fire</option>
+				<option value="heart" selected?={ gauge != nil && gauge.Icon == "heart" }>Heart</option>
+				<option value="star" selected?={ gauge != nil && gauge.Icon == "star" }>Star</option>
+				<option value="bolt" selected?={ gauge != nil && gauge.Icon == "bolt" }>Bolt</option>
+			</select>
+			if err := getError(errors, "icon"); err != nil {
+				<label class="label">
+					<span class="label-text-alt text-error">{ err.Message }</span>
+				</label>
+			}
 		</div>
+	</div>
 
-		<div class="mb-4">
+	<div>
+		<label class="label" for="description">
+			<span class="label-text font-medium">Description</span>
+		</label>
+		<textarea
+			id="description"
+			name="description"
+			class={ "textarea textarea-bordered w-full min-h-24", templ.KV("textarea-error", hasError(errors, "description")) }
+			placeholder="Enter gauge description (optional)"
+		>
+			if gauge != nil && gauge.Description.Valid {
+				{ gauge.Description.String }
+			}
+		</textarea>
+		if err := getError(errors, "description"); err != nil {
+			<label class="label">
+				<span class="label-text-alt text-error">{ err.Message }</span>
+			</label>
+		}
+	</div>
+
+	<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+		<div>
 			<label class="label" for="target">
-				<span class="label-text">Target</span>
+				<span class="label-text font-medium">Target Value</span>
 			</label>
 			<input
 				type="number"
 				id="target"
 				name="target"
-				class="input input-bordered w-full"
-				value={ fmt.Sprintf("%.2f", gauge.Target) }
+				class={ "input input-bordered w-full", templ.KV("input-error", hasError(errors, "target")) }
+				if gauge != nil {
+					value={ fmt.Sprintf("%.2f", gauge.Target) }
+				}
+				placeholder="Enter target value"
 				required
+				min="0"
+				step="0.01"
 			/>
+			if err := getError(errors, "target"); err != nil {
+				<label class="label">
+					<span class="label-text-alt text-error">{ err.Message }</span>
+				</label>
+			}
 		</div>
 
-		<div class="mb-4">
+		<div>
 			<label class="label" for="unit">
-				<span class="label-text">Unit</span>
+				<span class="label-text font-medium">Unit</span>
 			</label>
 			<input
 				type="text"
 				id="unit"
 				name="unit"
-				class="input input-bordered w-full"
-				value={ gauge.Unit }
+				class={ "input input-bordered w-full", templ.KV("input-error", hasError(errors, "unit")) }
+				if gauge != nil {
+					value={ gauge.Unit }
+				}
+				placeholder="Enter unit (e.g., liters, steps)"
 				required
 			/>
+			if err := getError(errors, "unit"); err != nil {
+				<label class="label">
+					<span class="label-text-alt text-error">{ err.Message }</span>
+				</label>
+			}
 		</div>
+	</div>
 
-		<div class="mb-4">
-			<label class="label" for="icon">
-				<span class="label-text">Icon</span>
-			</label>
-			<select name="icon" id="icon" class="select select-bordered w-full" required>
-				<option value="">Select an icon</option>
-				<option value="water" selected?={ gauge.Icon == "water" }>Water</option>
-				<option value="fire" selected?={ gauge.Icon == "fire" }>Fire</option>
-				<option value="heart" selected?={ gauge.Icon == "heart" }>Heart</option>
-				<option value="star" selected?={ gauge.Icon == "star" }>Star</option>
-				<option value="bolt" selected?={ gauge.Icon == "bolt" }>Bolt</option>
-			</select>
-		</div>
+	<div class="flex justify-end gap-4 pt-4">
+		<a href="/admin" class="btn">Cancel</a>
+		<button type="submit" class="btn btn-primary">Save Gauge</button>
+	</div>
+}
 
-		<div class="flex justify-end gap-4">
-			<a href="/admin" class="btn btn-ghost">Cancel</a>
-			<button type="submit" class="btn btn-primary">Save</button>
-		</div>
-	</form>
+func hasError(errors []FormError, field string) bool {
+	return getError(errors, field) != nil
+}
+
+func getError(errors []FormError, field string) *FormError {
+	for _, err := range errors {
+		if err.Field == field {
+			return &err
+		}
+	}
+	return nil
 }

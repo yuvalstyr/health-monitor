@@ -9,10 +9,10 @@ import (
 
 	"health-monitor/internal/db"
 	"health-monitor/internal/views/components"
+	"health-monitor/internal/views/pages"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	_ "modernc.org/sqlite"
 )
 
 func main() {
@@ -34,7 +34,12 @@ func main() {
 			return
 		}
 
-		components.Layout(components.GaugeList(gauges)).Render(r.Context(), w)
+		w.Header().Set("Content-Type", "text/html")
+		err = components.Layout(pages.Dashboard(gauges)).Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	r.Get("/admin", func(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +49,12 @@ func main() {
 			return
 		}
 
-		components.Layout(components.GaugeList(gauges)).Render(r.Context(), w)
+		w.Header().Set("Content-Type", "text/html")
+		err = components.Layout(pages.Admin(gauges)).Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	r.Get("/gauges/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -60,11 +70,21 @@ func main() {
 			return
 		}
 
-		components.Layout(components.GaugeView(&gauge)).Render(r.Context(), w)
+		w.Header().Set("Content-Type", "text/html")
+		err = components.Layout(components.GaugeView(&gauge)).Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	r.Get("/admin/gauges/new", func(w http.ResponseWriter, r *http.Request) {
-		components.Layout(components.GaugeForm("POST", "/admin/gauges", nil)).Render(r.Context(), w)
+		w.Header().Set("Content-Type", "text/html")
+		err := components.Layout(components.GaugeForm("POST", "/admin/gauges", nil, []components.FormError{})).Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	r.Get("/admin/gauges/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +100,12 @@ func main() {
 			return
 		}
 
-		components.Layout(components.GaugeForm("PUT", fmt.Sprintf("/admin/gauges/%d", id), &gauge)).Render(r.Context(), w)
+		w.Header().Set("Content-Type", "text/html")
+		err = components.Layout(components.GaugeForm("PUT", fmt.Sprintf("/admin/gauges/%d", id), &gauge, []components.FormError{})).Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	r.Post("/admin/gauges", func(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +139,12 @@ func main() {
 			return
 		}
 
-		components.Layout(components.GaugeList(gauges)).Render(r.Context(), w)
+		w.Header().Set("Content-Type", "text/html")
+		err = components.Layout(pages.Admin(gauges)).Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	r.Put("/admin/gauges/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -155,7 +185,12 @@ func main() {
 			return
 		}
 
-		components.Layout(components.GaugeList(gauges)).Render(r.Context(), w)
+		w.Header().Set("Content-Type", "text/html")
+		err = components.Layout(pages.Admin(gauges)).Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	r.Delete("/admin/gauges/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -177,7 +212,12 @@ func main() {
 			return
 		}
 
-		components.Layout(components.GaugeList(gauges)).Render(r.Context(), w)
+		w.Header().Set("Content-Type", "text/html")
+		err = components.Layout(pages.Admin(gauges)).Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	r.Post("/gauges/{id}/increment", func(w http.ResponseWriter, r *http.Request) {
@@ -208,8 +248,12 @@ func main() {
 			return
 		}
 
-		w.Header().Set("Content-Type", "text/plain")
-		fmt.Fprintf(w, "%.1f %s", gauge.Value, gauge.Unit)
+		w.Header().Set("Content-Type", "text/html")
+		err = components.GaugeValue(&gauge, gauge.Value).Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	r.Post("/gauges/{id}/decrement", func(w http.ResponseWriter, r *http.Request) {
@@ -240,8 +284,12 @@ func main() {
 			return
 		}
 
-		w.Header().Set("Content-Type", "text/plain")
-		fmt.Fprintf(w, "%.1f %s", gauge.Value, gauge.Unit)
+		w.Header().Set("Content-Type", "text/html")
+		err = components.GaugeValue(&gauge, gauge.Value).Render(r.Context(), w)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	})
 
 	log.Printf("Server starting on port 3000")

@@ -1,33 +1,63 @@
 package pages
 
 import (
-	"fmt"
 	"health-monitor/internal/db"
-	"health-monitor/internal/models"
 	"health-monitor/internal/views/components"
 )
 
-script showEditModal(id int64) {
-    document.getElementById(`edit-gauge-modal-${id}`).showModal()
+templ Admin(gauges []db.Gauge) {
+	@components.GaugeList(gauges)
 }
 
-templ AdminPage(gauges []models.GaugeWithValue) {
-	@components.Layout(components.Title("Admin Dashboard")) {
+templ Form() {
+	@components.Layout(components.Title("New Gauge")) {
 		<div class="container mx-auto px-4 py-8">
 			<div class="flex justify-between items-center mb-8">
-				@components.Title("Manage Gauges")
-				<a href="/admin/gauges/new" class="btn btn-primary">New Gauge</a>
+				<h1 class="text-3xl font-bold">New Gauge</h1>
 			</div>
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-				for _, g := range gauges {
-					@components.GaugeCard(g.Gauge, g.Value)
-				}
-			</div>
+			<form 
+				hx-post="/gauges" 
+				hx-target="body" 
+				hx-swap="outerHTML"
+				hx-push-url="/admin"
+				class="max-w-lg mx-auto">
+				<div class="form-control mb-4">
+					<label class="label">
+						<span class="label-text">Name</span>
+					</label>
+					<input type="text" name="name" class="input input-bordered" required/>
+				</div>
+				<div class="form-control mb-4">
+					<label class="label">
+						<span class="label-text">Icon</span>
+					</label>
+					<input type="text" name="icon" class="input input-bordered" required/>
+				</div>
+				<div class="form-control mb-4">
+					<label class="label">
+						<span class="label-text">Unit</span>
+					</label>
+					<input type="text" name="unit" class="input input-bordered" required/>
+				</div>
+				<div class="form-control mb-4">
+					<label class="label">
+						<span class="label-text">Target</span>
+					</label>
+					<input type="number" name="target" class="input input-bordered" required/>
+				</div>
+				<div class="flex justify-end gap-4">
+					<button 
+						type="button" 
+						hx-get="/admin" 
+						hx-target="body" 
+						hx-swap="outerHTML"
+						hx-push-url="/admin"
+						class="btn btn-ghost">
+						Cancel
+					</button>
+					<button type="submit" class="btn btn-primary">Create</button>
+				</div>
+			</form>
 		</div>
 	}
-}
-
-templ EditGaugeForm(gauge *db.Gauge) {
-	<h3 class="font-bold text-lg mb-4">Edit Gauge</h3>
-	@components.GaugeForm(fmt.Sprintf("/admin/gauges/%d", gauge.ID), "PUT", gauge)
 }
