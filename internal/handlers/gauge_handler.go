@@ -295,9 +295,9 @@ func (h *GaugeHandler) handleIncrementGauge(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Render just the updated gauge component
+	// Render just the updated gauge value component
 	w.Header().Set("Content-Type", "text/html")
-	err = components.Gauge(&updatedGauge).Render(r.Context(), w)
+	err = components.GaugeValue(&updatedGauge, updatedGauge.Value).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -340,9 +340,9 @@ func (h *GaugeHandler) handleDecrementGauge(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Render just the updated gauge component
+	// Render just the updated gauge value component
 	w.Header().Set("Content-Type", "text/html")
-	err = components.Gauge(&updatedGauge).Render(r.Context(), w)
+	err = components.GaugeValue(&updatedGauge, updatedGauge.Value).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
