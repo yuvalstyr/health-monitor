@@ -40,15 +40,15 @@ func TestGaugeCard(t *testing.T) {
 		assert.Contains(t, html, `class="card-title text-base sm:text-lg mb-0 sm:mb-1"`)
 
 		// Check value display
-		assert.Contains(t, html, `text-3xl sm:text-4xl font-bold transition-all`)
-		assert.Contains(t, html, `text-xs sm:text-sm text-base-content/60`)
+		assert.Contains(t, html, `text-4xl sm:text-5xl font-bold transition-all`)
+		assert.Contains(t, html, `badge badge-lg badge-outline`)
 
 		// Check progress bar
-		assert.Contains(t, html, `w-full h-1.5 sm:h-2 bg-base-200/50 rounded-full overflow-hidden`)
+		assert.Contains(t, html, `w-full h-2.5 sm:h-3 bg-base-200/50 rounded-lg overflow-hidden shadow-inner`)
 
 		// Check controls
-		assert.Contains(t, html, `btn btn-error btn-xs sm:btn-sm font-bold w-16 sm:w-20`)
-		assert.Contains(t, html, `btn btn-success btn-xs sm:btn-sm font-bold w-16 sm:w-20`)
+		assert.Contains(t, html, `btn btn-error btn-sm w-full font-bold`)
+		assert.Contains(t, html, `btn btn-success btn-sm w-full font-bold`)
 	})
 
 	t.Run("shows warning when over target", func(t *testing.T) {

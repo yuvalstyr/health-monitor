@@ -6,10 +6,26 @@ templ Base(title string, content templ.Component) {
         <head>
             <meta charset="UTF-8"/>
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"/>
-            <meta name="theme-color" content="#570DF8"/>
+            <meta name="theme-color" content="#14b8a6"/>
             <title>{ title } - Health Monitor</title>
             <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.19/dist/full.css" rel="stylesheet" type="text/css"/>
             <script src="https://cdn.tailwindcss.com"></script>
+            <script>
+                tailwind.config = {
+                    theme: { extend: {} },
+                    daisyui: {
+                        themes: [
+                            {
+                                dark: {
+                                    ...require("daisyui/src/theming/themes")["[data-theme=dark]"],
+                                    "primary": "#14b8a6",
+                                    "primary-focus": "#0f766e",
+                                },
+                            },
+                        ],
+                    }
+                }
+            </script>
             <script src="https://unpkg.com/htmx.org@1.9.10"></script>
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <style>
