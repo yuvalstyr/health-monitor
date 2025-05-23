@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"health-monitor/internal/db"
 	"health-monitor/internal/views/components"
+	"health-monitor/internal/views/layouts"
 	"health-monitor/internal/views/pages"
 	"net/http"
 	"strconv"
@@ -68,7 +69,7 @@ func (h *GaugeHandler) handleAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html")
-	err = components.Layout(pages.Admin(gauges)).Render(r.Context(), w)
+	err = layouts.Base("Admin", pages.Admin(gauges)).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -78,7 +79,7 @@ func (h *GaugeHandler) handleAdmin(w http.ResponseWriter, r *http.Request) {
 // handleNewGaugeForm renders the form for creating a new gauge
 func (h *GaugeHandler) handleNewGaugeForm(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	err := components.Layout(components.GaugeForm("POST", "/admin/gauges", nil, []components.FormError{})).Render(r.Context(), w)
+	err := layouts.Base("New Gauge", components.GaugeForm("POST", "/admin/gauges", nil, []components.FormError{})).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -137,7 +138,7 @@ func (h *GaugeHandler) handleCreateGauge(w http.ResponseWriter, r *http.Request)
 			Unit: unit,
 			Target: target,
 		}
-		err := components.Layout(components.GaugeForm("POST", "/admin/gauges", dummyGauge, errors)).Render(r.Context(), w)
+		err := layouts.Base("New Gauge", components.GaugeForm("POST", "/admin/gauges", dummyGauge, errors)).Render(r.Context(), w)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -179,7 +180,7 @@ func (h *GaugeHandler) handleEditGaugeForm(w http.ResponseWriter, r *http.Reques
 
 	// Render the edit form
 	w.Header().Set("Content-Type", "text/html")
-	err = components.Layout(components.GaugeForm("PUT", fmt.Sprintf("/admin/gauges/%d", id), &gauge, []components.FormError{})).Render(r.Context(), w)
+	err = layouts.Base("Edit Gauge", components.GaugeForm("PUT", fmt.Sprintf("/admin/gauges/%d", id), &gauge, []components.FormError{})).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -216,7 +217,7 @@ func (h *GaugeHandler) handleUpdateGauge(w http.ResponseWriter, r *http.Request)
 			Unit:   unit,
 			Target: target,
 		}
-		err := components.Layout(components.GaugeForm("PUT", fmt.Sprintf("/admin/gauges/%d", id), &currentGauge, errors)).Render(r.Context(), w)
+		err := layouts.Base("Edit Gauge", components.GaugeForm("PUT", fmt.Sprintf("/admin/gauges/%d", id), &currentGauge, errors)).Render(r.Context(), w)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}

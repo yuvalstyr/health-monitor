@@ -12,7 +12,7 @@ import (
 	"health-monitor/internal/db"
 	"health-monitor/internal/handlers"
 	"health-monitor/internal/logger"
-	"health-monitor/internal/views/components"
+	"health-monitor/internal/views/layouts"
 	"health-monitor/internal/views/pages"
 )
 
@@ -62,7 +62,7 @@ func main() {
 		}
 
 		w.Header().Set("Content-Type", "text/html")
-		err = components.Layout(pages.Dashboard(gauges)).Render(r.Context(), w)
+		err = layouts.Base("Dashboard", pages.Dashboard(gauges)).Render(r.Context(), w)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

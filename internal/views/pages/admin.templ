@@ -3,15 +3,15 @@ package pages
 import (
 	"health-monitor/internal/db"
 	"health-monitor/internal/views/components"
+	"health-monitor/internal/views/layouts"
 )
 
 templ Admin(gauges []db.Gauge) {
 	@components.GaugeList(gauges)
 }
 
-templ Form() {
-	@components.Layout(components.Title("New Gauge")) {
-		<div class="container mx-auto px-4 py-8">
+templ FormContent() {
+	<div class="container mx-auto px-4 py-8">
 			<div class="flex justify-between items-center mb-8">
 				<h1 class="text-3xl font-bold">New Gauge</h1>
 			</div>
@@ -58,6 +58,9 @@ templ Form() {
 					<button type="submit" class="btn btn-primary">Create</button>
 				</div>
 			</form>
-		</div>
-	}
+	</div>
+}
+
+templ Form() {
+	@layouts.Base("New Gauge", FormContent())
 }
