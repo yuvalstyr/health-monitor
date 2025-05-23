@@ -35,7 +35,7 @@ func TestGaugeHandler(t *testing.T) {
 				"name":   {"Test Gauge"},
 				"icon":   {"test-icon"},
 				"unit":   {"test-unit"},
-				"target": {"10.0"},
+				"target": {"10"},
 			}
 
 			component, err := handler.Create(r)
@@ -49,12 +49,12 @@ func TestGaugeHandler(t *testing.T) {
 				"name":   {""},
 				"icon":   {""},
 				"unit":   {""},
-				"target": {"invalid"},
+				"target": {"abc"},
 			}
 
-			component, err := handler.Create(r)
-			assert.NoError(t, err)
-			assert.NotNil(t, component)
+			_, err := handler.Create(r)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), "invalid target value")
 		})
 	})
 
@@ -72,7 +72,7 @@ func TestGaugeHandler(t *testing.T) {
 				"name":   {"Updated Gauge"},
 				"icon":   {"updated-icon"},
 				"unit":   {"updated-unit"},
-				"target": {"20.0"},
+				"target": {"20"},
 			}
 
 			component, err := handler.Update(1, r)
@@ -86,12 +86,12 @@ func TestGaugeHandler(t *testing.T) {
 				"name":   {""},
 				"icon":   {""},
 				"unit":   {""},
-				"target": {"invalid"},
+				"target": {"abc"},
 			}
 
-			component, err := handler.Update(1, r)
-			assert.NoError(t, err)
-			assert.NotNil(t, component)
+			_, err := handler.Update(1, r)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), "invalid target value")
 		})
 	})
 
@@ -130,8 +130,8 @@ func TestGaugeHandler(t *testing.T) {
 					Name:   "Test Gauge",
 					Icon:   "test-icon",
 					Unit:   "test-unit",
-					Target: 10.0,
-					Value:  5.0,
+					Target: 10,
+					Value:  5,
 				}, nil
 			}
 			queries.UpdateGaugeValueFn = func(ctx context.Context, params db.UpdateGaugeValueParams) error {
@@ -164,8 +164,8 @@ func TestGaugeHandler(t *testing.T) {
 					Name:   "Test Gauge",
 					Icon:   "test-icon",
 					Unit:   "test-unit",
-					Target: 10.0,
-					Value:  5.0,
+					Target: 10,
+					Value:  5,
 				}, nil
 			}
 			queries.UpdateGaugeValueFn = func(ctx context.Context, params db.UpdateGaugeValueParams) error {
