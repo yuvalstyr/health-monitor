@@ -51,14 +51,10 @@ templ GaugeCard(gauge *db.Gauge) {
 					</label>
 					<ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
 						<li>
-							<button
-								hx-put={ fmt.Sprintf("/gauges/%d", gauge.ID) }
-								hx-target="body"
-								hx-swap="outerHTML"
-								hx-push-url="/admin">
+							<a href={ templ.URL(fmt.Sprintf("/admin/gauges/%d?source=gauge_button", gauge.ID)) } class="w-full flex items-center gap-2">
 								@Icon("edit", "w-4 h-4")
 								<span>Edit</span>
-							</button>
+							</a>
 						</li>
 						<li>
 							<button

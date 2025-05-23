@@ -11,6 +11,49 @@ type FormError struct {
 }
 
 templ GaugeForm(method string, action string, gauge *db.Gauge, errors []FormError) {
+	<script>
+		// Function to update the icon preview when a different icon is selected
+		function updateIconPreview(iconName) {
+			const iconPreview = document.getElementById('icon-preview');
+			if (!iconName) {
+				iconPreview.innerHTML = '';
+				return;
+			}
+			
+			// Create SVG icon based on the selected icon name
+			let svgContent = '';
+			switch(iconName) {
+				case 'water':
+					svgContent = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 15c0 3.866-3.582 7-8 7s-8-3.134-8-7c0-2.57 1.578-4.827 4-6.165V5.787c-2.834 1.702-5 4.968-5 8.713 0 5.523 4.477 10 10 10s10-4.477 10-10c0-3.746-2.166-7.011-5-8.713v3.048c2.422 1.338 4 3.595 4 6.165z" /></svg>';
+					break;
+				case 'fire':
+					svgContent = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>';
+					break;
+				case 'heart':
+					svgContent = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>';
+					break;
+				case 'star':
+					svgContent = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>';
+					break;
+				case 'bolt':
+					svgContent = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>';
+					break;
+				case 'chart-bar':
+					svgContent = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>';
+					break;
+			}
+			
+			iconPreview.innerHTML = svgContent;
+		}
+		
+		// Initialize icon preview when the page loads
+		document.addEventListener('DOMContentLoaded', function() {
+			const iconSelect = document.getElementById('icon');
+			if (iconSelect && iconSelect.value) {
+				updateIconPreview(iconSelect.value);
+			}
+		});
+	</script>
 	<div class="max-w-2xl mx-auto p-6">
 		<div class="bg-base-100 shadow-xl rounded-box p-8">
 			<h1 class="text-2xl font-bold mb-6">
@@ -40,12 +83,13 @@ templ GaugeForm(method string, action string, gauge *db.Gauge, errors []FormErro
 			if method == "PUT" {
 				<form
 					class="form-control w-full space-y-6"
-					hx-put={ action }
+					method="POST"
+					hx-post={ action }
+					hx-headers='js:{"X-HTTP-Method-Override": "PUT", "Content-Type": "application/x-www-form-urlencoded"}'
 					hx-target="body"
 					hx-swap="outerHTML"
-					hx-push-url="/admin"
+					enctype="application/x-www-form-urlencoded"
 				>
-					<input type="hidden" name="_method" value={ method }/>
 					@formFields(gauge, errors)
 				</form>
 			} else {
@@ -91,19 +135,30 @@ templ formFields(gauge *db.Gauge, errors []FormError) {
 			<label class="label" for="icon">
 				<span class="label-text font-medium">Icon</span>
 			</label>
-			<select 
-				name="icon" 
-				id="icon" 
-				class={ "select select-bordered w-full", templ.KV("select-error", hasError(errors, "icon")) }
-				required
-			>
-				<option value="">Select an icon</option>
-				<option value="water" selected?={ gauge != nil && gauge.Icon == "water" }>Water</option>
-				<option value="fire" selected?={ gauge != nil && gauge.Icon == "fire" }>Fire</option>
-				<option value="heart" selected?={ gauge != nil && gauge.Icon == "heart" }>Heart</option>
-				<option value="star" selected?={ gauge != nil && gauge.Icon == "star" }>Star</option>
-				<option value="bolt" selected?={ gauge != nil && gauge.Icon == "bolt" }>Bolt</option>
-			</select>
+			<div class="flex gap-4">
+				<select 
+					name="icon" 
+					id="icon" 
+					class={ "select select-bordered flex-grow", templ.KV("select-error", hasError(errors, "icon")) }
+					required
+					onchange="updateIconPreview(this.value)"
+				>
+					<option value="">Select an icon</option>
+					<option value="water" selected?={ gauge != nil && gauge.Icon == "water" }>Water</option>
+					<option value="fire" selected?={ gauge != nil && gauge.Icon == "fire" }>Fire</option>
+					<option value="heart" selected?={ gauge != nil && gauge.Icon == "heart" }>Heart</option>
+					<option value="star" selected?={ gauge != nil && gauge.Icon == "star" }>Star</option>
+					<option value="bolt" selected?={ gauge != nil && gauge.Icon == "bolt" }>Bolt</option>
+					<option value="chart-bar" selected?={ gauge != nil && gauge.Icon == "chart-bar" }>Chart Bar</option>
+				</select>
+				<div class="flex items-center justify-center w-12 h-12 bg-base-200 rounded-lg">
+					<div id="icon-preview" class="w-6 h-6">
+						if gauge != nil && gauge.Icon != "" {
+							@Icon(gauge.Icon, "w-6 h-6")
+						}
+					</div>
+				</div>
+			</div>
 			if err := getError(errors, "icon"); err != nil {
 				<label class="label">
 					<span class="label-text-alt text-error">{ err.Message }</span>
@@ -144,12 +199,12 @@ templ formFields(gauge *db.Gauge, errors []FormError) {
 				name="target"
 				class={ "input input-bordered w-full", templ.KV("input-error", hasError(errors, "target")) }
 				if gauge != nil {
-					value={ fmt.Sprintf("%.2f", gauge.Target) }
+					value={ fmt.Sprintf("%d", int(gauge.Target)) }
 				}
 				placeholder="Enter target value"
 				required
 				min="0"
-				step="0.01"
+				step="1"
 			/>
 			if err := getError(errors, "target"); err != nil {
 				<label class="label">

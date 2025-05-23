@@ -1,0 +1,48 @@
+# Air configuration for Templ project
+root = "."
+tmp_dir = "tmp"
+
+[build]
+# First ensure tmp directory exists, then generate templ files, then build
+cmd = "mkdir -p tmp && templ generate && go build -o ./tmp/app ./cmd/server"
+# Binary file produced by the build
+bin = "tmp/app"
+# Command with options to run the binary
+full_bin = "./tmp/app"
+# File extensions to watch for changes
+include_ext = ["go", "templ", "sql"]
+# Only watch certain directories
+include_dir = ["cmd", "internal"]
+# Ignore these directories
+exclude_dir = ["tmp", "vendor", "data", ".git"]
+# Don't watch generated files
+exclude_regex = ["_templ\\.go$", "\\bgenerated\\b"]
+# Brief delay to avoid multiple rebuilds
+delay = 200 # ms
+# Force a reload on specific file changes even if they aren't detected
+follow_symlink = true
+# Add additional build arguments
+build_args = ["-mod=vendor"]
+
+[screen]
+clear_on_rebuild = true
+
+[misc]
+# Do not clean tmp directory to avoid permission issues
+clean_on_exit = false
+
+[log]
+time = true
+
+[color]
+main = "magenta"
+watcher = "cyan"
+build = "yellow"
+runner = "green"
+
+# Configuration for killing processes
+[build.kill]
+# Send SIGTERM before forceful SIGKILL
+send_interrupt = true
+# Delay before sending SIGKILL
+kill_delay = "5s"
