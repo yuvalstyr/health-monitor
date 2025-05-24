@@ -8,7 +8,7 @@ import (
 templ GaugeValue(gauge *db.Gauge, value float64) {
 	<div id={ fmt.Sprintf("gauge-value-%d", gauge.ID) } class="space-y-3 sm:space-y-4">
 		<div class="flex justify-between items-center">
-			<div class={ "text-4xl sm:text-5xl font-bold transition-all", templ.KV("text-primary", value <= gauge.Target), templ.KV("text-error animate-pulse", value > gauge.Target) }>
+			<div class={ "text-4xl sm:text-5xl font-bold transition-all", templ.KV("text-cyan-500", value <= gauge.Target), templ.KV("text-error animate-pulse", value > gauge.Target) }>
 				{ fmt.Sprintf("%.1f", value) }
 				<span class="text-sm sm:text-base font-normal text-base-content/60 ml-1">{ gauge.Unit }</span>
 			</div>
