@@ -9,6 +9,8 @@ CREATE TABLE gauges (
     value REAL NOT NULL DEFAULT 0,
     unit TEXT NOT NULL,
     icon TEXT NOT NULL DEFAULT 'chart-bar',
+    frequency TEXT NOT NULL DEFAULT 'monthly',
+    direction TEXT NOT NULL DEFAULT 'under',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

@@ -197,14 +197,13 @@ templ formFields(gauge *db.Gauge, errors []FormError) {
 				type="number"
 				id="target"
 				name="target"
+				step="0.01"
 				class={ "input input-bordered w-full", templ.KV("input-error", hasError(errors, "target")) }
 				if gauge != nil {
-					value={ fmt.Sprintf("%d", int(gauge.Target)) }
+					value={ fmt.Sprintf("%.2f", gauge.Target) }
 				}
 				placeholder="Enter target value"
 				required
-				min="0"
-				step="1"
 			/>
 			if err := getError(errors, "target"); err != nil {
 				<label class="label">
@@ -225,10 +224,67 @@ templ formFields(gauge *db.Gauge, errors []FormError) {
 				if gauge != nil {
 					value={ gauge.Unit }
 				}
-				placeholder="Enter unit (e.g., liters, steps)"
+				placeholder="e.g., hours, dollars, percent"
 				required
 			/>
 			if err := getError(errors, "unit"); err != nil {
+				<label class="label">
+					<span class="label-text-alt text-error">{ err.Message }</span>
+				</label>
+			}
+		</div>
+	</div>
+
+	<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+		<div>
+			<label class="label" for="frequency">
+				<span class="label-text font-medium">Update Frequency</span>
+			</label>
+			<select 
+				name="frequency" 
+				id="frequency" 
+				class={ "select select-bordered w-full", templ.KV("select-error", hasError(errors, "frequency")) }
+				required
+			>
+				<option value="">Select frequency</option>
+				<option value="weekly" selected?={ gauge != nil && gauge.Frequency == "weekly" }>Weekly</option>
+				<option value="biweekly" selected?={ gauge != nil && gauge.Frequency == "biweekly" }>Bi-weekly</option>
+				<option value="monthly" selected?={ gauge != nil && gauge.Frequency == "monthly" }>Monthly</option>
+			</select>
+			if err := getError(errors, "frequency"); err != nil {
+				<label class="label">
+					<span class="label-text-alt text-error">{ err.Message }</span>
+				</label>
+			}
+		</div>
+
+		<div>
+			<label class="label">
+				<span class="label-text font-medium">Target Direction</span>
+			</label>
+			<div class="flex flex-col gap-2 mt-2">
+				<label class="flex items-center gap-2 cursor-pointer">
+					<input 
+						type="radio" 
+						name="direction" 
+						value="under" 
+						class="radio radio-primary" 
+						checked?={ gauge == nil || (gauge != nil && gauge.Direction == "under") }
+					/>
+					<span class="label-text">Under target is good <span class="text-sm opacity-70">(costs, errors)</span></span>
+				</label>
+				<label class="flex items-center gap-2 cursor-pointer">
+					<input 
+						type="radio" 
+						name="direction" 
+						value="over" 
+						class="radio radio-primary" 
+						checked?={ gauge != nil && gauge.Direction == "over" }
+					/>
+					<span class="label-text">Over target is good <span class="text-sm opacity-70">(revenue, completion)</span></span>
+				</label>
+			</div>
+			if err := getError(errors, "direction"); err != nil {
 				<label class="label">
 					<span class="label-text-alt text-error">{ err.Message }</span>
 				</label>

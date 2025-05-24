@@ -347,6 +347,8 @@ func main() {
 		fmt.Printf("Target: %.2f\n", target)
 		fmt.Printf("Unit: '%s'\n", unit)
 		fmt.Printf("Icon: '%s'\n", icon)
+		fmt.Printf("Frequency: '%s'\n", r.FormValue("frequency"))
+		fmt.Printf("Direction: '%s'\n", r.FormValue("direction"))
 
 		// Create a gauge for logging
 		params := db.UpdateGaugeParams{
@@ -355,6 +357,8 @@ func main() {
 			Target:      target,
 			Unit:        unit,
 			Icon:        icon,
+			Frequency:   r.FormValue("frequency"),
+			Direction:   r.FormValue("direction"),
 			ID:          id,
 		}
 

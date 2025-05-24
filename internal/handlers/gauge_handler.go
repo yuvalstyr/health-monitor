@@ -45,16 +45,29 @@ func (h *GaugeHandler) Create(r *http.Request) (templ.Component, error) {
 	name := r.FormValue("name")
 	icon := r.FormValue("icon")
 	unit := r.FormValue("unit")
+	frequency := r.FormValue("frequency")
+	direction := r.FormValue("direction")
 	target, err := strconv.ParseFloat(r.FormValue("target"), 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid target value: %w", err)
 	}
 
+	// Validate frequency and direction
+	if frequency != "weekly" && frequency != "biweekly" && frequency != "monthly" {
+		frequency = "monthly" // Default to monthly if invalid
+	}
+
+	if direction != "under" && direction != "over" {
+		direction = "under" // Default to under if invalid
+	}
+
 	_, err = h.queries.CreateGauge(r.Context(), db.CreateGaugeParams{
-		Name:   name,
-		Icon:   icon,
-		Unit:   unit,
-		Target: target,
+		Name:      name,
+		Icon:      icon,
+		Unit:      unit,
+		Target:    target,
+		Frequency: frequency,
+		Direction: direction,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gauge: %w", err)
@@ -71,17 +84,30 @@ func (h *GaugeHandler) Update(id int64, r *http.Request) (templ.Component, error
 	name := r.FormValue("name")
 	icon := r.FormValue("icon")
 	unit := r.FormValue("unit")
+	frequency := r.FormValue("frequency")
+	direction := r.FormValue("direction")
 	target, err := strconv.ParseFloat(r.FormValue("target"), 64)
 	if err != nil {
 		return nil, fmt.Errorf("invalid target value: %w", err)
 	}
 
+	// Validate frequency and direction
+	if frequency != "weekly" && frequency != "biweekly" && frequency != "monthly" {
+		frequency = "monthly" // Default to monthly if invalid
+	}
+
+	if direction != "under" && direction != "over" {
+		direction = "under" // Default to under if invalid
+	}
+
 	err = h.queries.UpdateGauge(r.Context(), db.UpdateGaugeParams{
-		ID:     id,
-		Name:   name,
-		Icon:   icon,
-		Unit:   unit,
-		Target: target,
+		ID:        id,
+		Name:      name,
+		Icon:      icon,
+		Unit:      unit,
+		Target:    target,
+		Frequency: frequency,
+		Direction: direction,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update gauge: %w", err)

@@ -24,6 +24,8 @@ templ GaugeList(gauges []db.Gauge) {
 						<th>Description</th>
 						<th>Target</th>
 						<th>Current</th>
+						<th class="text-center">Direction</th>
+						<th class="text-center">Frequency</th>
 						<th>Progress</th>
 						<th>Actions</th>
 					</tr>
@@ -44,10 +46,22 @@ templ GaugeList(gauges []db.Gauge) {
 							</td>
 							<td>{ fmt.Sprintf("%.1f %s", gauge.Target, gauge.Unit) }</td>
 							<td>{ fmt.Sprintf("%.1f %s", gauge.Value, gauge.Unit) }</td>
+							<td class="text-center">
+							<span class="badge badge-sm badge-ghost w-16 mx-auto flex justify-center">
+								if gauge.Direction == "under" {
+									<span>under</span>
+								} else {
+									<span>over</span>
+								}
+							</span>
+						</td>
+							<td class="text-center">
+							<span class="badge badge-sm badge-ghost w-16 mx-auto flex justify-center">{ gauge.Frequency }</span>
+						</td>
 							<td class="w-32">
 								<div class="w-full bg-base-200/50 rounded-full h-2">
 									<div 
-										class={ "h-full rounded-full transition-all", templ.KV("bg-primary", gauge.Value <= gauge.Target), templ.KV("bg-error", gauge.Value > gauge.Target) }
+										class={ "h-full rounded-full transition-all", templ.KV("bg-teal-500", (gauge.Direction == "under" && gauge.Value <= gauge.Target) || (gauge.Direction == "over" && gauge.Value >= gauge.Target)), templ.KV("bg-error", (gauge.Direction == "under" && gauge.Value > gauge.Target) || (gauge.Direction == "over" && gauge.Value < gauge.Target)) }
 										style={ fmt.Sprintf("width: %d%%", min(int(gauge.Value/gauge.Target*100), 100)) }
 									></div>
 								</div>

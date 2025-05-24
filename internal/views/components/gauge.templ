@@ -5,26 +5,59 @@ import (
 	"health-monitor/internal/db"
 )
 
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 templ GaugeValue(gauge *db.Gauge, value float64) {
+	@gaugeValueContent(gauge, value)
+}
+
+templ gaugeValueContent(gauge *db.Gauge, value float64) {
 	<div id={ fmt.Sprintf("gauge-value-%d", gauge.ID) } class="space-y-1 sm:space-y-2">
 		<div class="flex justify-between items-baseline">
-			<div class={ "text-3xl sm:text-4xl font-bold transition-all", templ.KV("text-primary", value <= gauge.Target), templ.KV("text-error animate-pulse", value > gauge.Target) }>
-				{ fmt.Sprintf("%.1f", value) }
-				<span class="text-sm sm:text-base font-normal text-base-content/60 ml-1">{ gauge.Unit }</span>
-			</div>
+			if gauge.Direction == "under" && value <= gauge.Target || gauge.Direction == "over" && value >= gauge.Target {
+				<div class="text-3xl sm:text-4xl font-bold transition-all text-cyan-500">
+					{ fmt.Sprintf("%.1f", value) }
+					<span class="text-sm sm:text-base font-normal text-base-content/60 ml-1">{ gauge.Unit }</span>
+				</div>
+			} else {
+				<div class="text-3xl sm:text-4xl font-bold transition-all text-error animate-pulse">
+					{ fmt.Sprintf("%.1f", value) }
+					<span class="text-sm sm:text-base font-normal text-base-content/60 ml-1">{ gauge.Unit }</span>
+				</div>
+			}
 			<div class="text-xs sm:text-sm text-base-content/60">
 				Target: { fmt.Sprintf("%.1f", gauge.Target) }
 				<span class="hidden sm:inline">{ gauge.Unit }</span>
+				<span class="badge badge-xs ml-1" title={ fmt.Sprintf("%s target is good", gauge.Direction) }>
+					if gauge.Direction == "under" {
+						<span>↓</span>
+					} else {
+						<span>↑</span>
+					}
+				</span>
 			</div>
 		</div>
 		<div class="w-full h-1.5 sm:h-2 bg-base-200/50 rounded-full overflow-hidden">
-			<div 
-				class={ "h-full rounded-full transition-all", templ.KV("bg-primary", value <= gauge.Target), templ.KV("bg-error", value > gauge.Target) }
-				style={ fmt.Sprintf("width: %d%%", min(int(value/gauge.Target*100), 100)) }
-			></div>
+			if gauge.Direction == "under" && value <= gauge.Target || gauge.Direction == "over" && value >= gauge.Target {
+				<div class="h-full rounded-full transition-all bg-teal-500" style={ fmt.Sprintf("width: %d%%", min(int(value/gauge.Target*100), 100)) }></div>
+			} else {
+				<div class="h-full rounded-full transition-all bg-error" style={ fmt.Sprintf("width: %d%%", min(int(value/gauge.Target*100), 100)) }></div>
+			}
 		</div>
 		<div class="text-xs text-base-content/40 hidden sm:block">
 			{ fmt.Sprintf("%d%% of target", min(int(value/gauge.Target*100), 100)) }
+			<span class="ml-1 opacity-70">
+				if gauge.Direction == "under" {
+					<span>(lower is better)</span>
+				} else {
+					<span>(higher is better)</span>
+				}
+			</span>
 		</div>
 	</div>
 }
@@ -32,10 +65,9 @@ templ GaugeValue(gauge *db.Gauge, value float64) {
 templ GaugeCard(gauge *db.Gauge) {
 	<div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all group">
 		<div class="card-body p-3 sm:p-6">
-			// Header with icon and menu
 			<div class="flex justify-between items-start">
 				<div class="flex items-center gap-2 sm:gap-3">
-					<div class={ "p-2 sm:p-3 rounded-xl transition-all", templ.KV("bg-primary/10", gauge.Value <= gauge.Target), templ.KV("bg-error/10", gauge.Value > gauge.Target) }>
+					<div class="p-2 sm:p-3 rounded-xl transition-all bg-primary/10">
 						@Icon(gauge.Icon, "w-5 h-5 sm:w-6 sm:h-6 text-primary group-hover:scale-110 transition-all")
 					</div>
 					<div>
@@ -72,12 +104,10 @@ templ GaugeCard(gauge *db.Gauge) {
 				</div>
 			</div>
 
-			// Value display and progress
 			<div id={ fmt.Sprintf("gauge-value-%d", gauge.ID) } class="mt-3 sm:mt-6">
 				@GaugeValue(gauge, gauge.Value)
 			</div>
 
-			// Controls
 			<div class="card-actions justify-center items-center mt-3 pt-3 sm:mt-4 sm:pt-4 border-t border-base-200 gap-3 sm:gap-4">
 				<button
 					hx-post={ fmt.Sprintf("/gauges/%d/decrement", gauge.ID) }
@@ -99,30 +129,63 @@ templ GaugeCard(gauge *db.Gauge) {
 }
 
 templ Gauge(gauge *db.Gauge) {
+	@gaugeContent(gauge)
+}
+
+templ gaugeContent(gauge *db.Gauge) {
 	<div id={ fmt.Sprintf("gauge-%d", gauge.ID) } class="flex flex-col gap-6">
 		<div id={ fmt.Sprintf("gauge-header-%d", gauge.ID) } class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-base-100 p-6 rounded-box shadow-lg">
 			<div class="flex items-center gap-3">
-				<div class="p-3 bg-primary/10 rounded-lg">
-					@Icon(gauge.Icon, "w-8 h-8 text-primary")
+				<div class="p-3 bg-teal-500/10 rounded-lg">
+					@Icon(gauge.Icon, "w-8 h-8 text-teal-500")
 				</div>
 				<div>
 					<h1 class="text-xl sm:text-2xl font-bold mb-1">{ gauge.Name }</h1>
 					if gauge.Description.Valid {
 						<p class="text-base-content/60 text-sm">{ gauge.Description.String }</p>
 					}
+					<div class="badge badge-sm mt-1">
+						{ gauge.Frequency }
+						<span class="ml-1">
+							if gauge.Direction == "under" {
+								<span>(↓ good)</span>
+							} else {
+								<span>(↑ good)</span>
+							}
+						</span>
+					</div>
 				</div>
 			</div>
 
 			<div class="stats bg-base-200/50 shadow-sm rounded-box">
 				<div class="stat px-6 py-3">
 					<div class="stat-title text-xs uppercase tracking-wider opacity-60">Current</div>
-					<div class="stat-value text-xl sm:text-2xl">{ fmt.Sprintf("%.1f", gauge.Value) }</div>
+					if gauge.Direction == "under" && gauge.Value <= gauge.Target || gauge.Direction == "over" && gauge.Value >= gauge.Target {
+						<div class="stat-value text-xl sm:text-2xl text-cyan-500">{ fmt.Sprintf("%.1f", gauge.Value) }</div>
+					} else {
+						<div class="stat-value text-xl sm:text-2xl text-error">{ fmt.Sprintf("%.1f", gauge.Value) }</div>
+					}
 					<div class="stat-desc text-xs uppercase tracking-wider opacity-60">{ gauge.Unit }</div>
 				</div>
 				<div class="stat px-6 py-3 hidden sm:block">
 					<div class="stat-title text-xs uppercase tracking-wider opacity-60">Target</div>
 					<div class="stat-value text-xl sm:text-2xl">{ fmt.Sprintf("%.1f", gauge.Target) }</div>
 					<div class="stat-desc text-xs uppercase tracking-wider opacity-60">{ gauge.Unit }</div>
+				</div>
+				<div class="stat px-6 py-3 hidden sm:block">
+					<div class="stat-title text-xs uppercase tracking-wider opacity-60">Status</div>
+					if gauge.Direction == "under" && gauge.Value <= gauge.Target || gauge.Direction == "over" && gauge.Value >= gauge.Target {
+						<div class="stat-value text-base sm:text-lg text-cyan-500">
+							<span>On Target</span>
+						</div>
+					} else {
+						<div class="stat-value text-base sm:text-lg text-error">
+							<span>Needs Attention</span>
+						</div>
+					}
+					<div class="stat-desc text-xs opacity-60">
+						{ gauge.Frequency } update
+					</div>
 				</div>
 			</div>
 		</div>
