@@ -17,6 +17,8 @@ type Gauge struct {
 	Value       float64        `json:"value"`
 	Unit        string         `json:"unit"`
 	Icon        string         `json:"icon"`
+	Frequency   string         `json:"frequency"`
+	Direction   string         `json:"direction"`
 	CreatedAt   sql.NullTime   `json:"created_at"`
 	UpdatedAt   sql.NullTime   `json:"updated_at"`
 }
