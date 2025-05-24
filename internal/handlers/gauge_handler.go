@@ -49,6 +49,8 @@ func (h *GaugeHandler) RegisterRoutes(r chi.Router) {
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", h.handleEditGaugeForm)
 			r.Put("/", h.handleUpdateGauge)
+			// Add POST handler to support form submissions with X-HTTP-Method-Override
+			r.Post("/", h.handleUpdateGauge)
 			r.Delete("/", h.handleDeleteGauge)
 		})
 	})
