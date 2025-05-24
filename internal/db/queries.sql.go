@@ -12,9 +12,9 @@ import (
 )
 
 const createGauge = `-- name: CreateGauge :one
-INSERT INTO gauges (name, description, target, value, unit, icon)
-VALUES (?, ?, ?, 0, ?, ?)
-RETURNING id, name, description, target, value, unit, icon, created_at, updated_at
+INSERT INTO gauges (name, description, target, value, unit, icon, frequency, direction)
+VALUES (?, ?, ?, 0, ?, ?, ?, ?)
+RETURNING id, name, description, target, value, unit, icon, frequency, direction, created_at, updated_at
 `
 
 type CreateGaugeParams struct {
@@ -23,6 +23,8 @@ type CreateGaugeParams struct {
 	Target      float64        `json:"target"`
 	Unit        string         `json:"unit"`
 	Icon        string         `json:"icon"`
+	Frequency   string         `json:"frequency"`
+	Direction   string         `json:"direction"`
 }
 
 func (q *Queries) CreateGauge(ctx context.Context, arg CreateGaugeParams) (Gauge, error) {
@@ -32,6 +34,8 @@ func (q *Queries) CreateGauge(ctx context.Context, arg CreateGaugeParams) (Gauge
 		arg.Target,
 		arg.Unit,
 		arg.Icon,
+		arg.Frequency,
+		arg.Direction,
 	)
 	var i Gauge
 	err := row.Scan(
@@ -42,6 +46,8 @@ func (q *Queries) CreateGauge(ctx context.Context, arg CreateGaugeParams) (Gauge
 		&i.Value,
 		&i.Unit,
 		&i.Icon,
+		&i.Frequency,
+		&i.Direction,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -88,7 +94,7 @@ func (q *Queries) GetCurrentValue(ctx context.Context, gaugeID int64) (float64, 
 }
 
 const getGauge = `-- name: GetGauge :one
-SELECT id, name, description, target, value, unit, icon, created_at, updated_at FROM gauges WHERE id = ? LIMIT 1
+SELECT id, name, description, target, value, unit, icon, frequency, direction, created_at, updated_at FROM gauges WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetGauge(ctx context.Context, id int64) (Gauge, error) {
@@ -102,6 +108,8 @@ func (q *Queries) GetGauge(ctx context.Context, id int64) (Gauge, error) {
 		&i.Value,
 		&i.Unit,
 		&i.Icon,
+		&i.Frequency,
+		&i.Direction,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -180,7 +188,7 @@ func (q *Queries) GetGaugeValues(ctx context.Context, gaugeID int64) ([]GaugeVal
 }
 
 const listGauges = `-- name: ListGauges :many
-SELECT id, name, description, target, value, unit, icon, created_at, updated_at FROM gauges ORDER BY name
+SELECT id, name, description, target, value, unit, icon, frequency, direction, created_at, updated_at FROM gauges ORDER BY name
 `
 
 func (q *Queries) ListGauges(ctx context.Context) ([]Gauge, error) {
@@ -200,6 +208,8 @@ func (q *Queries) ListGauges(ctx context.Context) ([]Gauge, error) {
 			&i.Value,
 			&i.Unit,
 			&i.Icon,
+			&i.Frequency,
+			&i.Direction,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -223,6 +233,8 @@ SET name = ?,
     target = ?,
     unit = ?,
     icon = ?,
+    frequency = ?,
+    direction = ?,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 `
@@ -233,6 +245,8 @@ type UpdateGaugeParams struct {
 	Target      float64        `json:"target"`
 	Unit        string         `json:"unit"`
 	Icon        string         `json:"icon"`
+	Frequency   string         `json:"frequency"`
+	Direction   string         `json:"direction"`
 	ID          int64          `json:"id"`
 }
 
@@ -243,6 +257,8 @@ func (q *Queries) UpdateGauge(ctx context.Context, arg UpdateGaugeParams) error 
 		arg.Target,
 		arg.Unit,
 		arg.Icon,
+		arg.Frequency,
+		arg.Direction,
 		arg.ID,
 	)
 	return err
