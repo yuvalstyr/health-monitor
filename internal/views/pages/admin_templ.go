@@ -11,6 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"health-monitor/internal/db"
 	"health-monitor/internal/views/components"
+	"health-monitor/internal/views/layouts"
 )
 
 func Admin(gauges []db.Gauge) templ.Component {
@@ -42,7 +43,7 @@ func Admin(gauges []db.Gauge) templ.Component {
 	})
 }
 
-func Form() templ.Component {
+func FormContent() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -63,25 +64,36 @@ func Form() templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var3 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-			if !templ_7745c5c3_IsBuffer {
-				defer func() {
-					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-					if templ_7745c5c3_Err == nil {
-						templ_7745c5c3_Err = templ_7745c5c3_BufErr
-					}
-				}()
-			}
-			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"container mx-auto px-4 py-8\"><div class=\"flex justify-between items-center mb-8\"><h1 class=\"text-3xl font-bold\">New Gauge</h1></div><form hx-post=\"/gauges\" hx-target=\"body\" hx-swap=\"outerHTML\" hx-push-url=\"/admin\" class=\"max-w-lg mx-auto\"><div class=\"form-control mb-4\"><label class=\"label\"><span class=\"label-text\">Name</span></label> <input type=\"text\" name=\"name\" class=\"input input-bordered\" required></div><div class=\"form-control mb-4\"><label class=\"label\"><span class=\"label-text\">Icon</span></label> <input type=\"text\" name=\"icon\" class=\"input input-bordered\" required></div><div class=\"form-control mb-4\"><label class=\"label\"><span class=\"label-text\">Unit</span></label> <input type=\"text\" name=\"unit\" class=\"input input-bordered\" required></div><div class=\"form-control mb-4\"><label class=\"label\"><span class=\"label-text\">Target</span></label> <input type=\"number\" name=\"target\" class=\"input input-bordered\" required></div><div class=\"flex justify-end gap-4\"><button type=\"button\" hx-get=\"/admin\" hx-target=\"body\" hx-swap=\"outerHTML\" hx-push-url=\"/admin\" class=\"btn btn-ghost\">Cancel</button> <button type=\"submit\" class=\"btn btn-primary\">Create</button></div></form></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			return nil
-		})
-		templ_7745c5c3_Err = components.Layout(components.Title("New Gauge")).Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"container mx-auto px-4 py-8\"><div class=\"flex justify-between items-center mb-8\"><h1 class=\"text-3xl font-bold\">New Gauge</h1></div><form hx-post=\"/gauges\" hx-target=\"body\" hx-swap=\"outerHTML\" hx-push-url=\"/admin\" class=\"max-w-lg mx-auto\"><div class=\"form-control mb-4\"><label class=\"label\"><span class=\"label-text\">Name</span></label> <input type=\"text\" name=\"name\" class=\"input input-bordered\" required></div><div class=\"form-control mb-4\"><label class=\"label\"><span class=\"label-text\">Icon</span></label> <input type=\"text\" name=\"icon\" class=\"input input-bordered\" required></div><div class=\"form-control mb-4\"><label class=\"label\"><span class=\"label-text\">Unit</span></label> <input type=\"text\" name=\"unit\" class=\"input input-bordered\" required></div><div class=\"form-control mb-4\"><label class=\"label\"><span class=\"label-text\">Target</span></label> <input type=\"number\" name=\"target\" class=\"input input-bordered\" required></div><div class=\"flex justify-end gap-4\"><button type=\"button\" hx-get=\"/admin\" hx-target=\"body\" hx-swap=\"outerHTML\" hx-push-url=\"/admin\" class=\"btn btn-ghost\">Cancel</button> <button type=\"submit\" class=\"btn btn-primary\">Create</button></div></form></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func Form() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var3 == nil {
+			templ_7745c5c3_Var3 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = layouts.Base("New Gauge", FormContent()).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -2,13 +2,16 @@ package pages
 
 import (
 	"health-monitor/internal/views/components"
+	"health-monitor/internal/views/layouts"
 )
 
-templ NewGaugePage() {
-	@components.Layout(components.Title("New Gauge")) {
-		<div class="container mx-auto px-4 py-8">
+templ NewGaugeContent() {
+	<div class="container mx-auto px-4 py-8">
 			<h1 class="text-2xl font-bold mb-8">Create New Gauge</h1>
 			@components.GaugeForm("POST", "/admin/gauges", nil, []components.FormError{})
-		</div>
-	}
+	</div>
+}
+
+templ NewGaugePage() {
+	@layouts.Base("New Gauge", NewGaugeContent())
 }

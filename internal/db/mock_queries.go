@@ -8,7 +8,7 @@ type MockQueries struct {
 	UpdateGaugeFn       func(ctx context.Context, params UpdateGaugeParams) error
 	DeleteGaugeFn       func(ctx context.Context, id int64) error
 	GetGaugeFn         func(ctx context.Context, id int64) (Gauge, error)
-	GetAllGaugesFn     func(ctx context.Context) ([]Gauge, error)
+	ListGaugesFn     func(ctx context.Context) ([]Gauge, error)
 	UpdateGaugeValueFn func(ctx context.Context, params UpdateGaugeValueParams) error
 }
 
@@ -28,8 +28,8 @@ func (m *MockQueries) GetGauge(ctx context.Context, id int64) (Gauge, error) {
 	return m.GetGaugeFn(ctx, id)
 }
 
-func (m *MockQueries) GetAllGauges(ctx context.Context) ([]Gauge, error) {
-	return m.GetAllGaugesFn(ctx)
+func (m *MockQueries) ListGauges(ctx context.Context) ([]Gauge, error) {
+	return m.ListGaugesFn(ctx)
 }
 
 func (m *MockQueries) UpdateGaugeValue(ctx context.Context, params UpdateGaugeValueParams) error {

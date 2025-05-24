@@ -4,78 +4,69 @@ import (
 	"fmt"
 	"health-monitor/internal/db"
 	"health-monitor/internal/models"
-	"health-monitor/internal/views/components"
+	"health-monitor/internal/views/layouts"
 )
 
-templ TrendsPage(gauge *db.Gauge, history []models.GaugeHistory) {
-	@components.Layout(components.Title("Trends")) {
-		<div class="container mx-auto px-4 py-8">
-			<div class="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
-				<div>
-					<h1 class="text-2xl sm:text-3xl font-bold">{ gauge.Name }</h1>
-					<p class="text-base-content/70 text-sm sm:text-base mt-1">Historical Trends</p>
-				</div>
-				<a 
-					href="/" 
-					class="btn btn-outline btn-primary btn-sm sm:btn-md"
-				>
-					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-					</svg>
-					Back to Dashboard
-				</a>
+templ TrendsContent(gauge *db.Gauge, history []models.GaugeHistory) {
+	<div class="container mx-auto px-4 py-8">
+		<div class="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+			<div>
+				<h1 class="text-2xl sm:text-3xl font-bold">{ gauge.Name }</h1>
+				<p class="text-base-content/70 text-sm sm:text-base mt-1">Historical Trends</p>
 			</div>
+			<a 
+				href="/" 
+				class="btn btn-outline btn-primary btn-sm sm:btn-md"
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+				</svg>
+				Back to Dashboard
+			</a>
+		</div>
 
-			// Chart
-			<div class="card bg-base-100 shadow-xl mb-8">
-				<div class="card-body p-4 sm:p-6">
-					<canvas id="trendsChart" class="w-full h-64 sm:h-80"></canvas>
-				</div>
+		// Chart
+		<div class="card bg-base-100 shadow-xl mb-8">
+			<div class="card-body p-4 sm:p-6">
+				<canvas id="trendsChart" class="w-full h-64 sm:h-80"></canvas>
 			</div>
+		</div>
 
-			// Stats cards for mobile
-			<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 md:hidden">
-				for _, h := range history {
-					<div class="card bg-base-100 shadow">
-						<div class="card-body p-4">
-							<h3 class="card-title text-lg">{ h.Month }</h3>
-							<div class="flex items-center justify-between mt-2">
-								<div>
-									<p class="text-sm text-base-content/70">Average</p>
-									<p class="text-xl font-semibold">{ fmt.Sprintf("%.1f", h.AverageValue) }
-										<span class="text-base-content/70 text-sm ml-1">{ gauge.Unit }</span>
-									</p>
-								</div>
+		// Stats cards for mobile
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 md:hidden">
+			for _, h := range history {
+				<div class="card bg-base-100 shadow">
+					<div class="card-body p-4">
+						<h3 class="card-title text-lg">{ h.Month }</h3>
+						<div class="flex items-center justify-between mt-2">
+							<div>
+								<p class="text-sm text-base-content/70">Average</p>
+								<p class="text-xl font-bold">{ fmt.Sprintf("%.1f", h.AverageValue) } <span class="text-sm font-normal">{ gauge.Unit }</span></p>
+							</div>
+							<div>
 								if h.AverageValue >= gauge.Target {
-									<div class="badge badge-error gap-2">
-										<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-										</svg>
-										Above Target
-									</div>
+									<div class="badge badge-error">Above Target</div>
 								} else {
-									<div class="badge badge-success gap-2">
-										<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-										</svg>
-										On Track
-									</div>
+									<div class="badge badge-success">On Track</div>
 								}
 							</div>
 						</div>
 					</div>
-				}
-			</div>
+				</div>
+			}
+		</div>
 
-			// Table for desktop
-			<div class="card bg-base-100 shadow-xl hidden md:block">
+		// Table (hidden on small screens)
+		<div class="hidden md:block">
+			<div class="card bg-base-100 shadow-xl overflow-x-auto">
 				<div class="card-body p-4 sm:p-6">
+					<h2 class="card-title text-xl mb-4">Monthly Data</h2>
 					<div class="overflow-x-auto">
-						<table class="table w-full">
+						<table class="table table-zebra">
 							<thead>
 								<tr>
 									<th>Month</th>
-									<th>Average Value</th>
+									<th>Average</th>
 									<th>Target</th>
 									<th>Status</th>
 								</tr>
@@ -168,5 +159,9 @@ templ TrendsPage(gauge *db.Gauge, history []models.GaugeHistory) {
 				}
 			});
 		</script>
-	}
+	</div>
+}
+
+templ TrendsPage(gauge *db.Gauge, history []models.GaugeHistory) {
+	@layouts.Base("Trends", TrendsContent(gauge, history))
 }
