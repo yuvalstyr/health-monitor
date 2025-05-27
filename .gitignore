@@ -24,4 +24,13 @@ vendor/
 
 # Generated files
 *.templ.go
+*_templ.go
 coverage.html
+
+# Build directories and artifacts
+tmp/
+bin/
+*.db-journal
+
+# Air temporary files
+.air.toml.tmp
