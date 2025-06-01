@@ -325,9 +325,12 @@ func (h *GaugeHandler) handleIncrementGauge(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Render just the updated gauge value component
+	// Log update for debugging
+	fmt.Printf("Increment: Gauge %d value updated from %.1f to %.1f\n", id, gauge.Value, updatedGauge.Value)
+	
+	// Render the full gauge card component
 	w.Header().Set("Content-Type", "text/html")
-	err = components.GaugeValue(&updatedGauge, updatedGauge.Value).Render(r.Context(), w)
+	err = components.GaugeCard(&updatedGauge).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -370,9 +373,9 @@ func (h *GaugeHandler) handleDecrementGauge(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Render just the updated gauge value component
+	// Render the full gauge card component
 	w.Header().Set("Content-Type", "text/html")
-	err = components.GaugeValue(&updatedGauge, updatedGauge.Value).Render(r.Context(), w)
+	err = components.GaugeCard(&updatedGauge).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
