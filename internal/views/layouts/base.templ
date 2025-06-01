@@ -89,16 +89,11 @@ templ Base(title string, content templ.Component) {
                     </div>
 
                     <!-- Main content -->
-                    <div class="container mx-auto px-4 py-8 flex-grow">
+                    <div class="container mx-auto px-0 pt-1 pb-0 flex-grow">
                         @content
                     </div>
                     
-                    <!-- Footer inside the drawer content -->
-                    <footer class="footer footer-center p-4 bg-base-100 text-base-content">
-                        <div>
-                            <p>Personal Health Monitor</p>
-                        </div>
-                    </footer>
+                    <!-- Footer removed -->
                 </div>
 
                 <!-- Mobile drawer -->

@@ -6,9 +6,64 @@ import (
 )
 
 templ Dashboard(gauges []db.Gauge) {
-	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-		for _, gauge := range gauges {
-			@components.GaugeCard(&gauge)
-		}
+	<div class="container mx-auto px-2 h-[calc(100vh-4rem)] flex items-center justify-center">
+		<div class="space-y-5 w-full">
+			<!-- Weekly Section -->
+			<div class="bg-info/10 rounded-lg border-l-4 border-l-info relative shadow-sm">
+				<div class="flex items-center py-1 px-2 border-b border-base-300 border-b-info">
+					<div class="w-1.5 h-5 bg-info ml-1 mr-2"></div>
+					<h2 class="text-lg font-medium text-base-content/90">Weekly Metrics</h2>
+					<div class="ml-2 badge badge-sm badge-info badge-outline">7 days</div>
+				</div>
+				<div class="p-2 pb-4">
+					<div class="flex flex-wrap gap-4 justify-center sm:justify-start">
+						@templ.Raw("<!-- Weekly gauges -->")
+						for _, g := range gauges {
+							if g.Frequency == "weekly" {
+								@components.GaugeCard(&g)
+							}
+						}
+					</div>
+				</div>
+			</div>
+
+			<!-- Bi-Weekly Section -->
+			<div class="bg-success/10 rounded-lg border-l-4 border-l-success relative shadow-sm">
+				<div class="flex items-center py-1 px-2 border-b border-base-300 border-b-success">
+					<div class="w-1.5 h-5 bg-success ml-1 mr-2"></div>
+					<h2 class="text-lg font-medium text-base-content/90">Bi-Weekly Metrics</h2>
+					<div class="ml-2 badge badge-sm badge-success badge-outline">14 days</div>
+				</div>
+				<div class="p-2 pb-4">
+					<div class="flex flex-wrap gap-4 justify-center sm:justify-start">
+						@templ.Raw("<!-- Bi-weekly gauges -->")
+						for _, g := range gauges {
+							if g.Frequency == "bi-weekly" {
+								@components.GaugeCard(&g)
+							}
+						}
+					</div>
+				</div>
+			</div>
+
+			<!-- Monthly Section -->
+			<div class="bg-secondary/10 rounded-lg border-l-4 border-l-secondary relative shadow-sm">
+				<div class="flex items-center py-1 px-2 border-b border-base-300 border-b-secondary">
+					<div class="w-1.5 h-5 bg-secondary ml-1 mr-2"></div>
+					<h2 class="text-lg font-medium text-base-content/90">Monthly Metrics</h2>
+					<div class="ml-2 badge badge-sm badge-secondary badge-outline">30 days</div>
+				</div>
+				<div class="p-2 pb-4">
+					<div class="flex flex-wrap gap-4 justify-center sm:justify-start">
+						@templ.Raw("<!-- Monthly gauges -->")
+						for _, g := range gauges {
+							if g.Frequency == "monthly" {
+								@components.GaugeCard(&g)
+							}
+						}
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 }
