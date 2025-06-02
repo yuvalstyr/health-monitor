@@ -15,7 +15,11 @@ func min(a, b int) int {
 templ GaugeValue(gauge *db.Gauge, value float64) {
 	<div id={ fmt.Sprintf("gauge-value-%d", gauge.ID) } class="space-y-2 sm:space-y-3">
 		<div class="flex justify-between items-baseline">
-			<div class={ "text-3xl sm:text-4xl font-bold transition-all flex items-baseline gap-1", templ.KV("text-primary", value <= gauge.Target), templ.KV("text-error animate-pulse", value > gauge.Target) }>
+			<div class={ 
+				"text-3xl sm:text-4xl font-bold transition-all flex items-baseline gap-1",
+				templ.KV("text-success", (gauge.Direction == "under" && value <= gauge.Target) || (gauge.Direction == "over" && value >= gauge.Target)),
+				templ.KV("text-error animate-pulse", (gauge.Direction == "under" && value > gauge.Target) || (gauge.Direction == "over" && value < gauge.Target))
+			}>
 				<span>{ fmt.Sprintf("%.1f", value) }</span>
 				<span class="text-base-content/50 font-light">•</span>
 				<span class="text-lg sm:text-2xl text-base-content/80 font-semibold">{ fmt.Sprintf("%.1f", gauge.Target) }</span>
@@ -24,7 +28,11 @@ templ GaugeValue(gauge *db.Gauge, value float64) {
 		</div>
 		<div class="w-full h-2 sm:h-3 bg-base-200/50 rounded-full overflow-hidden">
 			<div 
-				class={ "h-full rounded-full transition-all", templ.KV("bg-primary", value <= gauge.Target), templ.KV("bg-error", value > gauge.Target) }
+				class={ 
+					"h-full rounded-full transition-all",
+					templ.KV("bg-success", (gauge.Direction == "under" && value <= gauge.Target) || (gauge.Direction == "over" && value >= gauge.Target)),
+					templ.KV("bg-error", (gauge.Direction == "under" && value > gauge.Target) || (gauge.Direction == "over" && value < gauge.Target))
+				}
 				style={ fmt.Sprintf("width: %d%%", min(int(value/gauge.Target*100), 100)) }
 			></div>
 		</div>
