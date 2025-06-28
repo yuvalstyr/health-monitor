@@ -1,6 +1,6 @@
 env "local" {
-  url = "sqlite://health-monitor.db"
-  dev = "sqlite://health-monitor.db"
+  url = "sqlite://health.db"
+  dev = "sqlite://health.db"
   migration {
     dir = "file://migrations"
   }

@@ -16,8 +16,6 @@ import (
 	"health-monitor/internal/views/pages"
 )
 
-
-
 func main() {
 	// Set up structured logging
 	logger.Setup()
@@ -81,6 +79,6 @@ func main() {
 	logger.Info().Str("port", port).Msg("Server listening")
 	err = http.ListenAndServe(":"+port, r)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Server failed to start")
+		logger.Fatal().Err(err).Msg("Server failed tf start")
 	}
 }

@@ -22,7 +22,7 @@ dev-restart: clean
 	make dev
 
 dev:
-	air
+	$(HOME)/go/bin/air
 
 test:
 	go test -v -race -timeout 10m -parallel 4 -count=1 ./...
@@ -46,10 +46,3 @@ tidy:
 .PHONY: migrations
 migrations:
 	atlas migrate diff --env local
-
-.PHONY: migrate
-migrate:
-	atlas migrate apply --env local
-
-dev:
-	air

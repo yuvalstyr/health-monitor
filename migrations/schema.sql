@@ -4,7 +4,11 @@ CREATE TABLE gauges (
     name TEXT NOT NULL,
     description TEXT,
     target REAL NOT NULL,
+    value REAL DEFAULT 0,
     unit TEXT NOT NULL,
+    icon TEXT,
+    frequency TEXT,
+    direction TEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

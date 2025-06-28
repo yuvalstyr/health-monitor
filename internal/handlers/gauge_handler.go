@@ -91,7 +91,7 @@ func (h *GaugeHandler) handleNewGaugeForm(w http.ResponseWriter, r *http.Request
 // validateGaugeForm validates the form data for gauge creation/updates
 func validateGaugeForm(r *http.Request) (string, string, string, float64, string, string, []components.FormError) {
 	var errors []components.FormError
-	
+
 	// Validate name
 	name := r.FormValue("name")
 	if name == "" {
@@ -154,10 +154,10 @@ func (h *GaugeHandler) handleCreateGauge(w http.ResponseWriter, r *http.Request)
 		w.Header().Set("Content-Type", "text/html")
 		// Create a dummy gauge to maintain form values
 		dummyGauge := &db.Gauge{
-			Name: name,
-			Icon: icon,
-			Unit: unit,
-			Target: target,
+			Name:      name,
+			Icon:      icon,
+			Unit:      unit,
+			Target:    target,
 			Frequency: frequency,
 			Direction: direction,
 		}
