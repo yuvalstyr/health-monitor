@@ -20,6 +20,8 @@ func min(a, b int) int {
 	return b
 }
 
+// GaugeValue returns a templated UI component displaying the current value, unit, target, and progress bar for a gauge.
+// The progress bar color and fill reflect the gauge's direction and whether the value meets the target.
 func GaugeValue(gauge *db.Gauge, value float64) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -136,6 +138,8 @@ func GaugeValue(gauge *db.Gauge, value float64) templ.Component {
 	})
 }
 
+// GaugeCard returns a card-style UI component for a gauge, displaying its icon, name, frequency, direction, current value, and progress bar, along with edit, increment, and decrement controls.
+// The component supports asynchronous updates for value changes and links to the gauge's admin edit page.
 func GaugeCard(gauge *db.Gauge) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -313,6 +317,7 @@ func GaugeCard(gauge *db.Gauge) templ.Component {
 	})
 }
 
+// Gauge renders a compact UI component for a gauge, displaying its icon, name, frequency, direction, current value, and a progress bar, along with increment and decrement buttons for updating the gauge value asynchronously.
 func Gauge(gauge *db.Gauge) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
