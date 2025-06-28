@@ -13,6 +13,9 @@ import (
 	"health-monitor/internal/db"
 )
 
+// GaugeView returns a templated UI component displaying detailed information and controls for a single gauge.
+//
+// The component includes the gauge's name, optional description, navigation links, a visual icon with conditional styling based on value status, current and target values with units, increment/decrement controls with dynamic updates, and a history table summarizing today's value and status. Interactive controls use htmx for real-time updates. Error handling is performed for context and URL construction failures.
 func GaugeView(gauge *db.Gauge) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
