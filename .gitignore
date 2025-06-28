@@ -26,3 +26,4 @@ vendor/
 *.templ.go
 coverage.html
 tmp/app
+tmp/
