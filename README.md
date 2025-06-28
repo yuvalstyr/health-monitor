@@ -422,3 +422,6 @@ We aim to maintain high test coverage for critical components:
    - SQLite CLI for database inspection
    - Browser dev tools for HTMX
    - Go debugger for server code
+
+### CodeRabbit Reviews
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/yuvalstyr/health-monitor?utm_source=oss&utm_medium=github&utm_campaign=yuvalstyr%2Fhealth-monitor&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
