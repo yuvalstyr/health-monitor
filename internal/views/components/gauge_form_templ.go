@@ -20,7 +20,9 @@ type FormError struct {
 
 // GaugeForm returns a templated HTML form component for creating or editing a Gauge entity.
 //
-// The form adapts its heading and fields based on whether an existing Gauge is provided, displays validation errors, and integrates with HTMX for dynamic submission. It includes a dynamic icon preview and supports both creation (POST) and update (PUT via method override) modes.
+// GaugeForm returns an HTML form component for creating or editing a Gauge entity.
+// The form adapts its heading and fields based on whether an existing Gauge is provided, displays validation errors, and integrates with HTMX for dynamic submission.
+// It includes a dynamic icon preview and supports both creation (POST) and update (PUT via method override) modes.
 func GaugeForm(method string, action string, gauge *db.Gauge, errors []FormError) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context

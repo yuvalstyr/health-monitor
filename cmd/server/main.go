@@ -16,7 +16,7 @@ import (
 	"health-monitor/internal/views/pages"
 )
 
-// main is the entry point for the health-monitor web service, initializing logging, database connections, HTTP routing, middleware, and starting the server.
+// main starts the health-monitor web service, initializing logging, database connections, HTTP routing, middleware, and serving HTTP requests.
 func main() {
 	// Set up structured logging
 	logger.Setup()

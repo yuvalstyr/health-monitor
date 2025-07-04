@@ -91,7 +91,9 @@ func (h *GaugeHandler) handleNewGaugeForm(w http.ResponseWriter, r *http.Request
 // validateGaugeForm parses and validates gauge form input from an HTTP request.
 //
 // Returns the parsed name, icon, unit, target value, frequency, direction, and a slice of form errors if validation fails.
-// Frequency defaults to "weekly" and direction defaults to "under" if invalid or missing. Target is set to 0 if not a valid number.
+// validateGaugeForm parses and validates gauge form input from an HTTP request.
+// It returns the parsed name, icon, unit, target value, frequency, direction, and a slice of form errors.
+// Frequency defaults to "weekly" and direction defaults to "under" if missing or invalid. Target is set to 0 if not a valid number.
 func validateGaugeForm(r *http.Request) (string, string, string, float64, string, string, []components.FormError) {
 	var errors []components.FormError
 

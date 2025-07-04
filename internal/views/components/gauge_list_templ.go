@@ -15,7 +15,9 @@ import (
 
 // GaugeList returns a templated HTML component that displays a table of gauges with their details and interactive controls.
 // 
-// The component renders each gauge with its icon, name, description, frequency, direction, target, current value, and a progress bar. It provides buttons for incrementing, decrementing, editing, and deleting each gauge, updating the list dynamically on user actions. The progress bar visually indicates whether the gauge's value is within its target.
+// GaugeList returns an HTML component that displays a table of gauges with their details and interactive controls.
+//
+// Each gauge is shown with its icon, name, optional description, frequency, direction, target value, current value, and a progress bar indicating progress toward the target. Users can increment, decrement, edit, or delete gauges using the provided action buttons. The component supports dynamic updates for these actions and visually highlights when a gauge exceeds its target.
 func GaugeList(gauges []db.Gauge) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
