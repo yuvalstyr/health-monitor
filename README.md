@@ -45,14 +45,136 @@ health-monitor/
 
 ## Development Guide
 
-### Initial Setup
+### Prerequisites
 
-1. **Prerequisites**:
-   - Go 1.21 or later
-   - SQLite
-   - Make
+1. **Go**: Version 1.21+ required
+   ```bash
+   # Check your Go version
+   go version
+   ```
 
-2. **Installation**:
+2. **Environment Setup**:
+   - Add Go bin directory to your PATH for easy access to installed tools:
+   ```bash
+   # Add this to your ~/.zshrc or ~/.bash_profile
+   echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
+   source ~/.zshrc
+   ```
+
+### Required Tools Installation
+
+1. **Templ**: For type-safe HTML templates
+   ```bash
+   go install github.com/a-h/templ/cmd/templ@latest
+   ```
+
+2. **SQLC**: For generating type-safe database code
+   ```bash
+   go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+   ```
+
+3. **Air**: For live reloading during development
+   ```bash
+   go install github.com/cosmtrek/air@latest
+   ```
+
+4. **Atlas**: For database migrations
+   ```bash
+   # Using Homebrew
+   brew install ariga/tap/atlas
+   # Or direct download from https://atlasgo.io
+   ```
+
+5. **SQLite**: For database management
+   ```bash
+   # On macOS (usually pre-installed)
+   brew install sqlite
+   ```
+
+Alternatively, you can run:
+```bash
+make install-tools
+```
+
+### Database Setup
+
+There is currently a mismatch between the schema in migrations/schema.sql and what the application expects. The application requires additional columns in the `gauges` table:
+
+1. **Using manual setup** (recommended for now):
+   ```bash
+   # Create the database with the correct schema
+   # Apply the schema from the provided file
+   sqlite3 health.db < updated_schema.sql
+   cat updated_schema.sql | sqlite3 health.db
+   ```
+
+2. **Using Atlas** (currently needs schema update):
+   ```bash
+   # Note: This will use the current schema.sql which may be missing required columns
+   # First, update the atlas.hcl file to point to health.db instead of health-monitor.db
+   # Then run:
+   make migrations
+   ```
+
+### Running the Application
+
+1. **Code Generation**:
+   ```bash
+   make generate
+   ```
+
+2. **Development Mode with Live Reload**:
+   ```bash
+   make dev
+   # Or directly:
+   $HOME/go/bin/air
+   ```
+
+3. **Building for Production**:
+   ```bash
+   make build
+   ```
+
+4. **Running Tests**:
+   ```bash
+   make test
+   ```
+
+### Common Issues and Solutions
+
+1. **PATH Issues**: Ensure $HOME/go/bin is in your PATH to access installed Go tools
+   ```bash
+   echo $PATH | grep "go/bin"
+   ```
+
+2. **Database Schema Mismatch**: If you encounter errors like "no such column: value":
+   - Use the manual schema creation steps described above
+   - Update the migrations/schema.sql file to match the application's expectations
+
+3. **Air Not Found**: If air is not found, use the full path:
+   ```bash
+   $HOME/go/bin/air
+   ```
+
+4. **Port Conflicts**: If port 3000 is already in use:
+   ```bash
+   # Find and kill processes using port 3000
+   lsof -i :3000 | awk 'NR!=1 {print $2}' | xargs kill -9 2>/dev/null || true
+   ```
+
+## Notes on Migration Management
+
+Currently, there is a discrepancy between:
+1. The schema defined in `migrations/schema.sql` (missing columns like `value`, `icon`, etc.)
+2. The schema expected by the application (queries.sql references columns not in schema.sql)
+3. The database file referenced in atlas.hcl (health-monitor.db) vs main.go (health.db)
+
+To properly align these, consider:
+1. Updating `migrations/schema.sql` with the complete schema
+2. Updating `atlas.hcl` to reference the correct database file
+3. Running a proper migration with Atlas once everything is aligned
+
+### Installation
    ```bash
    # Clone the repository
    git clone https://github.com/yourusername/health-monitor.git
@@ -271,3 +393,6 @@ We aim to maintain high test coverage for critical components:
    - SQLite CLI for database inspection
    - Browser dev tools for HTMX
    - Go debugger for server code
+
+### CodeRabbit Reviews
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/yuvalstyr/health-monitor?utm_source=oss&utm_medium=github&utm_campaign=yuvalstyr%2Fhealth-monitor&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)

@@ -14,27 +14,29 @@ func min(a, b int) int {
 
 templ GaugeValue(gauge *db.Gauge, value float64) {
 	<div id={ fmt.Sprintf("gauge-value-%d", gauge.ID) } class="space-y-2 sm:space-y-3">
-		<div class="flex justify-between items-baseline">
-			<div class={ "text-3xl sm:text-4xl font-bold transition-all", templ.KV("text-primary", value <= gauge.Target), templ.KV("text-error animate-pulse", value > gauge.Target) }>
-				{ fmt.Sprintf("%.1f", value) }
-				<span class="text-sm sm:text-base font-normal text-base-content/60 ml-1">{ gauge.Unit }</span>
+			<!-- Gauge value and target -->
+			<div class="flex justify-between items-baseline mt-2">
+				<div class="text-4xl font-bold">
+					{ fmt.Sprintf("%.1f", gauge.Value) }
+					<span class="text-sm font-normal text-base-content/60 ml-1">{ gauge.Unit }</span>
+				</div>
+				<div class="text-sm">
+					Target: { fmt.Sprintf("%.1f", gauge.Target) }
+				</div>
 			</div>
-			<div class="badge badge-md">
-				Target: { fmt.Sprintf("%.1f", gauge.Target) } { gauge.Unit }
+			
+			<!-- Progress bar -->
+			<div class="w-full h-3 bg-base-200/50 rounded-full overflow-hidden mt-2">
+				<div 
+					class={ "h-full rounded-full", templ.KV("bg-primary", (gauge.Direction == "under" && gauge.Value <= gauge.Target) || (gauge.Direction == "over" && gauge.Value >= gauge.Target)), templ.KV("bg-error", (gauge.Direction == "under" && gauge.Value > gauge.Target) || (gauge.Direction == "over" && gauge.Value < gauge.Target)) }
+style={ fmt.Sprintf("width: %d%%", func() int {
+    if gauge.Target == 0 {
+        return 0
+    }
+    return min(int(gauge.Value/gauge.Target*100), 100)
+}()) }
+				></div>
 			</div>
-		</div>
-		<div class="w-full h-2 sm:h-3 bg-base-200/50 rounded-full overflow-hidden">
-			<div 
-				class={ "h-full rounded-full transition-all", templ.KV("bg-primary", value <= gauge.Target), templ.KV("bg-error", value > gauge.Target) }
-				style={ fmt.Sprintf("width: %d%%", min(int(value/gauge.Target*100), 100)) }
-			></div>
-		</div>
-		<div class="text-xs text-base-content/70 flex justify-between items-center">
-			<span>{ fmt.Sprintf("%d%% of target", min(int(value/gauge.Target*100), 100)) }</span>
-			<span class="badge badge-sm">
-				{ gauge.Frequency }
-			</span>
-		</div>
 	</div>
 }
 
@@ -64,23 +66,9 @@ templ GaugeCard(gauge *db.Gauge) {
 				</div>
 			</div>
 			
-			<!-- Gauge value and target -->
-			<div class="flex justify-between items-baseline mt-2">
-				<div class="text-4xl font-bold">
-					{ fmt.Sprintf("%.1f", gauge.Value) }
-					<span class="text-sm font-normal text-base-content/60 ml-1">{ gauge.Unit }</span>
-				</div>
-				<div class="text-sm">
-					Target: { fmt.Sprintf("%.1f", gauge.Target) }
-				</div>
-			</div>
-			
-			<!-- Progress bar -->
-			<div class="w-full h-3 bg-base-200/50 rounded-full overflow-hidden mt-2">
-				<div 
-					class={ "h-full rounded-full", templ.KV("bg-primary", (gauge.Direction == "under" && gauge.Value <= gauge.Target) || (gauge.Direction == "over" && gauge.Value >= gauge.Target)), templ.KV("bg-error", (gauge.Direction == "under" && gauge.Value > gauge.Target) || (gauge.Direction == "over" && gauge.Value < gauge.Target)) }
-					style={ fmt.Sprintf("width: %d%%", min(int(gauge.Value/gauge.Target*100), 100)) }
-				></div>
+			<!-- Use GaugeValue component instead of direct rendering -->
+			<div id={ fmt.Sprintf("gauge-value-container-%d", gauge.ID) } class="mt-2">
+				@GaugeValue(gauge, gauge.Value)
 			</div>
 			
 			<!-- Larger increment/decrement buttons, vertically centered -->
@@ -88,7 +76,7 @@ templ GaugeCard(gauge *db.Gauge) {
 				<button 
 					class="btn btn-circle btn-md bg-error text-white shadow-md"
 					hx-post={ fmt.Sprintf("/gauges/%d/decrement", gauge.ID) }
-					hx-target={ fmt.Sprintf("#gauge-card-%d", gauge.ID) }
+					hx-target={ fmt.Sprintf("#gauge-value-%d", gauge.ID) }
 					hx-swap="outerHTML"
 				>
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
@@ -96,7 +84,7 @@ templ GaugeCard(gauge *db.Gauge) {
 				<button 
 					class="btn btn-circle btn-md bg-success text-white shadow-md"
 					hx-post={ fmt.Sprintf("/gauges/%d/increment", gauge.ID) }
-					hx-target={ fmt.Sprintf("#gauge-card-%d", gauge.ID) }
+					hx-target={ fmt.Sprintf("#gauge-value-%d", gauge.ID) }
 					hx-swap="outerHTML"
 				>
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>

@@ -4,7 +4,7 @@ tmp_dir = "tmp"
 
 [build]
 # First ensure tmp directory exists, then generate templ files, then build
-cmd = "mkdir -p tmp && templ generate && go build -o ./tmp/app ./cmd/server"
+cmd = "mkdir -p tmp && $HOME/go/bin/templ generate && go build -o ./tmp/app ./cmd/server"
 # Binary file produced by the build
 bin = "tmp/app"
 # Command with options to run the binary

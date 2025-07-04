@@ -1,11 +1,11 @@
 module health-monitor
 
-go 1.23
+go 1.23.0
 
-toolchain go1.23.7
+toolchain go1.24.4
 
 require (
-	github.com/a-h/templ v0.3.833
+	github.com/a-h/templ v0.3.906
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/stretchr/testify v1.10.0
@@ -23,7 +23,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rs/zerolog v1.34.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.32.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
 	modernc.org/libc v1.41.0 // indirect
