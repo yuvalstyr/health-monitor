@@ -80,6 +80,6 @@ func main() {
 	logger.Info().Str("port", port).Msg("Server listening")
 	err = http.ListenAndServe(":"+port, r)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Server failed tf start")
+		logger.Fatal().Err(err).Msg("Server failed to start")
 	}
 }
