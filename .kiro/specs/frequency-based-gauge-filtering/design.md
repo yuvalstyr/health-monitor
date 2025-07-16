@@ -440,7 +440,45 @@ CREATE TABLE gauge_values (
     date DATETIME NOT NULL,
     FOREIGN KEY (gauge_id) REFERENCES gauge_instances(id) ON DELETE CASCADE
 );
+```
 
+**Data Model Relationships and Value Management:**
+
+The gauge data model uses a three-tier structure to support frequency-based filtering:
+
+1. **gauge_templates**: User-created configurations (the "blueprint")
+2. **gauge_instances**: Auto-generated instances for specific time periods
+3. **gauge_values**: Individual value entries over time within each instance
+
+**Value Management Strategy:**
+- **gauge_instances.value**: Current/latest value for the period (denormalized for performance)
+- **gauge_values**: Historical log of all value changes within the period
+- When a user updates a gauge, both tables are updated:
+  - New entry added to `gauge_values` with timestamp
+  - `gauge_instances.value` updated to reflect the latest value
+  - `gauge_instances.updated_at` timestamp refreshed
+
+**Relationship Flow:**
+```
+gauge_templates (1) → (many) gauge_instances (1) → (many) gauge_values
+     ↓                        ↓                         ↓
+  User config          Period-specific           Individual updates
+                       gauge instance            within the period
+```
+
+**Why Both value Fields Exist:**
+- **Performance**: `gauge_instances.value` allows fast dashboard queries without JOINs
+- **History**: `gauge_values` preserves complete audit trail of changes
+- **Flexibility**: Supports future features like value trends, undo operations, or detailed analytics
+
+**Example Data Flow:**
+1. User creates template: "Weekly Exercise" (target: 5 hours)
+2. System creates instance: period_start="2024-01-01", value=0
+3. User logs 2 hours: gauge_values entry created, instance.value=2
+4. User logs 1.5 more hours: new gauge_values entry, instance.value=3.5
+5. Dashboard shows current value (3.5) with history available if needed
+
+```sql
 -- Create indexes for performance
 CREATE INDEX idx_gauge_templates_active ON gauge_templates(active);
 CREATE INDEX idx_gauge_templates_frequency ON gauge_templates(frequency);
