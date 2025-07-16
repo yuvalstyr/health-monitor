@@ -220,9 +220,9 @@ func (h *GaugeHandler) handleDashboard(w http.ResponseWriter, r *http.Request) {
 
 func (h *GaugeHandler) getCurrentPeriodGaugeInstances(ctx context.Context, currentTime time.Time) []GaugeInstanceView {
     // Calculate current period start for each frequency
-    weeklyStart := CalculatePeriodStart("weekly", currentTime)
-    biWeeklyStart := CalculatePeriodStart("bi-weekly", currentTime)
-    monthlyStart := CalculatePeriodStart("monthly", currentTime)
+    weeklyStart := CalculateCurrentPeriodStart("weekly", currentTime)
+    biWeeklyStart := CalculateCurrentPeriodStart("bi-weekly", currentTime)
+    monthlyStart := CalculateCurrentPeriodStart("monthly", currentTime)
     
     // Query instances that match current periods
     return h.queries.ListCurrentPeriodGaugeInstances(ctx, weeklyStart, biWeeklyStart, monthlyStart)
