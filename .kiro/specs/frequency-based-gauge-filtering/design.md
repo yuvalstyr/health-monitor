@@ -59,6 +59,11 @@ import (
 //go:embed migrations/*.sql
 var embedMigrations embed.FS
 
+func init() {
+    // Register modernc.org/sqlite driver as "sqlite3" for Goose compatibility
+    sql.Register("sqlite3", &sqlite.Driver{})
+}
+
 func RunMigrations(db *sql.DB) error {
     goose.SetBaseFS(embedMigrations)
     
@@ -125,7 +130,9 @@ SELECT * FROM gauge_templates WHERE active = true;
 SELECT gi.*, gt.name, gt.description, gt.target, gt.unit, gt.icon, gt.frequency, gt.direction
 FROM gauge_instances gi
 JOIN gauge_templates gt ON gi.template_id = gt.id
-WHERE gi.period_start <= ? 
+WHERE (gt.frequency = 'weekly' AND gi.period_start = ?) 
+   OR (gt.frequency = 'bi-weekly' AND gi.period_start = ?)
+   OR (gt.frequency = 'monthly' AND gi.period_start = ?)
 ORDER BY gt.name;
 
 -- Create gauge instance from template
@@ -199,6 +206,10 @@ func CalculateNextPeriodStart(frequency string, currentTime time.Time) time.Time
     
     case "monthly":
         // First day of next month
+        return time.Date(currentTime.Year(), currentTime.Month()+1, 1, 0, 0, 0, 0, currentTime.Location())
+    
+    default:
+        // Default to monthly for unknown frequencies
         return time.Date(currentTime.Year(), currentTime.Month()+1, 1, 0, 0, 0, 0, currentTime.Location())
     }
 }
