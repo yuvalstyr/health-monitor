@@ -9,7 +9,7 @@ import (
 
 	"health-monitor/internal/db"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 // NewTestDB creates a new test database and returns a Queries instance
@@ -22,7 +22,7 @@ func NewTestDB(t *testing.T) *db.Queries {
 	t.Cleanup(func() { os.Remove(f.Name()) })
 
 	// Open the database
-	database, err := sql.Open("sqlite3", f.Name())
+	database, err := sql.Open("sqlite", f.Name())
 	if err != nil {
 		t.Fatalf("Failed to open database: %v", err)
 	}

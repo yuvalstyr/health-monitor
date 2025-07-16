@@ -27,3 +27,5 @@ vendor/
 coverage.html
 tmp/app
 tmp/
+
+node_modules/

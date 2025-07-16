@@ -1,13 +1,11 @@
 package main
 
 import (
-	"database/sql"
 	"net/http"
 	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	_ "github.com/mattn/go-sqlite3"
 
 	"health-monitor/internal/db"
 	"health-monitor/internal/handlers"
@@ -29,7 +27,7 @@ func main() {
 		logger.Debug().Str("port", port).Msg("Using default port")
 	}
 
-	database, err := sql.Open("sqlite3", "health.db")
+	database, err := db.Open()
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Error opening database")
 	}
