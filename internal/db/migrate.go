@@ -8,7 +8,7 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-//go:embed migrations/*.sql
+//go:embed ../../migrations/*.sql
 var embedMigrations embed.FS
 
 // RunMigrations runs all pending Goose migrations
@@ -19,7 +19,7 @@ func RunMigrations(db *sql.DB) error {
 		return fmt.Errorf("failed to set goose dialect: %w", err)
 	}
 
-	if err := goose.Up(db, "migrations"); err != nil {
+	if err := goose.Up(db, "../../migrations"); err != nil {
 		return fmt.Errorf("failed to run goose migrations: %w", err)
 	}
 
