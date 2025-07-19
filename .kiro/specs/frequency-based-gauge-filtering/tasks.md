@@ -37,13 +37,13 @@
   - Generate new Go code with SQLC
   - _Requirements: 5.5_
 
-- [ ] 4. Implement period calculation utilities
+- [x] 4. Implement period calculation utilities
   - Create time utility functions for current period calculation
   - Create time utility functions for next period calculation
   - Handle edge cases (month boundaries, leap years)
   - _Requirements: 3.1, 3.3_
 
-- [ ] 4.1 Write unit tests for period calculation utilities
+- [x] 4.1 Write unit tests for period calculation utilities
   - Test weekly period calculations for all days of week
   - Test bi-weekly period calculations for different dates
   - Test monthly period calculations including month boundaries
