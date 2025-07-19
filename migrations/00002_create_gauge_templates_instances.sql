@@ -7,8 +7,8 @@ CREATE TABLE gauge_templates (
     target REAL NOT NULL,
     unit TEXT NOT NULL,
     icon TEXT NOT NULL DEFAULT 'chart-bar',
-    frequency TEXT NOT NULL, -- 'weekly', 'bi-weekly', 'monthly'
-    direction TEXT NOT NULL DEFAULT 'under',
+    frequency TEXT NOT NULL CHECK (frequency IN ('weekly', 'bi-weekly', 'monthly')),
+    direction TEXT NOT NULL DEFAULT 'under' CHECK (direction IN ('under', 'over')),
     active BOOLEAN DEFAULT false,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
