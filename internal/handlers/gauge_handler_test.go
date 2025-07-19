@@ -26,7 +26,7 @@ func createFormRequest(method, path string, formValues map[string]string) *http.
 	return r
 }
 
-func TestGaugeTemplateHandler(t *testing.T) {
+func TestGaugeHandler(t *testing.T) {
 	queries := &db.MockQueries{}
 	handler := NewGaugeHandler(queries)
 	
@@ -34,36 +34,29 @@ func TestGaugeTemplateHandler(t *testing.T) {
 	router := chi.NewRouter()
 	handler.RegisterRoutes(router)
 
-	t.Run("CreateGaugeTemplate", func(t *testing.T) {
+	t.Run("Create", func(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			// Mock database calls
-			queries.CreateGaugeTemplateFn = func(ctx context.Context, params db.CreateGaugeTemplateParams) (db.GaugeTemplate, error) {
-				return db.GaugeTemplate{
-					ID:          1,
-					Name:        params.Name,
-					Description: params.Description,
-					Icon:        params.Icon,
-					Unit:        params.Unit,
-					Target:      params.Target,
-					Frequency:   params.Frequency,
-					Direction:   params.Direction,
-					Active:      params.Active,
+			queries.CreateGaugeFn = func(ctx context.Context, params db.CreateGaugeParams) (db.Gauge, error) {
+				return db.Gauge{
+					ID:     1,
+					Name:   params.Name,
+					Icon:   params.Icon,
+					Unit:   params.Unit,
+					Target: params.Target,
+					Value:  0,
 				}, nil
 			}
-			queries.ListGaugeTemplatesFn = func(ctx context.Context) ([]db.GaugeTemplate, error) {
-				return []db.GaugeTemplate{}, nil
+			queries.ListGaugesFn = func(ctx context.Context) ([]db.Gauge, error) {
+				return []db.Gauge{}, nil
 			}
 
-			// Create test request with all required fields including active
+			// Create test request
 			r := createFormRequest("POST", "/admin/gauges", map[string]string{
-				"name":        "Test Gauge",
-				"description": "Test Description",
-				"icon":        "test-icon",
-				"unit":        "test-unit",
-				"target":      "10",
-				"frequency":   "weekly",
-				"direction":   "under",
-				"active":      "on",
+				"name":   "Test Gauge",
+				"icon":   "test-icon",
+				"unit":   "test-unit",
+				"target": "10",
 			})
 
 			// Create a response recorder
@@ -97,171 +90,33 @@ func TestGaugeTemplateHandler(t *testing.T) {
 			assert.Contains(t, w.Body.String(), "errors")
 			assert.Contains(t, w.Body.String(), "required")
 		})
-
-		t.Run("frequency validation", func(t *testing.T) {
-			// Mock database calls
-			queries.CreateGaugeTemplateFn = func(ctx context.Context, params db.CreateGaugeTemplateParams) (db.GaugeTemplate, error) {
-				// Verify that invalid frequency defaults to "weekly"
-				assert.Equal(t, "weekly", params.Frequency)
-				return db.GaugeTemplate{
-					ID:        1,
-					Frequency: params.Frequency,
-				}, nil
-			}
-			queries.ListGaugeTemplatesFn = func(ctx context.Context) ([]db.GaugeTemplate, error) {
-				return []db.GaugeTemplate{}, nil
-			}
-
-			// Create test request with invalid frequency
-			r := createFormRequest("POST", "/admin/gauges", map[string]string{
-				"name":      "Test Gauge",
-				"icon":      "test-icon",
-				"unit":      "test-unit",
-				"target":    "10",
-				"frequency": "invalid-frequency", // Invalid frequency should default to weekly
-				"direction": "under",
-			})
-
-			// Create a response recorder
-			w := httptest.NewRecorder()
-
-			// Call the handler directly
-			handler.handleCreateGauge(w, r)
-
-			// Check response
-			assert.Equal(t, http.StatusOK, w.Code)
-		})
-
-		t.Run("active status validation", func(t *testing.T) {
-			// Mock database calls
-			queries.CreateGaugeTemplateFn = func(ctx context.Context, params db.CreateGaugeTemplateParams) (db.GaugeTemplate, error) {
-				// Verify that active status is correctly parsed
-				assert.True(t, params.Active)
-				return db.GaugeTemplate{
-					ID:     1,
-					Active: params.Active,
-				}, nil
-			}
-			queries.ListGaugeTemplatesFn = func(ctx context.Context) ([]db.GaugeTemplate, error) {
-				return []db.GaugeTemplate{}, nil
-			}
-
-			// Create test request with active checkbox checked
-			r := createFormRequest("POST", "/admin/gauges", map[string]string{
-				"name":      "Test Gauge",
-				"icon":      "test-icon",
-				"unit":      "test-unit",
-				"target":    "10",
-				"frequency": "weekly",
-				"direction": "under",
-				"active":    "on", // Checkbox checked
-			})
-
-			// Create a response recorder
-			w := httptest.NewRecorder()
-
-			// Call the handler directly
-			handler.handleCreateGauge(w, r)
-
-			// Check response
-			assert.Equal(t, http.StatusOK, w.Code)
-		})
-
-		t.Run("inactive status validation", func(t *testing.T) {
-			// Mock database calls
-			queries.CreateGaugeTemplateFn = func(ctx context.Context, params db.CreateGaugeTemplateParams) (db.GaugeTemplate, error) {
-				// Verify that active status is correctly parsed as false when not provided
-				assert.False(t, params.Active)
-				return db.GaugeTemplate{
-					ID:     1,
-					Active: params.Active,
-				}, nil
-			}
-			queries.ListGaugeTemplatesFn = func(ctx context.Context) ([]db.GaugeTemplate, error) {
-				return []db.GaugeTemplate{}, nil
-			}
-
-			// Create test request without active checkbox (should be false)
-			r := createFormRequest("POST", "/admin/gauges", map[string]string{
-				"name":      "Test Gauge",
-				"icon":      "test-icon",
-				"unit":      "test-unit",
-				"target":    "10",
-				"frequency": "weekly",
-				"direction": "under",
-				// No "active" field - should default to false
-			})
-
-			// Create a response recorder
-			w := httptest.NewRecorder()
-
-			// Call the handler directly
-			handler.handleCreateGauge(w, r)
-
-			// Check response
-			assert.Equal(t, http.StatusOK, w.Code)
-		})
-
-		t.Run("database error", func(t *testing.T) {
-			// Mock database calls with error
-			queries.CreateGaugeTemplateFn = func(ctx context.Context, params db.CreateGaugeTemplateParams) (db.GaugeTemplate, error) {
-				return db.GaugeTemplate{}, fmt.Errorf("database connection failed")
-			}
-
-			// Create test request with valid data
-			r := createFormRequest("POST", "/admin/gauges", map[string]string{
-				"name":      "Test Gauge",
-				"icon":      "test-icon",
-				"unit":      "test-unit",
-				"target":    "10",
-				"frequency": "weekly",
-				"direction": "under",
-			})
-
-			// Create a response recorder
-			w := httptest.NewRecorder()
-
-			// Call the handler directly
-			handler.handleCreateGauge(w, r)
-
-			// Check response contains error
-			assert.Equal(t, http.StatusInternalServerError, w.Code)
-			assert.Contains(t, w.Body.String(), "Failed to create gauge template")
-		})
 	})
 
-	t.Run("UpdateGaugeTemplate", func(t *testing.T) {
+	t.Run("Update", func(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			// Mock database calls
-			queries.GetGaugeTemplateFn = func(ctx context.Context, id int64) (db.GaugeTemplate, error) {
-				return db.GaugeTemplate{
-					ID:        1,
-					Name:      "Original Gauge",
-					Icon:      "original-icon",
-					Unit:      "original-unit",
-					Target:    5.0,
-					Frequency: "weekly",
-					Direction: "under",
-					Active:    false,
+			queries.GetGaugeFn = func(ctx context.Context, id int64) (db.Gauge, error) {
+				return db.Gauge{
+					ID:     1,
+					Name:   "Original Gauge",
+					Icon:   "original-icon",
+					Unit:   "original-unit",
+					Target: 5.0,
 				}, nil
 			}
-			queries.UpdateGaugeTemplateFn = func(ctx context.Context, params db.UpdateGaugeTemplateParams) error {
+			queries.UpdateGaugeFn = func(ctx context.Context, params db.UpdateGaugeParams) error {
 				return nil
 			}
-			queries.ListGaugeTemplatesFn = func(ctx context.Context) ([]db.GaugeTemplate, error) {
-				return []db.GaugeTemplate{}, nil
+			queries.ListGaugesFn = func(ctx context.Context) ([]db.Gauge, error) {
+				return []db.Gauge{}, nil
 			}
 
-			// Create test request with all required fields including active
+			// Create test request
 			r := createFormRequest("PUT", "/admin/gauges/1", map[string]string{
-				"name":        "Updated Gauge",
-				"description": "Updated Description",
-				"icon":        "updated-icon",
-				"unit":        "updated-unit",
-				"target":      "20",
-				"frequency":   "monthly",
-				"direction":   "over",
-				"active":      "on",
+				"name":   "Updated Gauge",
+				"icon":   "updated-icon",
+				"unit":   "updated-unit",
+				"target": "20",
 			})
 
 			// Setup chi router context
@@ -279,42 +134,16 @@ func TestGaugeTemplateHandler(t *testing.T) {
 			assert.Equal(t, http.StatusOK, w.Code)
 			assert.Contains(t, w.Body.String(), "html")
 		})
-
-		t.Run("validation error", func(t *testing.T) {
-			// Create test request with invalid data (missing required fields)
-			r := createFormRequest("PUT", "/admin/gauges/1", map[string]string{
-				"name":   "",
-				"icon":   "",
-				"unit":   "",
-				"target": "invalid",
-			})
-
-			// Setup chi router context
-			rctx := chi.NewRouteContext()
-			rctx.URLParams.Add("id", "1")
-			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
-
-			// Create a response recorder
-			w := httptest.NewRecorder()
-
-			// Call the handler directly
-			handler.handleUpdateGauge(w, r)
-
-			// Check response contains validation errors
-			assert.Equal(t, http.StatusOK, w.Code) // Form validation returns OK with errors in form
-			assert.Contains(t, w.Body.String(), "errors")
-			assert.Contains(t, w.Body.String(), "required")
-		})
 	})
 
-	t.Run("DeleteGaugeTemplate", func(t *testing.T) {
+	t.Run("Delete", func(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			// Mock database calls
-			queries.DeleteGaugeTemplateFn = func(ctx context.Context, id int64) error {
+			queries.DeleteGaugeFn = func(ctx context.Context, id int64) error {
 				return nil
 			}
-			queries.ListGaugeTemplatesFn = func(ctx context.Context) ([]db.GaugeTemplate, error) {
-				return []db.GaugeTemplate{}, nil
+			queries.ListGaugesFn = func(ctx context.Context) ([]db.Gauge, error) {
+				return []db.Gauge{}, nil
 			}
 
 			// Create test request
@@ -337,8 +166,8 @@ func TestGaugeTemplateHandler(t *testing.T) {
 
 		t.Run("error", func(t *testing.T) {
 			// Mock database calls with error
-			queries.DeleteGaugeTemplateFn = func(ctx context.Context, id int64) error {
-				return fmt.Errorf("failed to delete gauge template")
+			queries.DeleteGaugeFn = func(ctx context.Context, id int64) error {
+				return fmt.Errorf("failed to delete gauge")
 			}
 
 			// Create test request
@@ -357,20 +186,20 @@ func TestGaugeTemplateHandler(t *testing.T) {
 
 			// Check response
 			assert.Equal(t, http.StatusInternalServerError, w.Code)
-			assert.Contains(t, w.Body.String(), "failed to delete gauge template")
+			assert.Contains(t, w.Body.String(), "failed to delete gauge")
 		})
 	})
 
-	t.Run("IncrementGaugeInstance", func(t *testing.T) {
+	t.Run("Increment", func(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			// Mock database calls
-			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
-				return db.GaugeInstance{
+			queries.GetGaugeFn = func(ctx context.Context, id int64) (db.Gauge, error) {
+				return db.Gauge{
 					ID:    1,
 					Value: 10,
 				}, nil
 			}
-			queries.UpdateGaugeInstanceValueFn = func(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error {
+			queries.UpdateGaugeValueFn = func(ctx context.Context, params db.UpdateGaugeValueParams) error {
 				return nil
 			}
 
@@ -394,8 +223,8 @@ func TestGaugeTemplateHandler(t *testing.T) {
 
 		t.Run("error", func(t *testing.T) {
 			// Mock database calls with error
-			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
-				return db.GaugeInstance{}, fmt.Errorf("failed to get gauge instance")
+			queries.GetGaugeFn = func(ctx context.Context, id int64) (db.Gauge, error) {
+				return db.Gauge{}, fmt.Errorf("failed to get gauge")
 			}
 
 			// Create test request
@@ -414,20 +243,20 @@ func TestGaugeTemplateHandler(t *testing.T) {
 
 			// Check response
 			assert.Equal(t, http.StatusInternalServerError, w.Code)
-			assert.Contains(t, w.Body.String(), "failed to get gauge instance")
+			assert.Contains(t, w.Body.String(), "failed to get gauge")
 		})
 	})
 
-	t.Run("DecrementGaugeInstance", func(t *testing.T) {
+	t.Run("Decrement", func(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			// Mock database calls
-			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
-				return db.GaugeInstance{
+			queries.GetGaugeFn = func(ctx context.Context, id int64) (db.Gauge, error) {
+				return db.Gauge{
 					ID:    1,
 					Value: 10,
 				}, nil
 			}
-			queries.UpdateGaugeInstanceValueFn = func(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error {
+			queries.UpdateGaugeValueFn = func(ctx context.Context, params db.UpdateGaugeValueParams) error {
 				return nil
 			}
 
@@ -451,8 +280,8 @@ func TestGaugeTemplateHandler(t *testing.T) {
 
 		t.Run("error", func(t *testing.T) {
 			// Mock database calls with error
-			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
-				return db.GaugeInstance{}, fmt.Errorf("failed to get gauge instance")
+			queries.GetGaugeFn = func(ctx context.Context, id int64) (db.Gauge, error) {
+				return db.Gauge{}, fmt.Errorf("failed to get gauge")
 			}
 
 			// Create test request
@@ -471,39 +300,7 @@ func TestGaugeTemplateHandler(t *testing.T) {
 
 			// Check response
 			assert.Equal(t, http.StatusInternalServerError, w.Code)
-			assert.Contains(t, w.Body.String(), "failed to get gauge instance")
-		})
-
-		t.Run("prevents negative values", func(t *testing.T) {
-			// Mock database calls - gauge instance with value 0
-			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
-				return db.GaugeInstance{
-					ID:    1,
-					Value: 0,
-				}, nil
-			}
-			// Should not call UpdateGaugeInstanceValue when value is 0
-			queries.UpdateGaugeInstanceValueFn = func(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error {
-				t.Error("UpdateGaugeInstanceValue should not be called when value is 0")
-				return nil
-			}
-
-			// Create test request
-			r := httptest.NewRequest("POST", "/gauges/1/decrement", nil)
-
-			// Setup chi router context
-			rctx := chi.NewRouteContext()
-			rctx.URLParams.Add("id", "1")
-			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
-
-			// Create a response recorder
-			w := httptest.NewRecorder()
-
-			// Call the handler directly
-			handler.handleDecrementGauge(w, r)
-
-			// Check response
-			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Contains(t, w.Body.String(), "failed to get gauge")
 		})
 	})
 }

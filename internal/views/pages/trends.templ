@@ -3,14 +3,15 @@ package pages
 import (
 	"fmt"
 	"health-monitor/internal/db"
+	"health-monitor/internal/models"
 	"health-monitor/internal/views/layouts"
 )
 
-templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) {
+templ TrendsContent(gauge *db.Gauge, history []models.GaugeHistory) {
 	<div class="container mx-auto px-4 py-8">
 		<div class="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
 			<div>
-				<h1 class="text-2xl sm:text-3xl font-bold">{ template.Name }</h1>
+				<h1 class="text-2xl sm:text-3xl font-bold">{ gauge.Name }</h1>
 				<p class="text-base-content/70 text-sm sm:text-base mt-1">Historical Trends</p>
 			</div>
 			<a 
@@ -36,14 +37,14 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 			for _, h := range history {
 				<div class="card bg-base-100 shadow">
 					<div class="card-body p-4">
-						<h3 class="card-title text-lg">{ fmt.Sprintf("%v", h.Month) }</h3>
+						<h3 class="card-title text-lg">{ h.Month }</h3>
 						<div class="flex items-center justify-between mt-2">
 							<div>
 								<p class="text-sm text-base-content/70">Average</p>
-								<p class="text-xl font-bold">{ fmt.Sprintf("%.1f", h.AverageValue) } <span class="text-sm font-normal">{ template.Unit }</span></p>
+								<p class="text-xl font-bold">{ fmt.Sprintf("%.1f", h.AverageValue) } <span class="text-sm font-normal">{ gauge.Unit }</span></p>
 							</div>
 							<div>
-								if h.AverageValue >= template.Target {
+								if h.AverageValue >= gauge.Target {
 									<div class="badge badge-error">Above Target</div>
 								} else {
 									<div class="badge badge-success">On Track</div>
@@ -73,17 +74,17 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 							<tbody>
 								for _, h := range history {
 									<tr class="hover">
-										<td class="font-medium">{ fmt.Sprintf("%v", h.Month) }</td>
+										<td class="font-medium">{ h.Month }</td>
 										<td>
 											<span class="font-semibold">{ fmt.Sprintf("%.1f", h.AverageValue) }</span>
-											<span class="text-base-content/70 ml-1">{ template.Unit }</span>
+											<span class="text-base-content/70 ml-1">{ gauge.Unit }</span>
 										</td>
 										<td>
-											<span class="font-semibold">{ fmt.Sprintf("%.1f", template.Target) }</span>
-											<span class="text-base-content/70 ml-1">{ template.Unit }</span>
+											<span class="font-semibold">{ fmt.Sprintf("%.1f", gauge.Target) }</span>
+											<span class="text-base-content/70 ml-1">{ gauge.Unit }</span>
 										</td>
 										<td>
-											if h.AverageValue >= template.Target {
+											if h.AverageValue >= gauge.Target {
 												<div class="badge badge-error gap-2">
 													<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -112,7 +113,7 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 			// Prepare chart data
 			const ctx = document.getElementById('trendsChart').getContext('2d');
 			const data = {
-				labels: [ for _, h := range history { fmt.Sprintf("%v", h.Month) } ],
+				labels: [ for _, h := range history { h.Month } ],
 				datasets: [{
 					label: 'Average Value',
 					data: [ for _, h := range history { h.AverageValue } ],
@@ -122,7 +123,7 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 					tension: 0.4
 				}, {
 					label: 'Target',
-					data: Array(history.length).fill({ fmt.Sprintf("%.1f", template.Target) }),
+					data: Array(history.length).fill({ fmt.Sprintf("%.1f", gauge.Target) }),
 					borderColor: '#F87272',
 					borderDash: [5, 5],
 					fill: false
@@ -146,7 +147,7 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 							beginAtZero: true,
 							ticks: {
 								callback: function(value) {
-									return value + ' ' + { template.Unit };
+									return value + ' ' + { gauge.Unit };
 								}
 							}
 						}
@@ -161,6 +162,6 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 	</div>
 }
 
-templ TrendsPage(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) {
-	@layouts.Base("Trends", TrendsContent(template, history))
+templ TrendsPage(gauge *db.Gauge, history []models.GaugeHistory) {
+	@layouts.Base("Trends", TrendsContent(gauge, history))
 }

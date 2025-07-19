@@ -10,7 +10,7 @@ type FormError struct {
 	Message string
 }
 
-templ GaugeForm(method string, action string, gaugeTemplate *db.GaugeTemplate, errors []FormError) {
+templ GaugeForm(method string, action string, gauge *db.Gauge, errors []FormError) {
 	<script>
 		// Function to update the icon preview when a different icon is selected
 		function updateIconPreview(iconName) {
@@ -57,7 +57,7 @@ templ GaugeForm(method string, action string, gaugeTemplate *db.GaugeTemplate, e
 	<div class="max-w-2xl mx-auto p-6">
 		<div class="bg-base-100 shadow-xl rounded-box p-8">
 			<h1 class="text-2xl font-bold mb-6">
-				if gaugeTemplate == nil {
+				if gauge == nil {
 					{ "New Gauge" }
 				} else {
 					{ "Edit Gauge" }
@@ -90,7 +90,7 @@ templ GaugeForm(method string, action string, gaugeTemplate *db.GaugeTemplate, e
 					hx-swap="outerHTML"
 					enctype="application/x-www-form-urlencoded"
 				>
-					@formFields(gaugeTemplate, errors)
+					@formFields(gauge, errors)
 				</form>
 			} else {
 				<form
@@ -100,14 +100,14 @@ templ GaugeForm(method string, action string, gaugeTemplate *db.GaugeTemplate, e
 					hx-swap="outerHTML"
 					hx-push-url="/admin"
 				>
-					@formFields(gaugeTemplate, errors)
+					@formFields(gauge, errors)
 				</form>
 			}
 		</div>
 	</div>
 }
 
-templ formFields(gaugeTemplate *db.GaugeTemplate, errors []FormError) {
+templ formFields(gauge *db.Gauge, errors []FormError) {
 	<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
 		<div>
 			<label class="label" for="name">
@@ -118,8 +118,8 @@ templ formFields(gaugeTemplate *db.GaugeTemplate, errors []FormError) {
 				id="name"
 				name="name"
 				class={ "input input-bordered w-full", templ.KV("input-error", hasError(errors, "name")) }
-				if gaugeTemplate != nil {
-					value={ gaugeTemplate.Name }
+				if gauge != nil {
+					value={ gauge.Name }
 				}
 				placeholder="Enter gauge name"
 				required
@@ -144,17 +144,17 @@ templ formFields(gaugeTemplate *db.GaugeTemplate, errors []FormError) {
 					onchange="updateIconPreview(this.value)"
 				>
 					<option value="">Select an icon</option>
-					<option value="water" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "water" }>Water</option>
-					<option value="fire" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "fire" }>Fire</option>
-					<option value="heart" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "heart" }>Heart</option>
-					<option value="star" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "star" }>Star</option>
-					<option value="bolt" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "bolt" }>Bolt</option>
-					<option value="chart-bar" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "chart-bar" }>Chart Bar</option>
+					<option value="water" selected?={ gauge != nil && gauge.Icon == "water" }>Water</option>
+					<option value="fire" selected?={ gauge != nil && gauge.Icon == "fire" }>Fire</option>
+					<option value="heart" selected?={ gauge != nil && gauge.Icon == "heart" }>Heart</option>
+					<option value="star" selected?={ gauge != nil && gauge.Icon == "star" }>Star</option>
+					<option value="bolt" selected?={ gauge != nil && gauge.Icon == "bolt" }>Bolt</option>
+					<option value="chart-bar" selected?={ gauge != nil && gauge.Icon == "chart-bar" }>Chart Bar</option>
 				</select>
 				<div class="flex items-center justify-center w-12 h-12 bg-base-200 rounded-lg">
 					<div id="icon-preview" class="w-6 h-6">
-						if gaugeTemplate != nil && gaugeTemplate.Icon != "" {
-							@Icon(gaugeTemplate.Icon, "w-6 h-6")
+						if gauge != nil && gauge.Icon != "" {
+							@Icon(gauge.Icon, "w-6 h-6")
 						}
 					</div>
 				</div>
@@ -177,8 +177,8 @@ templ formFields(gaugeTemplate *db.GaugeTemplate, errors []FormError) {
 			class={ "textarea textarea-bordered w-full min-h-24", templ.KV("textarea-error", hasError(errors, "description")) }
 			placeholder="Enter gauge description (optional)"
 		>
-			if gaugeTemplate != nil && gaugeTemplate.Description.Valid {
-				{ gaugeTemplate.Description.String }
+			if gauge != nil && gauge.Description.Valid {
+				{ gauge.Description.String }
 			}
 		</textarea>
 		if err := getError(errors, "description"); err != nil {
@@ -198,8 +198,8 @@ templ formFields(gaugeTemplate *db.GaugeTemplate, errors []FormError) {
 				id="target"
 				name="target"
 				class={ "input input-bordered w-full", templ.KV("input-error", hasError(errors, "target")) }
-				if gaugeTemplate != nil {
-					value={ fmt.Sprintf("%d", int(gaugeTemplate.Target)) }
+				if gauge != nil {
+					value={ fmt.Sprintf("%d", int(gauge.Target)) }
 				}
 				placeholder="Enter target value"
 				required
@@ -222,8 +222,8 @@ templ formFields(gaugeTemplate *db.GaugeTemplate, errors []FormError) {
 				id="unit"
 				name="unit"
 				class={ "input input-bordered w-full", templ.KV("input-error", hasError(errors, "unit")) }
-				if gaugeTemplate != nil {
-					value={ gaugeTemplate.Unit }
+				if gauge != nil {
+					value={ gauge.Unit }
 				}
 				placeholder="Enter unit (e.g., liters, steps)"
 				required
@@ -246,9 +246,9 @@ templ formFields(gaugeTemplate *db.GaugeTemplate, errors []FormError) {
 				id="frequency" 
 				class={ "select select-bordered w-full", templ.KV("select-error", hasError(errors, "frequency")) }
 			>
-				<option value="weekly" selected?={ gaugeTemplate == nil || gaugeTemplate.Frequency == "weekly" }>Weekly</option>
-				<option value="bi-weekly" selected?={ gaugeTemplate != nil && gaugeTemplate.Frequency == "bi-weekly" }>Bi-Weekly</option>
-				<option value="monthly" selected?={ gaugeTemplate != nil && gaugeTemplate.Frequency == "monthly" }>Monthly</option>
+				<option value="weekly" selected?={ gauge == nil || gauge.Frequency == "weekly" }>Weekly</option>
+				<option value="bi-weekly" selected?={ gauge != nil && gauge.Frequency == "bi-weekly" }>Bi-Weekly</option>
+				<option value="monthly" selected?={ gauge != nil && gauge.Frequency == "monthly" }>Monthly</option>
 			</select>
 			<label class="label">
 				<span class="label-text-alt">How often should this metric be reviewed?</span>
@@ -264,28 +264,13 @@ templ formFields(gaugeTemplate *db.GaugeTemplate, errors []FormError) {
 				id="direction" 
 				class={ "select select-bordered w-full", templ.KV("select-error", hasError(errors, "direction")) }
 			>
-				<option value="under" selected?={ gaugeTemplate == nil || gaugeTemplate.Direction == "under" }>Under Target is Good (↓)</option>
-				<option value="over" selected?={ gaugeTemplate != nil && gaugeTemplate.Direction == "over" }>Over Target is Good (↑)</option>
+				<option value="under" selected?={ gauge == nil || gauge.Direction == "under" }>Under Target is Good (↓)</option>
+				<option value="over" selected?={ gauge != nil && gauge.Direction == "over" }>Over Target is Good (↑)</option>
 			</select>
 			<label class="label">
 				<span class="label-text-alt">Should values be under or over the target?</span>
 			</label>
 		</div>
-	</div>
-
-	<div>
-		<label class="label cursor-pointer">
-			<span class="label-text font-medium">Active</span>
-			<input 
-				type="checkbox" 
-				name="active" 
-				class="checkbox checkbox-primary" 
-				checked?={ gaugeTemplate != nil && gaugeTemplate.Active }
-			/>
-		</label>
-		<label class="label">
-			<span class="label-text-alt">When active, the system will automatically create instances for this gauge based on its frequency</span>
-		</label>
 	</div>
 
 	<div class="flex justify-end gap-4 pt-4">

@@ -70,7 +70,7 @@
   - Update admin page to show gauge templates instead of instances
   - _Requirements: 2.1, 2.2, 2.5_
 
-- [x] 6.1 Write unit tests for gauge template handlers
+- [ ] 6.1 Write unit tests for gauge template handlers
   - Test gauge template creation with valid data
   - Test form validation for required fields (frequency, active status)
   - Test gauge template editing and updates

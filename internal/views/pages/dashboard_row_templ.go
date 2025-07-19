@@ -10,10 +10,10 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
-	"health-monitor/internal/db"
+	"health-monitor/internal/models"
 )
 
-func DashboardRow(instance db.ListCurrentPeriodGaugeInstancesRow) templ.Component {
+func DashboardRow(g models.GaugeWithValue) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -39,9 +39,9 @@ func DashboardRow(instance db.ListCurrentPeriodGaugeInstancesRow) templ.Componen
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(instance.Name)
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(g.Gauge.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/dashboard_row.templ`, Line: 10, Col: 21}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/dashboard_row.templ`, Line: 10, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -52,9 +52,9 @@ func DashboardRow(instance db.ListCurrentPeriodGaugeInstancesRow) templ.Componen
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f %s", instance.Value, instance.Unit))
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f %s", g.Value, g.Gauge.Unit))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/dashboard_row.templ`, Line: 11, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/dashboard_row.templ`, Line: 11, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -65,9 +65,9 @@ func DashboardRow(instance db.ListCurrentPeriodGaugeInstancesRow) templ.Componen
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f %s", instance.Target, instance.Unit))
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f %s", g.Gauge.Target, g.Gauge.Unit))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/dashboard_row.templ`, Line: 12, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/dashboard_row.templ`, Line: 12, Col: 60}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -77,7 +77,7 @@ func DashboardRow(instance db.ListCurrentPeriodGaugeInstancesRow) templ.Componen
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var5 = []any{templ.KV("badge badge-success", instance.Value <= instance.Target), templ.KV("badge badge-error", instance.Value > instance.Target)}
+		var templ_7745c5c3_Var5 = []any{templ.KV("badge badge-success", g.Value <= g.Gauge.Target), templ.KV("badge badge-error", g.Value > g.Gauge.Target)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var5...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -99,7 +99,7 @@ func DashboardRow(instance db.ListCurrentPeriodGaugeInstancesRow) templ.Componen
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if instance.Value <= instance.Target {
+		if g.Value <= g.Gauge.Target {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "On Track")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -115,9 +115,9 @@ func DashboardRow(instance db.ListCurrentPeriodGaugeInstancesRow) templ.Componen
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/dashboard/gauges/%d/decrement", instance.ID))
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/dashboard/gauges/%d/decrement", g.Gauge.ID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/dashboard_row.templ`, Line: 26, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/dashboard_row.templ`, Line: 26, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -128,9 +128,9 @@ func DashboardRow(instance db.ListCurrentPeriodGaugeInstancesRow) templ.Componen
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/dashboard/gauges/%d/increment", instance.ID))
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("/dashboard/gauges/%d/increment", g.Gauge.ID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/dashboard_row.templ`, Line: 32, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/dashboard_row.templ`, Line: 32, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {

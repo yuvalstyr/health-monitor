@@ -6,8 +6,8 @@ import (
 	"health-monitor/internal/views/layouts"
 )
 
-templ Admin(gaugeTemplates []db.GaugeTemplate) {
-	@components.GaugeTemplateList(gaugeTemplates)
+templ Admin(gauges []db.Gauge) {
+	@components.GaugeList(gauges)
 }
 
 templ FormContent() {

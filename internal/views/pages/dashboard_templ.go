@@ -13,7 +13,7 @@ import (
 	"health-monitor/internal/views/components"
 )
 
-func Dashboard(gaugeInstances []db.ListCurrentPeriodGaugeInstancesRow) templ.Component {
+func Dashboard(gauges []db.Gauge) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -38,25 +38,8 @@ func Dashboard(gaugeInstances []db.ListCurrentPeriodGaugeInstancesRow) templ.Com
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		for _, instance := range gaugeInstances {
-			templ_7745c5c3_Err = components.GaugeCard(&db.GaugeInstance{
-				ID:          instance.ID,
-				TemplateID:  instance.TemplateID,
-				PeriodStart: instance.PeriodStart,
-				Value:       instance.Value,
-				CreatedAt:   instance.CreatedAt,
-				UpdatedAt:   instance.UpdatedAt,
-			}, &db.GaugeTemplate{
-				ID:          instance.TemplateID,
-				Name:        instance.Name,
-				Description: instance.Description,
-				Target:      instance.Target,
-				Unit:        instance.Unit,
-				Icon:        instance.Icon,
-				Frequency:   instance.Frequency,
-				Direction:   instance.Direction,
-				Active:      true, // Only active templates are returned
-			}).Render(ctx, templ_7745c5c3_Buffer)
+		for _, gauge := range gauges {
+			templ_7745c5c3_Err = components.GaugeCard(&gauge).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

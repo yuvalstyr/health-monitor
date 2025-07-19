@@ -11,10 +11,11 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"fmt"
 	"health-monitor/internal/db"
+	"health-monitor/internal/models"
 	"health-monitor/internal/views/layouts"
 )
 
-func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) templ.Component {
+func TrendsContent(gauge *db.Gauge, history []models.GaugeHistory) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -40,9 +41,9 @@ func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) 
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(template.Name)
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(gauge.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 13, Col: 62}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 14, Col: 59}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -58,9 +59,9 @@ func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) 
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%v", h.Month))
+			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(h.Month)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 39, Col: 65}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 40, Col: 46}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -73,7 +74,7 @@ func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) 
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", h.AverageValue))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 43, Col: 74}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 44, Col: 74}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -84,9 +85,9 @@ func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) 
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(template.Unit)
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(gauge.Unit)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 43, Col: 126}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 44, Col: 123}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -96,7 +97,7 @@ func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) 
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if h.AverageValue >= template.Target {
+			if h.AverageValue >= gauge.Target {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"badge badge-error\">Above Target</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -122,9 +123,9 @@ func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) 
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%v", h.Month))
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(h.Month)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 76, Col: 62}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 77, Col: 43}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -137,7 +138,7 @@ func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) 
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", h.AverageValue))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 78, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 79, Col: 76}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -148,9 +149,9 @@ func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) 
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var8 string
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(template.Unit)
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(gauge.Unit)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 79, Col: 66}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 80, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -161,9 +162,9 @@ func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) 
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", template.Target))
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.1f", gauge.Target))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 82, Col: 77}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 83, Col: 74}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -174,9 +175,9 @@ func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) 
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(template.Unit)
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(gauge.Unit)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 83, Col: 66}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/pages/trends.templ`, Line: 84, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -186,7 +187,7 @@ func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) 
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if h.AverageValue >= template.Target {
+			if h.AverageValue >= gauge.Target {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div class=\"badge badge-error gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13 7h8m0 0v8m0-8l-8 8-4-4-6 6\"></path></svg> Above Target</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -202,7 +203,7 @@ func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) 
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</tbody></table></div></div></div></div><script>\n\t\t\t// Prepare chart data\n\t\t\tconst ctx = document.getElementById('trendsChart').getContext('2d');\n\t\t\tconst data = {\n\t\t\t\tlabels: [ for _, h := range history { fmt.Sprintf(\"%v\", h.Month) } ],\n\t\t\t\tdatasets: [{\n\t\t\t\t\tlabel: 'Average Value',\n\t\t\t\t\tdata: [ for _, h := range history { h.AverageValue } ],\n\t\t\t\t\tborderColor: '#570DF8',\n\t\t\t\t\tbackgroundColor: '#570DF822',\n\t\t\t\t\tfill: true,\n\t\t\t\t\ttension: 0.4\n\t\t\t\t}, {\n\t\t\t\t\tlabel: 'Target',\n\t\t\t\t\tdata: Array(history.length).fill({ fmt.Sprintf(\"%.1f\", template.Target) }),\n\t\t\t\t\tborderColor: '#F87272',\n\t\t\t\t\tborderDash: [5, 5],\n\t\t\t\t\tfill: false\n\t\t\t\t}]\n\t\t\t};\n\n\t\t\t// Create chart\n\t\t\tnew Chart(ctx, {\n\t\t\t\ttype: 'line',\n\t\t\t\tdata: data,\n\t\t\t\toptions: {\n\t\t\t\t\tresponsive: true,\n\t\t\t\t\tmaintainAspectRatio: false,\n\t\t\t\t\tplugins: {\n\t\t\t\t\t\tlegend: {\n\t\t\t\t\t\t\tposition: 'top',\n\t\t\t\t\t\t}\n\t\t\t\t\t},\n\t\t\t\t\tscales: {\n\t\t\t\t\t\ty: {\n\t\t\t\t\t\t\tbeginAtZero: true,\n\t\t\t\t\t\t\tticks: {\n\t\t\t\t\t\t\t\tcallback: function(value) {\n\t\t\t\t\t\t\t\t\treturn value + ' ' + { template.Unit };\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t},\n\t\t\t\t\tinteraction: {\n\t\t\t\t\t\tintersect: false,\n\t\t\t\t\t\tmode: 'index'\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\t\t</script></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</tbody></table></div></div></div></div><script>\n\t\t\t// Prepare chart data\n\t\t\tconst ctx = document.getElementById('trendsChart').getContext('2d');\n\t\t\tconst data = {\n\t\t\t\tlabels: [ for _, h := range history { h.Month } ],\n\t\t\t\tdatasets: [{\n\t\t\t\t\tlabel: 'Average Value',\n\t\t\t\t\tdata: [ for _, h := range history { h.AverageValue } ],\n\t\t\t\t\tborderColor: '#570DF8',\n\t\t\t\t\tbackgroundColor: '#570DF822',\n\t\t\t\t\tfill: true,\n\t\t\t\t\ttension: 0.4\n\t\t\t\t}, {\n\t\t\t\t\tlabel: 'Target',\n\t\t\t\t\tdata: Array(history.length).fill({ fmt.Sprintf(\"%.1f\", gauge.Target) }),\n\t\t\t\t\tborderColor: '#F87272',\n\t\t\t\t\tborderDash: [5, 5],\n\t\t\t\t\tfill: false\n\t\t\t\t}]\n\t\t\t};\n\n\t\t\t// Create chart\n\t\t\tnew Chart(ctx, {\n\t\t\t\ttype: 'line',\n\t\t\t\tdata: data,\n\t\t\t\toptions: {\n\t\t\t\t\tresponsive: true,\n\t\t\t\t\tmaintainAspectRatio: false,\n\t\t\t\t\tplugins: {\n\t\t\t\t\t\tlegend: {\n\t\t\t\t\t\t\tposition: 'top',\n\t\t\t\t\t\t}\n\t\t\t\t\t},\n\t\t\t\t\tscales: {\n\t\t\t\t\t\ty: {\n\t\t\t\t\t\t\tbeginAtZero: true,\n\t\t\t\t\t\t\tticks: {\n\t\t\t\t\t\t\t\tcallback: function(value) {\n\t\t\t\t\t\t\t\t\treturn value + ' ' + { gauge.Unit };\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t},\n\t\t\t\t\tinteraction: {\n\t\t\t\t\t\tintersect: false,\n\t\t\t\t\t\tmode: 'index'\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\t\t</script></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -210,7 +211,7 @@ func TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) 
 	})
 }
 
-func TrendsPage(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) templ.Component {
+func TrendsPage(gauge *db.Gauge, history []models.GaugeHistory) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -231,7 +232,7 @@ func TrendsPage(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) tem
 			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = layouts.Base("Trends", TrendsContent(template, history)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = layouts.Base("Trends", TrendsContent(gauge, history)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
