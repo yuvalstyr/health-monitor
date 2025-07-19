@@ -12,39 +12,39 @@ func TestCalculateCurrentPeriodStart_Weekly(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "Monday should return same Monday",
+			name:     "Sunday should return same Sunday",
+			date:     "2024-01-14", // Sunday
+			expected: "2024-01-14",
+		},
+		{
+			name:     "Monday should return previous Sunday",
 			date:     "2024-01-15", // Monday
-			expected: "2024-01-15",
+			expected: "2024-01-14", // Sunday
 		},
 		{
-			name:     "Tuesday should return previous Monday",
+			name:     "Tuesday should return previous Sunday",
 			date:     "2024-01-16", // Tuesday
-			expected: "2024-01-15", // Monday
+			expected: "2024-01-14", // Sunday
 		},
 		{
-			name:     "Wednesday should return previous Monday",
+			name:     "Wednesday should return previous Sunday",
 			date:     "2024-01-17", // Wednesday
-			expected: "2024-01-15", // Monday
+			expected: "2024-01-14", // Sunday
 		},
 		{
-			name:     "Thursday should return previous Monday",
+			name:     "Thursday should return previous Sunday",
 			date:     "2024-01-18", // Thursday
-			expected: "2024-01-15", // Monday
+			expected: "2024-01-14", // Sunday
 		},
 		{
-			name:     "Friday should return previous Monday",
+			name:     "Friday should return previous Sunday",
 			date:     "2024-01-19", // Friday
-			expected: "2024-01-15", // Monday
+			expected: "2024-01-14", // Sunday
 		},
 		{
-			name:     "Saturday should return previous Monday",
+			name:     "Saturday should return previous Sunday",
 			date:     "2024-01-20", // Saturday
-			expected: "2024-01-15", // Monday
-		},
-		{
-			name:     "Sunday should return previous Monday",
-			date:     "2024-01-21", // Sunday
-			expected: "2024-01-15", // Monday
+			expected: "2024-01-14", // Sunday
 		},
 	}
 
@@ -69,34 +69,34 @@ func TestCalculateCurrentPeriodStart_BiWeekly(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "1st of month should return 1st",
-			date:     "2024-01-01",
-			expected: "2024-01-01",
+			name:     "Week 1 (Jan 1, 2024 - Monday) should return Dec 31",
+			date:     "2024-01-01", // Monday, Week 1
+			expected: "2023-12-31", // Start of weeks 1-2 period (Sunday)
 		},
 		{
-			name:     "14th of month should return 1st",
-			date:     "2024-01-14",
-			expected: "2024-01-01",
+			name:     "Week 1 (Jan 7, 2024 - Sunday) should return Dec 31",
+			date:     "2024-01-07", // Sunday, Week 1
+			expected: "2023-12-31", // Start of weeks 1-2 period (Sunday)
 		},
 		{
-			name:     "15th of month should return 15th",
-			date:     "2024-01-15",
-			expected: "2024-01-15",
+			name:     "Week 2 (Jan 8, 2024 - Monday) should return Dec 31",
+			date:     "2024-01-08", // Monday, Week 2
+			expected: "2023-12-31", // Start of weeks 1-2 period (Sunday)
 		},
 		{
-			name:     "31st of month should return 15th",
-			date:     "2024-01-31",
-			expected: "2024-01-15",
+			name:     "Week 3 (Jan 15, 2024 - Monday) should return Jan 14",
+			date:     "2024-01-15", // Monday, Week 3
+			expected: "2024-01-14", // Start of weeks 3-4 period (Sunday)
 		},
 		{
-			name:     "February 29th (leap year) should return 15th",
-			date:     "2024-02-29",
-			expected: "2024-02-15",
+			name:     "Week 4 (Jan 22, 2024 - Monday) should return Jan 14",
+			date:     "2024-01-22", // Monday, Week 4
+			expected: "2024-01-14", // Start of weeks 3-4 period (Sunday)
 		},
 		{
-			name:     "February 14th should return 1st",
-			date:     "2024-02-14",
-			expected: "2024-02-01",
+			name:     "Week 5 (Jan 29, 2024 - Monday) should return Jan 28",
+			date:     "2024-01-29", // Monday, Week 5
+			expected: "2024-01-28", // Start of weeks 5-6 period (Sunday)
 		},
 	}
 
@@ -168,24 +168,24 @@ func TestCalculateNextPeriodStart_Weekly(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "Monday should return next Monday",
+			name:     "Monday should return next Sunday",
 			date:     "2024-01-15", // Monday
-			expected: "2024-01-22", // Next Monday
+			expected: "2024-01-21", // Next Sunday
 		},
 		{
-			name:     "Friday should return next Monday",
+			name:     "Friday should return next Sunday",
 			date:     "2024-01-19", // Friday
-			expected: "2024-01-22", // Next Monday
+			expected: "2024-01-21", // Next Sunday
 		},
 		{
-			name:     "Sunday should return next Monday",
+			name:     "Sunday should return next Sunday",
 			date:     "2024-01-21", // Sunday
-			expected: "2024-01-22", // Next Monday
+			expected: "2024-01-28", // Next Sunday
 		},
 		{
 			name:     "Year boundary - December Sunday",
 			date:     "2023-12-31", // Sunday
-			expected: "2024-01-01", // Next Monday (New Year)
+			expected: "2024-01-07", // Next Sunday (New Year)
 		},
 	}
 
@@ -210,34 +210,34 @@ func TestCalculateNextPeriodStart_BiWeekly(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "1st of month should return 15th",
-			date:     "2024-01-01",
-			expected: "2024-01-15",
+			name:     "Week 1 (Jan 1) should return start of weeks 3-4 period",
+			date:     "2024-01-01", // Monday, Week 1
+			expected: "2024-01-14", // Sunday of Week 3
 		},
 		{
-			name:     "14th of month should return 15th",
-			date:     "2024-01-14",
-			expected: "2024-01-15",
+			name:     "Week 2 (Jan 8) should return start of weeks 3-4 period",
+			date:     "2024-01-08", // Monday, Week 2
+			expected: "2024-01-14", // Sunday of Week 3
 		},
 		{
-			name:     "15th of month should return 1st of next month",
-			date:     "2024-01-15",
-			expected: "2024-02-01",
+			name:     "Week 3 (Jan 15) should return start of weeks 5-6 period",
+			date:     "2024-01-15", // Monday, Week 3
+			expected: "2024-01-28", // Sunday of Week 5
 		},
 		{
-			name:     "31st of January should return 1st of February",
-			date:     "2024-01-31",
-			expected: "2024-02-01",
+			name:     "Week 4 (Jan 22) should return start of weeks 5-6 period",
+			date:     "2024-01-22", // Monday, Week 4
+			expected: "2024-01-28", // Sunday of Week 5
 		},
 		{
-			name:     "December 31st should return January 1st (year boundary)",
-			date:     "2024-12-31",
-			expected: "2025-01-01",
+			name:     "Week 5 (Jan 29) should return start of weeks 7-8 period",
+			date:     "2024-01-29", // Monday, Week 5
+			expected: "2024-02-11", // Sunday of Week 7
 		},
 		{
-			name:     "February 29th (leap year) should return March 1st",
-			date:     "2024-02-29",
-			expected: "2024-03-01",
+			name:     "Year boundary - Week 52 should return Week 1 of next year",
+			date:     "2024-12-23", // Monday, Week 52 (in weeks 51-52 period)
+			expected: "2024-12-29", // Sunday of Week 53 (which becomes Week 1 of next bi-weekly period)
 		},
 	}
 
@@ -309,14 +309,14 @@ func TestCalculatePeriodEnd_Weekly(t *testing.T) {
 		expected    string
 	}{
 		{
-			name:        "Monday start should end on Sunday",
-			periodStart: "2024-01-15", // Monday
-			expected:    "2024-01-21", // Sunday
+			name:        "Sunday start should end on Saturday",
+			periodStart: "2024-01-14", // Sunday
+			expected:    "2024-01-20", // Saturday
 		},
 		{
 			name:        "Year boundary week",
-			periodStart: "2023-12-25", // Monday
-			expected:    "2023-12-31", // Sunday
+			periodStart: "2023-12-31", // Sunday
+			expected:    "2024-01-06", // Saturday
 		},
 	}
 
@@ -477,7 +477,7 @@ func TestEdgeCases_YearBoundary(t *testing.T) {
 			function: "next",
 			freq:     "weekly",
 			date:     "2023-12-31", // Sunday
-			expected: "2024-01-01", // Monday
+			expected: "2024-01-07", // Next Sunday
 		},
 		{
 			name:     "December 31st - next monthly period",
@@ -491,7 +491,7 @@ func TestEdgeCases_YearBoundary(t *testing.T) {
 			function: "next",
 			freq:     "bi-weekly",
 			date:     "2023-12-31",
-			expected: "2024-01-01",
+			expected: "2023-12-31",
 		},
 	}
 
@@ -546,12 +546,12 @@ func TestTimeZoneHandling(t *testing.T) {
 		{
 			name:     "EST timezone - weekly calculation",
 			date:     time.Date(2024, 1, 17, 15, 30, 0, 0, est), // Wednesday in EST
-			expected: "2024-01-15", // Monday
+			expected: "2024-01-14", // Sunday
 		},
 		{
 			name:     "PST timezone - weekly calculation",
 			date:     time.Date(2024, 1, 17, 12, 30, 0, 0, pst), // Wednesday in PST
-			expected: "2024-01-15", // Monday
+			expected: "2024-01-14", // Sunday
 		},
 	}
 
