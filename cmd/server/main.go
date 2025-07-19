@@ -52,14 +52,11 @@ func main() {
 	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		gauges, err := queries.ListGauges(r.Context())
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		// For now, show empty dashboard - this will be updated in task 7 to show current period instances
+		gaugeInstances := []db.ListCurrentPeriodGaugeInstancesRow{}
 
 		w.Header().Set("Content-Type", "text/html")
-		err = layouts.Base("Dashboard", pages.Dashboard(gauges)).Render(r.Context(), w)
+		err = layouts.Base("Dashboard", pages.Dashboard(gaugeInstances)).Render(r.Context(), w)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

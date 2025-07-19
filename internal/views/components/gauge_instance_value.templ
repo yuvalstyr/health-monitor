@@ -1,0 +1,12 @@
+package components
+
+import (
+	"fmt"
+	"health-monitor/internal/db"
+)
+
+templ GaugeInstanceValue(instance *db.GaugeInstance, value float64) {
+	<div class="gauge-instance-value" id={ fmt.Sprintf("gauge-instance-%d", instance.ID) }>
+		<span class="text-2xl font-bold">{ fmt.Sprintf("%.1f", value) }</span>
+	</div>
+}
