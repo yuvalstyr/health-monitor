@@ -44,9 +44,6 @@ install-tools:
 tidy:
 	go mod tidy
 
-# Database migration commands
-.PHONY: migrate-status migrate-up migrate-down migrate-create migrate-reset
-
 migrate-status:
 	go run github.com/pressly/goose/v3/cmd/goose@latest -dir migrations sqlite3 health-monitor.db status
 
