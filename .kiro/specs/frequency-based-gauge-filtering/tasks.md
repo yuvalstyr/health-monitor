@@ -23,7 +23,7 @@
   - Update database initialization code to use Goose
   - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 2. Create new database schema with separate tables
+- [x] 2. Create new database schema with separate tables
   - Write Goose migration to create gauge_templates table
   - Write Goose migration to create gauge_instances table  
   - Update gauge_values table to reference gauge_instances

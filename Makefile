@@ -1,4 +1,4 @@
-.PHONY: all build run clean generate test test-coverage dev dev-restart
+.PHONY: all build run clean generate test test-coverage dev dev-restart migrate-status migrate-up migrate-down migrate-create migrate-reset
 
 all: generate build
 
@@ -39,10 +39,26 @@ install-tools:
 	go install github.com/a-h/templ/cmd/templ@latest
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 	go install github.com/air-verse/air@latest
+	go install github.com/pressly/goose/v3/cmd/goose@latest
 
 tidy:
 	go mod tidy
 
-.PHONY: migrations
-migrations:
-	atlas migrate diff --env local
+migrate-status:
+	go run github.com/pressly/goose/v3/cmd/goose@latest -dir migrations sqlite3 health-monitor.db status
+
+migrate-up:
+	go run github.com/pressly/goose/v3/cmd/goose@latest -dir migrations sqlite3 health-monitor.db up
+
+migrate-down:
+	go run github.com/pressly/goose/v3/cmd/goose@latest -dir migrations sqlite3 health-monitor.db down
+
+migrate-create:
+	@if [ -z "$(NAME)" ]; then \
+		echo "Usage: make migrate-create NAME=your_migration_name"; \
+		exit 1; \
+	fi
+	go run github.com/pressly/goose/v3/cmd/goose@latest -dir migrations create $(NAME) sql
+
+migrate-reset:
+	go run github.com/pressly/goose/v3/cmd/goose@latest -dir migrations sqlite3 health-monitor.db reset

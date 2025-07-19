@@ -78,11 +78,9 @@ health-monitor/
    go install github.com/cosmtrek/air@latest
    ```
 
-4. **Atlas**: For database migrations
+4. **Goose**: For database migrations
    ```bash
-   # Using Homebrew
-   brew install ariga/tap/atlas
-   # Or direct download from https://atlasgo.io
+   go install github.com/pressly/goose/v3/cmd/goose@latest
    ```
 
 5. **SQLite**: For database management
@@ -98,23 +96,32 @@ make install-tools
 
 ### Database Setup
 
-There is currently a mismatch between the schema in migrations/schema.sql and what the application expects. The application requires additional columns in the `gauges` table:
+The application uses Goose for database migrations. The migration files are located in the `migrations/` directory and are automatically applied when the application starts.
 
-1. **Using manual setup** (recommended for now):
+1. **Automatic Migration** (recommended):
    ```bash
-   # Create the database with the correct schema
-   # Apply the schema from the provided file
-   sqlite3 health.db < updated_schema.sql
-   cat updated_schema.sql | sqlite3 health.db
+   # Migrations are automatically applied when starting the application
+   make run
    ```
 
-2. **Using Atlas** (currently needs schema update):
+2. **Manual Migration Management**:
    ```bash
-   # Note: This will use the current schema.sql which may be missing required columns
-   # First, update the atlas.hcl file to point to health.db instead of health-monitor.db
-   # Then run:
-   make migrations
+   # Check migration status
+   make migrate-status
+   
+   # Apply all pending migrations
+   make migrate-up
+   
+   # Rollback the last migration
+   make migrate-down
+   
+   # Create a new migration file
+   make migrate-create NAME=your_migration_name
    ```
+
+3. **Database File Location**:
+   - Default: `health-monitor.db` in the project root
+   - Can be overridden with `DB_PATH` environment variable
 
 ### Running the Application
 
@@ -162,17 +169,20 @@ There is currently a mismatch between the schema in migrations/schema.sql and wh
    lsof -i :3000 | awk 'NR!=1 {print $2}' | xargs kill -9 2>/dev/null || true
    ```
 
-## Notes on Migration Management
+## Database Migration Management
 
-Currently, there is a discrepancy between:
-1. The schema defined in `migrations/schema.sql` (missing columns like `value`, `icon`, etc.)
-2. The schema expected by the application (queries.sql references columns not in schema.sql)
-3. The database file referenced in atlas.hcl (health-monitor.db) vs main.go (health.db)
+The application uses Goose for database migrations with the following structure:
 
-To properly align these, consider:
-1. Updating `migrations/schema.sql` with the complete schema
-2. Updating `atlas.hcl` to reference the correct database file
-3. Running a proper migration with Atlas once everything is aligned
+1. **Migration Files**: Located in `migrations/` directory
+   - `00001_initial_schema.sql`: Creates the initial database schema
+   - `00002_create_gauge_templates_instances.sql`: Adds template/instance separation for frequency-based filtering
+   - Future migrations follow the pattern: `NNNNN_description.sql`
+
+2. **Migration Features**:
+   - Automatic migration on application startup
+   - Version tracking with rollback support
+   - Embedded migrations in the binary for deployment
+   - SQL-based migrations with up/down support
 
 ### Installation
    ```bash
@@ -183,17 +193,24 @@ To properly align these, consider:
    # Install dependencies
    go mod download
 
-   # Initialize database
-   make migrate
+   # Install required tools
+   make install-tools
+
+   # Initialize database (migrations run automatically on first start)
+   make run
    ```
 
 ### Database Changes
 
-1. **Modifying the Schema**:
-   - Edit `internal/db/schema.sql` to add/modify tables
-   - Run migrations:
+1. **Creating New Migrations**:
+   - Create a new migration file:
    ```bash
-   make migrate
+   make migrate-create NAME=your_migration_name
+   ```
+   - Edit the generated migration file in `migrations/`
+   - Apply the migration:
+   ```bash
+   make migrate-up
    ```
 
 2. **Adding/Modifying Queries**:
@@ -255,22 +272,26 @@ To properly align these, consider:
 
 2. **Making Changes**:
    - Database changes:
-     1. Modify schema.sql or queries.sql
-     2. Run `make migrate` and `make sqlc`
+     1. Create new migration: `make migrate-create NAME=your_change`
+     2. Edit the generated migration file
+     3. Apply migration: `make migrate-up`
+     4. Update queries.sql if needed and run `make generate`
    - Template changes:
      1. Edit .templ files
-     2. Run `make templ`
+     2. Run `make generate` (includes templ generation)
    - Server changes:
      1. Edit Go files
-     2. Server will auto-reload
+     2. Server will auto-reload with `make dev`
 
 3. **Common Commands**:
    ```bash
-   make run          # Start development server
-   make migrate      # Run database migrations
-   make sqlc        # Generate SQLC code
-   make templ       # Generate Templ code
-   make clean       # Clean generated files
+   make run              # Start development server
+   make dev              # Start with live reload
+   make migrate-status   # Check migration status
+   make migrate-up       # Apply pending migrations
+   make migrate-down     # Rollback last migration
+   make generate         # Generate SQLC and Templ code
+   make clean           # Clean generated files
    ```
 
 ### HTMX Integration
