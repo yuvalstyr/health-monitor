@@ -244,8 +244,8 @@ func (q *Queries) GetGaugeValues(ctx context.Context, gaugeID int64) ([]GaugeVal
 }
 
 const instanceExistsForPeriod = `-- name: InstanceExistsForPeriod :one
-SELECT COUNT(*) FROM gauge_instances 
-WHERE template_id = ? AND period_start = ?
+SELECT EXISTS(SELECT 1 FROM gauge_instances 
+WHERE template_id = ? AND period_start = ?) as instance_exists
 `
 
 type InstanceExistsForPeriodParams struct {
@@ -255,9 +255,9 @@ type InstanceExistsForPeriodParams struct {
 
 func (q *Queries) InstanceExistsForPeriod(ctx context.Context, arg InstanceExistsForPeriodParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, instanceExistsForPeriod, arg.TemplateID, arg.PeriodStart)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
+	var instance_exists int64
+	err := row.Scan(&instance_exists)
+	return instance_exists, err
 }
 
 const listActiveGaugeTemplates = `-- name: ListActiveGaugeTemplates :many

@@ -19,10 +19,17 @@ CREATE TABLE gauge_values (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     gauge_id INTEGER NOT NULL,
     value REAL NOT NULL,
-    week INTEGER NOT NULL,
-    year INTEGER NOT NULL,
+    week INTEGER NOT NULL CHECK (week >= 1 AND week <= 53),
+    year INTEGER NOT NULL CHECK (year >= 1900 AND year <= 2100),
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (gauge_id) REFERENCES gauges(id) ON DELETE CASCADE
+    FOREIGN KEY (gauge_id) REFERENCES gauges(id) ON DELETE CASCADE,
+    -- Ensure week 53 only exists in years that actually have 53 weeks
+    CHECK (week <= 52 OR (week = 53 AND (
+        -- Years with 53 weeks: years starting on Thursday or leap years starting on Wednesday
+        (year % 4 = 0 AND year % 100 != 0) OR (year % 400 = 0) OR
+        (strftime('%w', year || '-01-01') = '4') OR
+        ((year % 4 = 0 AND year % 100 != 0 OR year % 400 = 0) AND strftime('%w', year || '-01-01') = '3')
+    )))
 );
 
 -- Create indexes

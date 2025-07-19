@@ -43,6 +43,7 @@ CREATE INDEX idx_gauge_templates_active ON gauge_templates(active);
 CREATE INDEX idx_gauge_templates_frequency ON gauge_templates(frequency);
 CREATE INDEX idx_gauge_instances_template ON gauge_instances(template_id);
 CREATE INDEX idx_gauge_instances_period ON gauge_instances(period_start);
+CREATE UNIQUE INDEX idx_gauge_instances_template_period ON gauge_instances(template_id, period_start);
 CREATE INDEX idx_gauge_values_gauge_id ON gauge_values(gauge_id);
 CREATE INDEX idx_gauge_values_date ON gauge_values(date);
 

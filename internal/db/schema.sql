@@ -10,8 +10,8 @@ CREATE TABLE gauge_templates (
     target REAL NOT NULL,
     unit TEXT NOT NULL,
     icon TEXT NOT NULL DEFAULT 'chart-bar',
-    frequency TEXT NOT NULL, -- 'weekly', 'bi-weekly', 'monthly'
-    direction TEXT NOT NULL DEFAULT 'under',
+    frequency TEXT NOT NULL CHECK (frequency IN ('weekly', 'bi-weekly', 'monthly')),
+    direction TEXT NOT NULL DEFAULT 'under' CHECK (direction IN ('under', 'over')),
     active BOOLEAN DEFAULT false,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -41,3 +41,4 @@ CREATE INDEX idx_gauge_templates_active ON gauge_templates(active);
 CREATE INDEX idx_gauge_templates_frequency ON gauge_templates(frequency);
 CREATE INDEX idx_gauge_instances_template ON gauge_instances(template_id);
 CREATE INDEX idx_gauge_instances_period ON gauge_instances(period_start);
+CREATE UNIQUE INDEX idx_gauge_instances_template_period ON gauge_instances(template_id, period_start);

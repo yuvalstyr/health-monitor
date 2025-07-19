@@ -54,8 +54,8 @@ WHERE id = ?;
 DELETE FROM gauge_instances WHERE id = ?;
 
 -- name: InstanceExistsForPeriod :one
-SELECT COUNT(*) FROM gauge_instances 
-WHERE template_id = ? AND period_start = ?;
+SELECT EXISTS(SELECT 1 FROM gauge_instances 
+WHERE template_id = ? AND period_start = ?) as instance_exists;
 
 -- Dashboard and Current Period Queries
 -- name: ListCurrentPeriodGaugeInstances :many

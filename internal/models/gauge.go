@@ -42,6 +42,10 @@ type GaugeHistory struct {
 
 // NewGaugeInstanceWithStatus creates a new GaugeInstanceWithStatus instance
 func NewGaugeInstanceWithStatus(instance *db.ListCurrentPeriodGaugeInstancesRow) *GaugeInstanceWithStatus {
+	if instance == nil {
+		return nil
+	}
+	
 	percent := 0.0
 	if instance.Target > 0 {
 		percent = (instance.Value / instance.Target) * 100
@@ -61,6 +65,10 @@ func NewGaugeInstanceWithStatus(instance *db.ListCurrentPeriodGaugeInstancesRow)
 
 // NewGaugeTemplateWithStatus creates a new GaugeTemplateWithStatus instance
 func NewGaugeTemplateWithStatus(template *db.GaugeTemplate, currentValue float64) *GaugeTemplateWithStatus {
+	if template == nil {
+		return nil
+	}
+	
 	percent := 0.0
 	if template.Target > 0 {
 		percent = (currentValue / template.Target) * 100
