@@ -168,18 +168,40 @@ type SchedulingService interface {
 func CalculateCurrentPeriodStart(frequency string, currentTime time.Time) time.Time {
     switch frequency {
     case "weekly":
-        // Monday of current week
-        weekday := int(currentTime.Weekday())
-        if weekday == 0 { weekday = 7 } // Sunday = 7
-        return currentTime.AddDate(0, 0, -(weekday-1)).Truncate(24 * time.Hour)
+        // Sunday of current week
+        weekday := int(currentTime.Weekday()) // Sunday = 0, Monday = 1, etc.
+        sunday := currentTime.AddDate(0, 0, -weekday)
+        return time.Date(sunday.Year(), sunday.Month(), sunday.Day(), 0, 0, 0, 0, sunday.Location())
     
     case "bi-weekly":
-        // First or 15th of current month based on current date
-        if currentTime.Day() <= 14 {
-            return time.Date(currentTime.Year(), currentTime.Month(), 1, 0, 0, 0, 0, currentTime.Location())
+        // Calculate based on ISO week numbers: weeks 1-2, 3-4, 5-6, etc.
+        year, week := currentTime.ISOWeek()
+        
+        // Determine which bi-weekly period this week belongs to
+        var periodStartWeek int
+        if week%2 == 1 {
+            periodStartWeek = week // Odd week starts bi-weekly period
         } else {
-            return time.Date(currentTime.Year(), currentTime.Month(), 15, 0, 0, 0, 0, currentTime.Location())
+            periodStartWeek = week - 1 // Even week continues bi-weekly period
         }
+        
+        // Calculate the Sunday of the period start week
+        jan1 := time.Date(year, 1, 1, 0, 0, 0, 0, currentTime.Location())
+        jan1Weekday := int(jan1.Weekday())
+        
+        // Find the Monday of week 1 (ISO week standard)
+        week1Monday := jan1.AddDate(0, 0, -(jan1Weekday-1))
+        if jan1Weekday == 0 {
+            week1Monday = jan1.AddDate(0, 0, 1) // If Jan 1 is Sunday, Monday is next day
+        }
+        if jan1Weekday > 4 { // If Jan 1 is Fri, Sat, or Sun, week 1 starts next Monday
+            week1Monday = week1Monday.AddDate(0, 0, 7)
+        }
+        
+        // Calculate the Monday of our target week, then go back to Sunday
+        periodStartMonday := week1Monday.AddDate(0, 0, (periodStartWeek-1)*7)
+        periodStartSunday := periodStartMonday.AddDate(0, 0, -1)
+        return periodStartSunday
     
     case "monthly":
         // First day of current month
@@ -190,19 +212,14 @@ func CalculateCurrentPeriodStart(frequency string, currentTime time.Time) time.T
 func CalculateNextPeriodStart(frequency string, currentTime time.Time) time.Time {
     switch frequency {
     case "weekly":
-        // Monday of next week
+        // Sunday of next week
         currentStart := CalculateCurrentPeriodStart(frequency, currentTime)
         return currentStart.AddDate(0, 0, 7)
     
     case "bi-weekly":
-        // Next bi-weekly period
-        if currentTime.Day() <= 14 {
-            // Currently in first half, next is 15th
-            return time.Date(currentTime.Year(), currentTime.Month(), 15, 0, 0, 0, 0, currentTime.Location())
-        } else {
-            // Currently in second half, next is 1st of next month
-            return time.Date(currentTime.Year(), currentTime.Month()+1, 1, 0, 0, 0, 0, currentTime.Location())
-        }
+        // Next bi-weekly period (2 weeks after current period start)
+        currentStart := CalculateCurrentPeriodStart(frequency, currentTime)
+        return currentStart.AddDate(0, 0, 14)
     
     case "monthly":
         // First day of next month
@@ -309,28 +326,44 @@ type GaugeInstanceView struct {
 type PeriodCalculator struct{}
 
 func (pc *PeriodCalculator) CalculateWeeklyPeriod(t time.Time) (start, end time.Time) {
-    // Monday to Sunday of current week
-    weekday := int(t.Weekday())
-    if weekday == 0 { weekday = 7 } // Sunday = 7
-    start = t.AddDate(0, 0, -(weekday-1)).Truncate(24 * time.Hour)
+    // Sunday to Saturday of current week
+    weekday := int(t.Weekday()) // Sunday = 0, Monday = 1, etc.
+    start = t.AddDate(0, 0, -weekday).Truncate(24 * time.Hour)
     end = start.AddDate(0, 0, 6).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
     return
 }
 
 func (pc *PeriodCalculator) CalculateBiWeeklyPeriod(t time.Time) (start, end time.Time) {
-    // Determine which bi-weekly period of the month
-    monthStart := time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, t.Location())
-    weekOfMonth := (t.Day()-1)/7 + 1
+    // Calculate based on ISO week numbers: weeks 1-2, 3-4, 5-6, etc.
+    year, week := t.ISOWeek()
     
-    if weekOfMonth <= 2 {
-        // First bi-weekly period (weeks 1-2)
-        start = monthStart
-        end = monthStart.AddDate(0, 0, 13).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+    // Determine which bi-weekly period this week belongs to
+    var periodStartWeek int
+    if week%2 == 1 {
+        periodStartWeek = week // Odd week starts bi-weekly period
     } else {
-        // Second bi-weekly period (weeks 3-4+)
-        start = monthStart.AddDate(0, 0, 14)
-        end = monthStart.AddDate(0, 1, -1).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+        periodStartWeek = week - 1 // Even week continues bi-weekly period
     }
+    
+    // Calculate the Sunday of the period start week
+    jan1 := time.Date(year, 1, 1, 0, 0, 0, 0, t.Location())
+    jan1Weekday := int(jan1.Weekday())
+    
+    // Find the Monday of week 1 (ISO week standard)
+    week1Monday := jan1.AddDate(0, 0, -(jan1Weekday-1))
+    if jan1Weekday == 0 {
+        week1Monday = jan1.AddDate(0, 0, 1) // If Jan 1 is Sunday, Monday is next day
+    }
+    if jan1Weekday > 4 { // If Jan 1 is Fri, Sat, or Sun, week 1 starts next Monday
+        week1Monday = week1Monday.AddDate(0, 0, 7)
+    }
+    
+    // Calculate the Monday of our target week, then go back to Sunday
+    periodStartMonday := week1Monday.AddDate(0, 0, (periodStartWeek-1)*7)
+    start = periodStartMonday.AddDate(0, 0, -1) // Go back to Sunday
+    
+    // End is 13 days after start (2 full weeks)
+    end = start.AddDate(0, 0, 13).Add(23*time.Hour + 59*time.Minute + 59*time.Second)
     return
 }
 

@@ -16,7 +16,7 @@ This feature enhances the dashboard to display only gauges that are relevant to 
 
 1. WHEN the dashboard loads THEN the system SHALL display only gauges that are relevant to the current time period based on their frequency
 2. WHEN a gauge has weekly frequency THEN the system SHALL show it only during its designated week
-3. WHEN a gauge has bi-weekly frequency THEN the system SHALL show it only during its designated bi-weekly period based on calendar weeks (e.g., if January 2025 starts on Wednesday, weeks 1-2 would be Jan 1-14, weeks 3-4 would be Jan 15-28, and week 5 would be Jan 29-31)
+3. WHEN a gauge has bi-weekly frequency THEN the system SHALL show it only during its designated bi-weekly period based on ISO calendar weeks starting on Sunday (e.g., weeks 1-2 form one bi-weekly period, weeks 3-4 form another, with each week running Sunday through Saturday)
 4. WHEN a gauge has monthly frequency THEN the system SHALL show it only during its designated month
 5. WHEN a gauge is not relevant to the current time period THEN the system SHALL either hide it or display it in a disabled state
 
