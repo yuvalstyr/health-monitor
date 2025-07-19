@@ -50,13 +50,13 @@
   - Test edge cases like leap years and year boundaries
   - _Requirements: 3.1, 3.3_
 
-- [x] 5. Create scheduling service for automated gauge instance creation
+- [ ] 5. Create scheduling service for automated gauge instance creation
   - Implement SchedulingService interface with CreateInstancesForActiveTemplates method
   - Add logic to check if next period instances already exist
   - Add logic to create new gauge instances for next periods
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [x] 5.1 Write unit tests for scheduling service
+- [ ] 5.1 Write unit tests for scheduling service
   - Test CreateInstancesForActiveTemplates with mock database
   - Test duplicate instance prevention logic
   - Test instance creation for different frequencies
