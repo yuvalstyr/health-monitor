@@ -30,7 +30,7 @@
   - Create necessary indexes for performance
   - _Requirements: 2.1, 3.2_
 
-- [ ] 3. Update SQLC queries for new table structure
+- [x] 3. Update SQLC queries for new table structure
   - Create queries for gauge_templates CRUD operations
   - Create queries for gauge_instances CRUD operations
   - Update existing gauge queries to work with new schema

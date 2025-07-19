@@ -19,41 +19,67 @@ type MonthlyValue struct {
 	AverageValue float64 `json:"average_value"`
 }
 
-// GaugeWithValue combines a gauge with its latest value
-type GaugeWithValue struct {
-	*db.Gauge
+// GaugeInstanceWithStatus combines a gauge instance with its status
+type GaugeInstanceWithStatus struct {
+	*db.ListCurrentPeriodGaugeInstancesRow
 	Status *GaugeStatus `json:"status"`
 }
 
-// GaugeHistory represents historical data for a gauge
+// GaugeTemplateWithStatus combines a gauge template with its status
+type GaugeTemplateWithStatus struct {
+	*db.GaugeTemplate
+	Status *GaugeStatus `json:"status"`
+}
+
+// GaugeHistory represents historical data for a gauge instance
 type GaugeHistory struct {
-	*db.Gauge
+	InstanceID   int64          `json:"instance_id"`
+	TemplateName string         `json:"template_name"`
 	Month        string         `json:"month"`
 	AverageValue float64        `json:"average_value"`
 	Values       []MonthlyValue `json:"values"`
 }
 
-// NewGaugeWithValue creates a new GaugeWithValue instance
-func NewGaugeWithValue(gauge *db.Gauge) *GaugeWithValue {
+// NewGaugeInstanceWithStatus creates a new GaugeInstanceWithStatus instance
+func NewGaugeInstanceWithStatus(instance *db.ListCurrentPeriodGaugeInstancesRow) *GaugeInstanceWithStatus {
 	percent := 0.0
-	if gauge.Target > 0 {
-		percent = (gauge.Value / gauge.Target) * 100
+	if instance.Target > 0 {
+		percent = (instance.Value / instance.Target) * 100
 	}
 
-	return &GaugeWithValue{
-		Gauge: gauge,
+	return &GaugeInstanceWithStatus{
+		ListCurrentPeriodGaugeInstancesRow: instance,
 		Status: &GaugeStatus{
-			Value:   gauge.Value,
-			Target:  gauge.Target,
-			Unit:    gauge.Unit,
-			Icon:    gauge.Icon,
+			Value:   instance.Value,
+			Target:  instance.Target,
+			Unit:    instance.Unit,
+			Icon:    instance.Icon,
+			Percent: percent,
+		},
+	}
+}
+
+// NewGaugeTemplateWithStatus creates a new GaugeTemplateWithStatus instance
+func NewGaugeTemplateWithStatus(template *db.GaugeTemplate, currentValue float64) *GaugeTemplateWithStatus {
+	percent := 0.0
+	if template.Target > 0 {
+		percent = (currentValue / template.Target) * 100
+	}
+
+	return &GaugeTemplateWithStatus{
+		GaugeTemplate: template,
+		Status: &GaugeStatus{
+			Value:   currentValue,
+			Target:  template.Target,
+			Unit:    template.Unit,
+			Icon:    template.Icon,
 			Percent: percent,
 		},
 	}
 }
 
 // NewGaugeHistory creates a new GaugeHistory instance
-func NewGaugeHistory(gauge *db.Gauge, history []db.GetGaugeHistoryRow) *GaugeHistory {
+func NewGaugeHistory(instanceID int64, templateName string, history []db.GetGaugeHistoryRow) *GaugeHistory {
 	values := make([]MonthlyValue, len(history))
 	for i, h := range history {
 		month := ""
@@ -69,8 +95,9 @@ func NewGaugeHistory(gauge *db.Gauge, history []db.GetGaugeHistoryRow) *GaugeHis
 	}
 
 	return &GaugeHistory{
-		Gauge:  gauge,
-		Month:  "",
-		Values: values,
+		InstanceID:   instanceID,
+		TemplateName: templateName,
+		Month:        "",
+		Values:       values,
 	}
 }

@@ -11,13 +11,38 @@ import (
 	"time"
 )
 
-const createGauge = `-- name: CreateGauge :one
-INSERT INTO gauges (name, description, target, value, unit, icon, frequency, direction)
-VALUES (?, ?, ?, 0, ?, ?, ?, ?)
-RETURNING id, name, description, target, value, unit, icon, frequency, direction, created_at, updated_at
+const createGaugeInstance = `-- name: CreateGaugeInstance :one
+INSERT INTO gauge_instances (template_id, period_start, value)
+VALUES (?, ?, 0)
+RETURNING id, template_id, period_start, value, created_at, updated_at
 `
 
-type CreateGaugeParams struct {
+type CreateGaugeInstanceParams struct {
+	TemplateID  int64     `json:"template_id"`
+	PeriodStart time.Time `json:"period_start"`
+}
+
+func (q *Queries) CreateGaugeInstance(ctx context.Context, arg CreateGaugeInstanceParams) (GaugeInstance, error) {
+	row := q.db.QueryRowContext(ctx, createGaugeInstance, arg.TemplateID, arg.PeriodStart)
+	var i GaugeInstance
+	err := row.Scan(
+		&i.ID,
+		&i.TemplateID,
+		&i.PeriodStart,
+		&i.Value,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createGaugeTemplate = `-- name: CreateGaugeTemplate :one
+INSERT INTO gauge_templates (name, description, target, unit, icon, frequency, direction, active)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+RETURNING id, name, description, target, unit, icon, frequency, direction, active, created_at, updated_at
+`
+
+type CreateGaugeTemplateParams struct {
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
 	Target      float64        `json:"target"`
@@ -25,10 +50,11 @@ type CreateGaugeParams struct {
 	Icon        string         `json:"icon"`
 	Frequency   string         `json:"frequency"`
 	Direction   string         `json:"direction"`
+	Active      bool           `json:"active"`
 }
 
-func (q *Queries) CreateGauge(ctx context.Context, arg CreateGaugeParams) (Gauge, error) {
-	row := q.db.QueryRowContext(ctx, createGauge,
+func (q *Queries) CreateGaugeTemplate(ctx context.Context, arg CreateGaugeTemplateParams) (GaugeTemplate, error) {
+	row := q.db.QueryRowContext(ctx, createGaugeTemplate,
 		arg.Name,
 		arg.Description,
 		arg.Target,
@@ -36,18 +62,19 @@ func (q *Queries) CreateGauge(ctx context.Context, arg CreateGaugeParams) (Gauge
 		arg.Icon,
 		arg.Frequency,
 		arg.Direction,
+		arg.Active,
 	)
-	var i Gauge
+	var i GaugeTemplate
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Description,
 		&i.Target,
-		&i.Value,
 		&i.Unit,
 		&i.Icon,
 		&i.Frequency,
 		&i.Direction,
+		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -56,26 +83,35 @@ func (q *Queries) CreateGauge(ctx context.Context, arg CreateGaugeParams) (Gauge
 
 const createGaugeValue = `-- name: CreateGaugeValue :exec
 INSERT INTO gauge_values (gauge_id, value, date)
-VALUES (?, CAST(? AS REAL), ?)
+VALUES (?, ?, ?)
 `
 
 type CreateGaugeValueParams struct {
 	GaugeID int64     `json:"gauge_id"`
-	Column2 float64   `json:"column_2"`
+	Value   float64   `json:"value"`
 	Date    time.Time `json:"date"`
 }
 
 func (q *Queries) CreateGaugeValue(ctx context.Context, arg CreateGaugeValueParams) error {
-	_, err := q.db.ExecContext(ctx, createGaugeValue, arg.GaugeID, arg.Column2, arg.Date)
+	_, err := q.db.ExecContext(ctx, createGaugeValue, arg.GaugeID, arg.Value, arg.Date)
 	return err
 }
 
-const deleteGauge = `-- name: DeleteGauge :exec
-DELETE FROM gauges WHERE id = ?
+const deleteGaugeInstance = `-- name: DeleteGaugeInstance :exec
+DELETE FROM gauge_instances WHERE id = ?
 `
 
-func (q *Queries) DeleteGauge(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, deleteGauge, id)
+func (q *Queries) DeleteGaugeInstance(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteGaugeInstance, id)
+	return err
+}
+
+const deleteGaugeTemplate = `-- name: DeleteGaugeTemplate :exec
+DELETE FROM gauge_templates WHERE id = ?
+`
+
+func (q *Queries) DeleteGaugeTemplate(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteGaugeTemplate, id)
 	return err
 }
 
@@ -91,29 +127,6 @@ func (q *Queries) GetCurrentValue(ctx context.Context, gaugeID int64) (float64, 
 	var value float64
 	err := row.Scan(&value)
 	return value, err
-}
-
-const getGauge = `-- name: GetGauge :one
-SELECT id, name, description, target, value, unit, icon, frequency, direction, created_at, updated_at FROM gauges WHERE id = ? LIMIT 1
-`
-
-func (q *Queries) GetGauge(ctx context.Context, id int64) (Gauge, error) {
-	row := q.db.QueryRowContext(ctx, getGauge, id)
-	var i Gauge
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Description,
-		&i.Target,
-		&i.Value,
-		&i.Unit,
-		&i.Icon,
-		&i.Frequency,
-		&i.Direction,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
 }
 
 const getGaugeHistory = `-- name: GetGaugeHistory :many
@@ -153,6 +166,49 @@ func (q *Queries) GetGaugeHistory(ctx context.Context, gaugeID int64) ([]GetGaug
 	return items, nil
 }
 
+const getGaugeInstance = `-- name: GetGaugeInstance :one
+SELECT id, template_id, period_start, value, created_at, updated_at FROM gauge_instances WHERE id = ? LIMIT 1
+`
+
+// Gauge Instances CRUD Operations
+func (q *Queries) GetGaugeInstance(ctx context.Context, id int64) (GaugeInstance, error) {
+	row := q.db.QueryRowContext(ctx, getGaugeInstance, id)
+	var i GaugeInstance
+	err := row.Scan(
+		&i.ID,
+		&i.TemplateID,
+		&i.PeriodStart,
+		&i.Value,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getGaugeTemplate = `-- name: GetGaugeTemplate :one
+SELECT id, name, description, target, unit, icon, frequency, direction, active, created_at, updated_at FROM gauge_templates WHERE id = ? LIMIT 1
+`
+
+// Gauge Templates CRUD Operations
+func (q *Queries) GetGaugeTemplate(ctx context.Context, id int64) (GaugeTemplate, error) {
+	row := q.db.QueryRowContext(ctx, getGaugeTemplate, id)
+	var i GaugeTemplate
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.Target,
+		&i.Unit,
+		&i.Icon,
+		&i.Frequency,
+		&i.Direction,
+		&i.Active,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getGaugeValues = `-- name: GetGaugeValues :many
 SELECT id, gauge_id, value, date FROM gauge_values 
 WHERE gauge_id = ?
@@ -187,29 +243,46 @@ func (q *Queries) GetGaugeValues(ctx context.Context, gaugeID int64) ([]GaugeVal
 	return items, nil
 }
 
-const listGauges = `-- name: ListGauges :many
-SELECT id, name, description, target, value, unit, icon, frequency, direction, created_at, updated_at FROM gauges ORDER BY name
+const instanceExistsForPeriod = `-- name: InstanceExistsForPeriod :one
+SELECT COUNT(*) FROM gauge_instances 
+WHERE template_id = ? AND period_start = ?
 `
 
-func (q *Queries) ListGauges(ctx context.Context) ([]Gauge, error) {
-	rows, err := q.db.QueryContext(ctx, listGauges)
+type InstanceExistsForPeriodParams struct {
+	TemplateID  int64     `json:"template_id"`
+	PeriodStart time.Time `json:"period_start"`
+}
+
+func (q *Queries) InstanceExistsForPeriod(ctx context.Context, arg InstanceExistsForPeriodParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, instanceExistsForPeriod, arg.TemplateID, arg.PeriodStart)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const listActiveGaugeTemplates = `-- name: ListActiveGaugeTemplates :many
+SELECT id, name, description, target, unit, icon, frequency, direction, active, created_at, updated_at FROM gauge_templates WHERE active = true ORDER BY name
+`
+
+func (q *Queries) ListActiveGaugeTemplates(ctx context.Context) ([]GaugeTemplate, error) {
+	rows, err := q.db.QueryContext(ctx, listActiveGaugeTemplates)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Gauge{}
+	items := []GaugeTemplate{}
 	for rows.Next() {
-		var i Gauge
+		var i GaugeTemplate
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
 			&i.Description,
 			&i.Target,
-			&i.Value,
 			&i.Unit,
 			&i.Icon,
 			&i.Frequency,
 			&i.Direction,
+			&i.Active,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -226,20 +299,30 @@ func (q *Queries) ListGauges(ctx context.Context) ([]Gauge, error) {
 	return items, nil
 }
 
-const updateGauge = `-- name: UpdateGauge :exec
-UPDATE gauges
-SET name = ?,
-    description = ?,
-    target = ?,
-    unit = ?,
-    icon = ?,
-    frequency = ?,
-    direction = ?,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = ?
+const listCurrentPeriodGaugeInstances = `-- name: ListCurrentPeriodGaugeInstances :many
+SELECT gi.id, gi.template_id, gi.period_start, gi.value, gi.created_at, gi.updated_at, gt.name, gt.description, gt.target, gt.unit, gt.icon, gt.frequency, gt.direction
+FROM gauge_instances gi
+JOIN gauge_templates gt ON gi.template_id = gt.id
+WHERE gt.active = true
+  AND ((gt.frequency = 'weekly' AND gi.period_start = ?) 
+    OR (gt.frequency = 'bi-weekly' AND gi.period_start = ?)
+    OR (gt.frequency = 'monthly' AND gi.period_start = ?))
+ORDER BY gt.name
 `
 
-type UpdateGaugeParams struct {
+type ListCurrentPeriodGaugeInstancesParams struct {
+	PeriodStart   time.Time `json:"period_start"`
+	PeriodStart_2 time.Time `json:"period_start_2"`
+	PeriodStart_3 time.Time `json:"period_start_3"`
+}
+
+type ListCurrentPeriodGaugeInstancesRow struct {
+	ID          int64          `json:"id"`
+	TemplateID  int64          `json:"template_id"`
+	PeriodStart time.Time      `json:"period_start"`
+	Value       float64        `json:"value"`
+	CreatedAt   sql.NullTime   `json:"created_at"`
+	UpdatedAt   sql.NullTime   `json:"updated_at"`
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
 	Target      float64        `json:"target"`
@@ -247,11 +330,198 @@ type UpdateGaugeParams struct {
 	Icon        string         `json:"icon"`
 	Frequency   string         `json:"frequency"`
 	Direction   string         `json:"direction"`
+}
+
+// Dashboard and Current Period Queries
+func (q *Queries) ListCurrentPeriodGaugeInstances(ctx context.Context, arg ListCurrentPeriodGaugeInstancesParams) ([]ListCurrentPeriodGaugeInstancesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listCurrentPeriodGaugeInstances, arg.PeriodStart, arg.PeriodStart_2, arg.PeriodStart_3)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListCurrentPeriodGaugeInstancesRow{}
+	for rows.Next() {
+		var i ListCurrentPeriodGaugeInstancesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TemplateID,
+			&i.PeriodStart,
+			&i.Value,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.Description,
+			&i.Target,
+			&i.Unit,
+			&i.Icon,
+			&i.Frequency,
+			&i.Direction,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGaugeInstances = `-- name: ListGaugeInstances :many
+SELECT id, template_id, period_start, value, created_at, updated_at FROM gauge_instances ORDER BY period_start DESC
+`
+
+func (q *Queries) ListGaugeInstances(ctx context.Context) ([]GaugeInstance, error) {
+	rows, err := q.db.QueryContext(ctx, listGaugeInstances)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GaugeInstance{}
+	for rows.Next() {
+		var i GaugeInstance
+		if err := rows.Scan(
+			&i.ID,
+			&i.TemplateID,
+			&i.PeriodStart,
+			&i.Value,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGaugeInstancesByTemplate = `-- name: ListGaugeInstancesByTemplate :many
+SELECT id, template_id, period_start, value, created_at, updated_at FROM gauge_instances WHERE template_id = ? ORDER BY period_start DESC
+`
+
+func (q *Queries) ListGaugeInstancesByTemplate(ctx context.Context, templateID int64) ([]GaugeInstance, error) {
+	rows, err := q.db.QueryContext(ctx, listGaugeInstancesByTemplate, templateID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GaugeInstance{}
+	for rows.Next() {
+		var i GaugeInstance
+		if err := rows.Scan(
+			&i.ID,
+			&i.TemplateID,
+			&i.PeriodStart,
+			&i.Value,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGaugeTemplates = `-- name: ListGaugeTemplates :many
+SELECT id, name, description, target, unit, icon, frequency, direction, active, created_at, updated_at FROM gauge_templates ORDER BY name
+`
+
+func (q *Queries) ListGaugeTemplates(ctx context.Context) ([]GaugeTemplate, error) {
+	rows, err := q.db.QueryContext(ctx, listGaugeTemplates)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GaugeTemplate{}
+	for rows.Next() {
+		var i GaugeTemplate
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Target,
+			&i.Unit,
+			&i.Icon,
+			&i.Frequency,
+			&i.Direction,
+			&i.Active,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateGaugeInstanceValue = `-- name: UpdateGaugeInstanceValue :exec
+UPDATE gauge_instances
+SET value = ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+`
+
+type UpdateGaugeInstanceValueParams struct {
+	Value float64 `json:"value"`
+	ID    int64   `json:"id"`
+}
+
+func (q *Queries) UpdateGaugeInstanceValue(ctx context.Context, arg UpdateGaugeInstanceValueParams) error {
+	_, err := q.db.ExecContext(ctx, updateGaugeInstanceValue, arg.Value, arg.ID)
+	return err
+}
+
+const updateGaugeTemplate = `-- name: UpdateGaugeTemplate :exec
+UPDATE gauge_templates
+SET name = ?,
+    description = ?,
+    target = ?,
+    unit = ?,
+    icon = ?,
+    frequency = ?,
+    direction = ?,
+    active = ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?
+`
+
+type UpdateGaugeTemplateParams struct {
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
+	Target      float64        `json:"target"`
+	Unit        string         `json:"unit"`
+	Icon        string         `json:"icon"`
+	Frequency   string         `json:"frequency"`
+	Direction   string         `json:"direction"`
+	Active      bool           `json:"active"`
 	ID          int64          `json:"id"`
 }
 
-func (q *Queries) UpdateGauge(ctx context.Context, arg UpdateGaugeParams) error {
-	_, err := q.db.ExecContext(ctx, updateGauge,
+func (q *Queries) UpdateGaugeTemplate(ctx context.Context, arg UpdateGaugeTemplateParams) error {
+	_, err := q.db.ExecContext(ctx, updateGaugeTemplate,
 		arg.Name,
 		arg.Description,
 		arg.Target,
@@ -259,24 +529,8 @@ func (q *Queries) UpdateGauge(ctx context.Context, arg UpdateGaugeParams) error 
 		arg.Icon,
 		arg.Frequency,
 		arg.Direction,
+		arg.Active,
 		arg.ID,
 	)
-	return err
-}
-
-const updateGaugeValue = `-- name: UpdateGaugeValue :exec
-UPDATE gauges
-SET value = ?,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = ?
-`
-
-type UpdateGaugeValueParams struct {
-	Value float64 `json:"value"`
-	ID    int64   `json:"id"`
-}
-
-func (q *Queries) UpdateGaugeValue(ctx context.Context, arg UpdateGaugeValueParams) error {
-	_, err := q.db.ExecContext(ctx, updateGaugeValue, arg.Value, arg.ID)
 	return err
 }
