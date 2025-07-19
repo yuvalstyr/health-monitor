@@ -41,29 +41,47 @@ func NewTestDB(t *testing.T) *db.Queries {
 	return db.New(database)
 }
 
-// CreateTestGauge creates a test gauge and returns it
-func CreateTestGauge(t *testing.T, q *db.Queries) db.Gauge {
-	params := db.CreateGaugeParams{
+// CreateTestGaugeTemplate creates a test gauge template and returns it
+func CreateTestGaugeTemplate(t *testing.T, q *db.Queries) db.GaugeTemplate {
+	params := db.CreateGaugeTemplateParams{
 		Name:        "Test Gauge",
 		Description: sql.NullString{String: "Test Description", Valid: true},
 		Target:      100,
 		Unit:        "units",
 		Icon:        "star",
+		Frequency:   "weekly",
+		Direction:   "under",
+		Active:      true,
 	}
 
-	gauge, err := q.CreateGauge(context.Background(), params)
+	template, err := q.CreateGaugeTemplate(context.Background(), params)
 	if err != nil {
-		t.Fatalf("Failed to create test gauge: %v", err)
+		t.Fatalf("Failed to create test gauge template: %v", err)
 	}
 
-	return gauge
+	return template
+}
+
+// CreateTestGaugeInstance creates a test gauge instance and returns it
+func CreateTestGaugeInstance(t *testing.T, q *db.Queries, templateID int64, periodStart time.Time) db.GaugeInstance {
+	params := db.CreateGaugeInstanceParams{
+		TemplateID:  templateID,
+		PeriodStart: periodStart,
+	}
+
+	instance, err := q.CreateGaugeInstance(context.Background(), params)
+	if err != nil {
+		t.Fatalf("Failed to create test gauge instance: %v", err)
+	}
+
+	return instance
 }
 
 // CreateTestGaugeValue creates a test gauge value
 func CreateTestGaugeValue(t *testing.T, q *db.Queries, gaugeID int64, value float64, date time.Time) error {
 	params := db.CreateGaugeValueParams{
 		GaugeID: gaugeID,
-		Column2: value,
+		Value:   value,
 		Date:    date,
 	}
 

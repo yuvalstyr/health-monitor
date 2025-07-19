@@ -9,16 +9,27 @@ import (
 )
 
 type Querier interface {
-	CreateGauge(ctx context.Context, arg CreateGaugeParams) (Gauge, error)
+	CreateGaugeInstance(ctx context.Context, arg CreateGaugeInstanceParams) (GaugeInstance, error)
+	CreateGaugeTemplate(ctx context.Context, arg CreateGaugeTemplateParams) (GaugeTemplate, error)
 	CreateGaugeValue(ctx context.Context, arg CreateGaugeValueParams) error
-	DeleteGauge(ctx context.Context, id int64) error
+	DeleteGaugeInstance(ctx context.Context, id int64) error
+	DeleteGaugeTemplate(ctx context.Context, id int64) error
 	GetCurrentValue(ctx context.Context, gaugeID int64) (float64, error)
-	GetGauge(ctx context.Context, id int64) (Gauge, error)
 	GetGaugeHistory(ctx context.Context, gaugeID int64) ([]GetGaugeHistoryRow, error)
+	// Gauge Instances CRUD Operations
+	GetGaugeInstance(ctx context.Context, id int64) (GaugeInstance, error)
+	// Gauge Templates CRUD Operations
+	GetGaugeTemplate(ctx context.Context, id int64) (GaugeTemplate, error)
 	GetGaugeValues(ctx context.Context, gaugeID int64) ([]GaugeValue, error)
-	ListGauges(ctx context.Context) ([]Gauge, error)
-	UpdateGauge(ctx context.Context, arg UpdateGaugeParams) error
-	UpdateGaugeValue(ctx context.Context, arg UpdateGaugeValueParams) error
+	InstanceExistsForPeriod(ctx context.Context, arg InstanceExistsForPeriodParams) (int64, error)
+	ListActiveGaugeTemplates(ctx context.Context) ([]GaugeTemplate, error)
+	// Dashboard and Current Period Queries
+	ListCurrentPeriodGaugeInstances(ctx context.Context, arg ListCurrentPeriodGaugeInstancesParams) ([]ListCurrentPeriodGaugeInstancesRow, error)
+	ListGaugeInstances(ctx context.Context) ([]GaugeInstance, error)
+	ListGaugeInstancesByTemplate(ctx context.Context, templateID int64) ([]GaugeInstance, error)
+	ListGaugeTemplates(ctx context.Context) ([]GaugeTemplate, error)
+	UpdateGaugeInstanceValue(ctx context.Context, arg UpdateGaugeInstanceValueParams) error
+	UpdateGaugeTemplate(ctx context.Context, arg UpdateGaugeTemplateParams) error
 }
 
 var _ Querier = (*Queries)(nil)

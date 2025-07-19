@@ -9,16 +9,25 @@ import (
 	"time"
 )
 
-type Gauge struct {
+type GaugeInstance struct {
+	ID          int64        `json:"id"`
+	TemplateID  int64        `json:"template_id"`
+	PeriodStart time.Time    `json:"period_start"`
+	Value       float64      `json:"value"`
+	CreatedAt   sql.NullTime `json:"created_at"`
+	UpdatedAt   sql.NullTime `json:"updated_at"`
+}
+
+type GaugeTemplate struct {
 	ID          int64          `json:"id"`
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
 	Target      float64        `json:"target"`
-	Value       float64        `json:"value"`
 	Unit        string         `json:"unit"`
 	Icon        string         `json:"icon"`
 	Frequency   string         `json:"frequency"`
 	Direction   string         `json:"direction"`
+	Active      bool           `json:"active"`
 	CreatedAt   sql.NullTime   `json:"created_at"`
 	UpdatedAt   sql.NullTime   `json:"updated_at"`
 }
