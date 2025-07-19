@@ -5,10 +5,27 @@ import (
 	"health-monitor/internal/views/components"
 )
 
-templ Dashboard(gauges []db.Gauge) {
+templ Dashboard(gaugeInstances []db.ListCurrentPeriodGaugeInstancesRow) {
 	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-		for _, gauge := range gauges {
-			@components.GaugeCard(&gauge)
+		for _, instance := range gaugeInstances {
+			@components.GaugeCard(&db.GaugeInstance{
+				ID: instance.ID,
+				TemplateID: instance.TemplateID,
+				PeriodStart: instance.PeriodStart,
+				Value: instance.Value,
+				CreatedAt: instance.CreatedAt,
+				UpdatedAt: instance.UpdatedAt,
+			}, &db.GaugeTemplate{
+				ID: instance.TemplateID,
+				Name: instance.Name,
+				Description: instance.Description,
+				Target: instance.Target,
+				Unit: instance.Unit,
+				Icon: instance.Icon,
+				Frequency: instance.Frequency,
+				Direction: instance.Direction,
+				Active: true, // Only active templates are returned
+			})
 		}
 	</div>
 }
