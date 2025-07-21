@@ -116,15 +116,15 @@ func (q *Queries) DeleteGaugeTemplate(ctx context.Context, id int64) error {
 }
 
 const getCurrentValue = `-- name: GetCurrentValue :one
-SELECT COALESCE(
+SELECT CAST(COALESCE(
     (SELECT value FROM gauge_values WHERE gauge_id = ? ORDER BY date DESC LIMIT 1),
     0
-) as value
+) AS BIGINT) as value
 `
 
-func (q *Queries) GetCurrentValue(ctx context.Context, gaugeID int64) (interface{}, error) {
+func (q *Queries) GetCurrentValue(ctx context.Context, gaugeID int64) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getCurrentValue, gaugeID)
-	var value interface{}
+	var value int64
 	err := row.Scan(&value)
 	return value, err
 }

@@ -26,7 +26,7 @@ type MockQueries struct {
 	
 	// Gauge Value methods
 	CreateGaugeValueFn func(ctx context.Context, params CreateGaugeValueParams) error
-	GetCurrentValueFn  func(ctx context.Context, gaugeID int64) (float64, error)
+	GetCurrentValueFn  func(ctx context.Context, gaugeID int64) (int64, error)
 	GetGaugeValuesFn   func(ctx context.Context, gaugeID int64) ([]GaugeValue, error)
 	GetGaugeHistoryFn  func(ctx context.Context, gaugeID int64) ([]GetGaugeHistoryRow, error)
 }
@@ -140,9 +140,9 @@ func (m *MockQueries) CreateGaugeValue(ctx context.Context, params CreateGaugeVa
 	return m.CreateGaugeValueFn(ctx, params)
 }
 
-func (m *MockQueries) GetCurrentValue(ctx context.Context, gaugeID int64) (float64, error) {
+func (m *MockQueries) GetCurrentValue(ctx context.Context, gaugeID int64) (int64, error) {
 	if m.GetCurrentValueFn == nil {
-		return 0.0, nil
+		return 0, nil
 	}
 	return m.GetCurrentValueFn(ctx, gaugeID)
 }

@@ -69,10 +69,10 @@ WHERE gt.active = true
 ORDER BY gt.name;
 
 -- name: GetCurrentValue :one
-SELECT COALESCE(
+SELECT CAST(COALESCE(
     (SELECT value FROM gauge_values WHERE gauge_id = ? ORDER BY date DESC LIMIT 1),
     0
-) as value;
+) AS BIGINT) as value;
 
 -- name: CreateGaugeValue :exec
 INSERT INTO gauge_values (gauge_id, value, date)
