@@ -96,7 +96,7 @@ func (h *GaugeHandler) handleNewGaugeForm(w http.ResponseWriter, r *http.Request
 // validateGaugeTemplateForm parses and validates gauge template form input from an HTTP request.
 // It returns the parsed name, description, icon, unit, target value, frequency, direction, active status, and a slice of form errors.
 // Frequency defaults to "weekly" and direction defaults to "under" if missing or invalid. Target is set to 0 if not a valid number.
-func validateGaugeTemplateForm(r *http.Request) (string, string, string, string, float64, string, string, bool, []components.FormError) {
+func validateGaugeTemplateForm(r *http.Request) (string, string, string, string, int64, string, string, bool, []components.FormError) {
 	var errors []components.FormError
 
 	// Validate name
@@ -122,9 +122,9 @@ func validateGaugeTemplateForm(r *http.Request) (string, string, string, string,
 
 	// Validate target
 	targetStr := r.FormValue("target")
-	target, err := strconv.ParseFloat(targetStr, 64)
+	target, err := strconv.ParseInt(targetStr, 10, 64)
 	if err != nil || targetStr == "" {
-		errors = append(errors, components.FormError{Field: "target", Message: "Target must be a valid number"})
+		errors = append(errors, components.FormError{Field: "target", Message: "Target must be a valid integer"})
 		target = 0
 	}
 
@@ -348,7 +348,7 @@ func (h *GaugeHandler) handleIncrementGauge(w http.ResponseWriter, r *http.Reque
 
 	// Render just the updated gauge value component
 	w.Header().Set("Content-Type", "text/html")
-	err = components.GaugeInstanceValue(&updatedInstance, updatedInstance.Value).Render(r.Context(), w)
+	err = components.GaugeInstanceValue(&updatedInstance).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -393,7 +393,7 @@ func (h *GaugeHandler) handleDecrementGauge(w http.ResponseWriter, r *http.Reque
 
 	// Render just the updated gauge value component
 	w.Header().Set("Content-Type", "text/html")
-	err = components.GaugeInstanceValue(&updatedInstance, updatedInstance.Value).Render(r.Context(), w)
+	err = components.GaugeInstanceValue(&updatedInstance).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

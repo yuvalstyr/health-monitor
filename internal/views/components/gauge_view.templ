@@ -41,12 +41,12 @@ templ GaugeView(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {
 							<div class="stats shadow text-center">
 								<div class="stat">
 									<div class="stat-title">Current Value</div>
-									<div class="stat-value">{ fmt.Sprintf("%.1f", gaugeInstance.Value) }</div>
+									<div class="stat-value">{ fmt.Sprintf("%d", gaugeInstance.Value) }</div>
 									<div class="stat-desc">{ template.Unit }</div>
 								</div>
 								<div class="stat">
 									<div class="stat-title">Target</div>
-									<div class="stat-value">{ fmt.Sprintf("%.1f", template.Target) }</div>
+									<div class="stat-value">{ fmt.Sprintf("%d", template.Target) }</div>
 									<div class="stat-desc">{ template.Unit }</div>
 								</div>
 							</div>
@@ -58,7 +58,7 @@ templ GaugeView(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {
 									hx-swap="innerHTML"
 								>-</button>
 								<div id="current-value" class="text-4xl font-bold min-w-24 text-center">
-									{ fmt.Sprintf("%.1f %s", gaugeInstance.Value, template.Unit) }
+									{ fmt.Sprintf("%d %s", gaugeInstance.Value, template.Unit) }
 								</div>
 								<button 
 									class="btn btn-primary btn-circle"
@@ -87,7 +87,7 @@ templ GaugeView(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {
 							<tbody>
 								<tr>
 									<td>Today</td>
-									<td>{ fmt.Sprintf("%.1f %s", gaugeInstance.Value, template.Unit) }</td>
+									<td>{ fmt.Sprintf("%d %s", gaugeInstance.Value, template.Unit) }</td>
 									<td>
 										if gaugeInstance.Value > template.Target {
 											<span class="text-error">Above Target</span>

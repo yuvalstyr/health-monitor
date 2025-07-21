@@ -36,7 +36,7 @@ func TestGaugeCard(t *testing.T) {
 
 		// Check essential content is present
 		assert.Contains(t, html, template.Name)
-		assert.Contains(t, html, "75.0")
+		assert.Contains(t, html, "75")
 		assert.Contains(t, html, "weekly")
 		
 		// Check it has increment/decrement buttons
@@ -55,8 +55,8 @@ func TestGaugeCard(t *testing.T) {
 		component := GaugeCard(differentInstance, template)
 		html := renderComponent(t, component)
 
-		assert.Contains(t, html, "150.0")
-		assert.NotContains(t, html, "75.0")
+		assert.Contains(t, html, "150")
+		assert.NotContains(t, html, "75")
 	})
 }
 
@@ -84,7 +84,7 @@ func TestGauge(t *testing.T) {
 
 		// Check basic content
 		assert.Contains(t, html, template.Name)
-		assert.Contains(t, html, "75.0")
+		assert.Contains(t, html, "75")
 		assert.Contains(t, html, "weekly")
 
 		// Check it has increment/decrement functionality
@@ -109,7 +109,7 @@ func TestGauge(t *testing.T) {
 
 		// Should still render the gauge name and value
 		assert.Contains(t, html, "Test Gauge")
-		assert.Contains(t, html, "75.0")
+		assert.Contains(t, html, "75")
 	})
 }
 

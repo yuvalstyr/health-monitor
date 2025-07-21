@@ -67,7 +67,7 @@ templ GaugeTemplateList(gaugeTemplates []db.GaugeTemplate) {
 									</span>
 								}
 							</td>
-							<td>{ fmt.Sprintf("%.1f %s", template.Target, template.Unit) }</td>
+							<td>{ fmt.Sprintf("%d %s", template.Target, template.Unit) }</td>
 							<td>
 								if template.Active {
 									<span class="badge badge-success">Active</span>

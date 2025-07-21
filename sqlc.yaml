@@ -12,10 +12,10 @@ sql:
         emit_empty_slices: true
         overrides:
           - column: "gauge_templates.target"
-            go_type: "float64"
+            go_type: "int64"
           - column: "gauge_instances.value"
-            go_type: "float64"
+            go_type: "int64"
           - column: "gauge_values.value"
-            go_type: "float64"
+            go_type: "int64"
           - column: "gauge_templates.active"
             go_type: "bool"

@@ -69,10 +69,10 @@ WHERE gt.active = true
 ORDER BY gt.name;
 
 -- name: GetCurrentValue :one
-SELECT CAST(COALESCE(
+SELECT COALESCE(
     (SELECT value FROM gauge_values WHERE gauge_id = ? ORDER BY date DESC LIMIT 1),
-    0.0
-) AS REAL) as value;
+    0
+) as value;
 
 -- name: CreateGaugeValue :exec
 INSERT INTO gauge_values (gauge_id, value, date)
@@ -85,7 +85,7 @@ ORDER BY date DESC;
 
 -- name: GetGaugeHistory :many
 SELECT strftime('%Y-%m', date) as month,
-       CAST(AVG(value) AS REAL) as average_value
+       CAST(AVG(value) AS INTEGER) as average_value
 FROM gauge_values
 WHERE gauge_id = ?
 GROUP BY strftime('%Y-%m', date)

@@ -77,6 +77,13 @@
   - Test error handling for invalid template data
   - _Requirements: 2.1, 2.2, 2.5_
 
+- [ ] 6.2 Create database seeding command for development
+  - Create seed command to populate database with sample gauge templates
+  - Create sample gauge instances for current periods
+  - Add Makefile target for easy seeding (`make seed`)
+  - Include variety of frequencies and realistic sample data
+  - _Development tool for easier testing and demo purposes_
+
 - [ ] 7. Implement dashboard filtering for current period gauges
   - Update dashboard handler to query current period gauge instances
   - Implement filtering logic based on current time and frequency

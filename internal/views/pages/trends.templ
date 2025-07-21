@@ -40,7 +40,7 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 						<div class="flex items-center justify-between mt-2">
 							<div>
 								<p class="text-sm text-base-content/70">Average</p>
-								<p class="text-xl font-bold">{ fmt.Sprintf("%.1f", h.AverageValue) } <span class="text-sm font-normal">{ template.Unit }</span></p>
+								<p class="text-xl font-bold">{ fmt.Sprintf("%d", h.AverageValue) } <span class="text-sm font-normal">{ template.Unit }</span></p>
 							</div>
 							<div>
 								if h.AverageValue >= template.Target {
@@ -75,11 +75,11 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 									<tr class="hover">
 										<td class="font-medium">{ fmt.Sprintf("%v", h.Month) }</td>
 										<td>
-											<span class="font-semibold">{ fmt.Sprintf("%.1f", h.AverageValue) }</span>
+											<span class="font-semibold">{ fmt.Sprintf("%d", h.AverageValue) }</span>
 											<span class="text-base-content/70 ml-1">{ template.Unit }</span>
 										</td>
 										<td>
-											<span class="font-semibold">{ fmt.Sprintf("%.1f", template.Target) }</span>
+											<span class="font-semibold">{ fmt.Sprintf("%d", template.Target) }</span>
 											<span class="text-base-content/70 ml-1">{ template.Unit }</span>
 										</td>
 										<td>
@@ -122,7 +122,7 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 					tension: 0.4
 				}, {
 					label: 'Target',
-					data: Array(history.length).fill({ fmt.Sprintf("%.1f", template.Target) }),
+					data: Array(history.length).fill({ fmt.Sprintf("%d", template.Target) }),
 					borderColor: '#F87272',
 					borderDash: [5, 5],
 					fill: false

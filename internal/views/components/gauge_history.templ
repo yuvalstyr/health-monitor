@@ -20,7 +20,7 @@ templ GaugeHistory(history []models.GaugeHistory) {
 					for _, h := range history {
 						<tr>
 							<td>{ h.Month }</td>
-							<td>{ fmt.Sprintf("%.1f", h.AverageValue) }</td>
+							<td>{ fmt.Sprintf("%d", h.AverageValue) }</td>
 						</tr>
 					}
 				</tbody>

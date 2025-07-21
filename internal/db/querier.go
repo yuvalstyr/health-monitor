@@ -14,7 +14,7 @@ type Querier interface {
 	CreateGaugeValue(ctx context.Context, arg CreateGaugeValueParams) error
 	DeleteGaugeInstance(ctx context.Context, id int64) error
 	DeleteGaugeTemplate(ctx context.Context, id int64) error
-	GetCurrentValue(ctx context.Context, gaugeID int64) (float64, error)
+	GetCurrentValue(ctx context.Context, gaugeID int64) (interface{}, error)
 	GetGaugeHistory(ctx context.Context, gaugeID int64) ([]GetGaugeHistoryRow, error)
 	// Gauge Instances CRUD Operations
 	GetGaugeInstance(ctx context.Context, id int64) (GaugeInstance, error)

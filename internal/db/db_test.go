@@ -58,7 +58,7 @@ func TestQueries_GaugeValues(t *testing.T) {
 		// Create values (all in the same month to test averaging)
 		now := time.Now().UTC()
 		values := []struct {
-			value float64
+			value int64
 			date  time.Time
 		}{
 			{50, now.AddDate(0, 0, -2)},  // 2 days ago
@@ -77,7 +77,7 @@ func TestQueries_GaugeValues(t *testing.T) {
 		assert.Len(t, history, 1) // All values are in the same month
 
 		// Average of 50, 75, 100 should be 75
-		expectedAverage := (50.0 + 75.0 + 100.0) / 3.0
+		expectedAverage := int64((50 + 75 + 100) / 3)
 		assert.Equal(t, expectedAverage, history[0].AverageValue)
 	})
 }

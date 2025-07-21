@@ -8,8 +8,8 @@ import (
 templ DashboardRow(instance db.ListCurrentPeriodGaugeInstancesRow) {
 	<tr>
 		<td>{ instance.Name }</td>
-		<td>{ fmt.Sprintf("%.2f %s", instance.Value, instance.Unit) }</td>
-		<td>{ fmt.Sprintf("%.2f %s", instance.Target, instance.Unit) }</td>
+		<td>{ fmt.Sprintf("%d %s", instance.Value, instance.Unit) }</td>
+		<td>{ fmt.Sprintf("%d %s", instance.Target, instance.Unit) }</td>
 		<td>
 			<span class={ templ.KV("badge badge-success", instance.Value <= instance.Target), templ.KV("badge badge-error", instance.Value > instance.Target) }>
 				if instance.Value <= instance.Target {

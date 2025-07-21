@@ -12,12 +12,12 @@ func min(a, b int) int {
 	return b
 }
 
-templ GaugeValue(gaugeInstance *db.GaugeInstance, value float64) {
+templ GaugeValue(gaugeInstance *db.GaugeInstance) {
 	<div id={ fmt.Sprintf("gauge-instance-value-%d", gaugeInstance.ID) } class="space-y-2 sm:space-y-3">
 			<!-- Gauge value -->
 			<div class="flex justify-between items-baseline mt-2">
 				<div class="text-4xl font-bold">
-					{ fmt.Sprintf("%.1f", gaugeInstance.Value) }
+					{ fmt.Sprintf("%d", gaugeInstance.Value) }
 				</div>
 			</div>
 	</div>
@@ -51,7 +51,7 @@ templ GaugeCard(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {
 			
 			<!-- Use GaugeInstanceValue component instead of direct rendering -->
 			<div id={ fmt.Sprintf("gauge-value-container-%d", gaugeInstance.ID) } class="mt-2">
-				@GaugeInstanceValue(gaugeInstance, gaugeInstance.Value)
+				@GaugeInstanceValue(gaugeInstance)
 			</div>
 			
 			<!-- Larger increment/decrement buttons, vertically centered -->
@@ -95,7 +95,7 @@ templ Gauge(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {
 		</div>
 		
 		<div class="my-3">
-			@GaugeValue(gaugeInstance, gaugeInstance.Value)
+			@GaugeValue(gaugeInstance)
 		</div>
 		
 		<div class="flex justify-center gap-2 mt-3">

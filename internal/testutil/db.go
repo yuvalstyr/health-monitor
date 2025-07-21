@@ -78,7 +78,7 @@ func CreateTestGaugeInstance(t *testing.T, q *db.Queries, templateID int64, peri
 }
 
 // CreateTestGaugeValue creates a test gauge value
-func CreateTestGaugeValue(t *testing.T, q *db.Queries, gaugeID int64, value float64, date time.Time) error {
+func CreateTestGaugeValue(t *testing.T, q *db.Queries, gaugeID int64, value int64, date time.Time) error {
 	params := db.CreateGaugeValueParams{
 		GaugeID: gaugeID,
 		Value:   value,
