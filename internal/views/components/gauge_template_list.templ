@@ -5,10 +5,10 @@ import (
 	"health-monitor/internal/db"
 )
 
-templ GaugeList(gaugeTemplates []db.GaugeTemplate) {
-	<div id="gauge-list" class="p-6">
+templ GaugeTemplateList(gaugeTemplates []db.GaugeTemplate) {
+	<div id="gauge-template-list" class="p-6">
 		<div class="flex justify-between items-center mb-6">
-			<h1 class="text-2xl font-bold">Gauges</h1>
+			<h1 class="text-2xl font-bold">Gauge Templates</h1>
 			<a href="/admin/gauges/new" class="btn btn-primary gap-2">
 				<span>+</span>
 				<span>New Gauge</span>
@@ -83,13 +83,20 @@ templ GaugeList(gaugeTemplates []db.GaugeTemplate) {
 									<button
 										class="btn btn-square btn-sm btn-ghost text-error hover:bg-error hover:text-base-100"
 										hx-delete={ fmt.Sprintf("/admin/gauges/%d", template.ID) }
-										hx-target="#gauge-list"
+										hx-target="#gauge-template-list"
 										hx-swap="outerHTML"
 										hx-confirm="Are you sure you want to delete this gauge template? This will also delete all associated instances."
 									>
 										@Icon("trash", "w-4 h-4")
 									</button>
 								</div>
+							</td>
+						</tr>
+					}
+					if len(gaugeTemplates) == 0 {
+						<tr>
+							<td colspan="8" class="text-center py-8 text-base-content/50">
+								No gauge templates found. <a href="/admin/gauges/new" class="link link-primary">Create your first gauge</a>.
 							</td>
 						</tr>
 					}

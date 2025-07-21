@@ -45,7 +45,7 @@ RETURNING id, name, description, target, unit, icon, frequency, direction, activ
 type CreateGaugeTemplateParams struct {
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
-	Target      float64        `json:"target"`
+	Target      int64          `json:"target"`
 	Unit        string         `json:"unit"`
 	Icon        string         `json:"icon"`
 	Frequency   string         `json:"frequency"`
@@ -88,7 +88,7 @@ VALUES (?, ?, ?)
 
 type CreateGaugeValueParams struct {
 	GaugeID int64     `json:"gauge_id"`
-	Value   float64   `json:"value"`
+	Value   int64     `json:"value"`
 	Date    time.Time `json:"date"`
 }
 
@@ -118,20 +118,20 @@ func (q *Queries) DeleteGaugeTemplate(ctx context.Context, id int64) error {
 const getCurrentValue = `-- name: GetCurrentValue :one
 SELECT CAST(COALESCE(
     (SELECT value FROM gauge_values WHERE gauge_id = ? ORDER BY date DESC LIMIT 1),
-    0.0
-) AS REAL) as value
+    0
+) AS BIGINT) as value
 `
 
-func (q *Queries) GetCurrentValue(ctx context.Context, gaugeID int64) (float64, error) {
+func (q *Queries) GetCurrentValue(ctx context.Context, gaugeID int64) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getCurrentValue, gaugeID)
-	var value float64
+	var value int64
 	err := row.Scan(&value)
 	return value, err
 }
 
 const getGaugeHistory = `-- name: GetGaugeHistory :many
 SELECT strftime('%Y-%m', date) as month,
-       CAST(AVG(value) AS REAL) as average_value
+       CAST(AVG(value) AS INTEGER) as average_value
 FROM gauge_values
 WHERE gauge_id = ?
 GROUP BY strftime('%Y-%m', date)
@@ -140,7 +140,7 @@ ORDER BY month DESC
 
 type GetGaugeHistoryRow struct {
 	Month        interface{} `json:"month"`
-	AverageValue float64     `json:"average_value"`
+	AverageValue int64       `json:"average_value"`
 }
 
 func (q *Queries) GetGaugeHistory(ctx context.Context, gaugeID int64) ([]GetGaugeHistoryRow, error) {
@@ -320,12 +320,12 @@ type ListCurrentPeriodGaugeInstancesRow struct {
 	ID          int64          `json:"id"`
 	TemplateID  int64          `json:"template_id"`
 	PeriodStart time.Time      `json:"period_start"`
-	Value       float64        `json:"value"`
+	Value       int64          `json:"value"`
 	CreatedAt   sql.NullTime   `json:"created_at"`
 	UpdatedAt   sql.NullTime   `json:"updated_at"`
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
-	Target      float64        `json:"target"`
+	Target      int64          `json:"target"`
 	Unit        string         `json:"unit"`
 	Icon        string         `json:"icon"`
 	Frequency   string         `json:"frequency"`
@@ -485,8 +485,8 @@ WHERE id = ?
 `
 
 type UpdateGaugeInstanceValueParams struct {
-	Value float64 `json:"value"`
-	ID    int64   `json:"id"`
+	Value int64 `json:"value"`
+	ID    int64 `json:"id"`
 }
 
 func (q *Queries) UpdateGaugeInstanceValue(ctx context.Context, arg UpdateGaugeInstanceValueParams) error {
@@ -511,7 +511,7 @@ WHERE id = ?
 type UpdateGaugeTemplateParams struct {
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
-	Target      float64        `json:"target"`
+	Target      int64          `json:"target"`
 	Unit        string         `json:"unit"`
 	Icon        string         `json:"icon"`
 	Frequency   string         `json:"frequency"`

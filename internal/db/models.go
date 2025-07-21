@@ -13,7 +13,7 @@ type GaugeInstance struct {
 	ID          int64        `json:"id"`
 	TemplateID  int64        `json:"template_id"`
 	PeriodStart time.Time    `json:"period_start"`
-	Value       float64      `json:"value"`
+	Value       int64        `json:"value"`
 	CreatedAt   sql.NullTime `json:"created_at"`
 	UpdatedAt   sql.NullTime `json:"updated_at"`
 }
@@ -22,7 +22,7 @@ type GaugeTemplate struct {
 	ID          int64          `json:"id"`
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
-	Target      float64        `json:"target"`
+	Target      int64          `json:"target"`
 	Unit        string         `json:"unit"`
 	Icon        string         `json:"icon"`
 	Frequency   string         `json:"frequency"`
@@ -35,6 +35,6 @@ type GaugeTemplate struct {
 type GaugeValue struct {
 	ID      int64     `json:"id"`
 	GaugeID int64     `json:"gauge_id"`
-	Value   float64   `json:"value"`
+	Value   int64     `json:"value"`
 	Date    time.Time `json:"date"`
 }

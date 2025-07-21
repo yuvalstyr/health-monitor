@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"health-monitor/internal/db"
 	"health-monitor/internal/views/components"
@@ -14,12 +15,16 @@ import (
 )
 
 type Querier interface {
-	ListGauges(ctx context.Context) ([]db.Gauge, error)
-	GetGauge(ctx context.Context, id int64) (db.Gauge, error)
-	CreateGauge(ctx context.Context, params db.CreateGaugeParams) (db.Gauge, error)
-	UpdateGauge(ctx context.Context, params db.UpdateGaugeParams) error
-	DeleteGauge(ctx context.Context, id int64) error
-	UpdateGaugeValue(ctx context.Context, params db.UpdateGaugeValueParams) error
+	// Gauge Template methods
+	ListGaugeTemplates(ctx context.Context) ([]db.GaugeTemplate, error)
+	GetGaugeTemplate(ctx context.Context, id int64) (db.GaugeTemplate, error)
+	CreateGaugeTemplate(ctx context.Context, params db.CreateGaugeTemplateParams) (db.GaugeTemplate, error)
+	UpdateGaugeTemplate(ctx context.Context, params db.UpdateGaugeTemplateParams) error
+	DeleteGaugeTemplate(ctx context.Context, id int64) error
+	
+	// Gauge Instance methods (for increment/decrement operations)
+	GetGaugeInstance(ctx context.Context, id int64) (db.GaugeInstance, error)
+	UpdateGaugeInstanceValue(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error
 }
 
 type GaugeHandler struct {
@@ -64,37 +69,34 @@ func (h *GaugeHandler) RegisterRoutes(r chi.Router) {
 
 // handleAdmin renders the admin dashboard page
 func (h *GaugeHandler) handleAdmin(w http.ResponseWriter, r *http.Request) {
-	gauges, err := h.queries.ListGauges(r.Context())
+	gaugeTemplates, err := h.queries.ListGaugeTemplates(r.Context())
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to get gauges: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to get gauge templates: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html")
-	err = layouts.Base("Admin", pages.Admin(gauges)).Render(r.Context(), w)
+	err = layouts.Base("Admin", pages.Admin(gaugeTemplates)).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-// handleNewGaugeForm renders the form for creating a new gauge
+// handleNewGaugeForm renders the form for creating a new gauge template
 func (h *GaugeHandler) handleNewGaugeForm(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	err := layouts.Base("New Gauge", components.GaugeForm("POST", "/admin/gauges", nil, []components.FormError{})).Render(r.Context(), w)
+	err := layouts.Base("New Gauge", components.GaugeTemplateForm("POST", "/admin/gauges", nil, []components.FormError{})).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-// validateGaugeForm parses and validates gauge form input from an HTTP request.
-//
-// Returns the parsed name, icon, unit, target value, frequency, direction, and a slice of form errors if validation fails.
-// validateGaugeForm parses and validates gauge form input from an HTTP request.
-// It returns the parsed name, icon, unit, target value, frequency, direction, and a slice of form errors.
+// validateGaugeTemplateForm parses and validates gauge template form input from an HTTP request.
+// It returns the parsed name, description, icon, unit, target value, frequency, direction, active status, and a slice of form errors.
 // Frequency defaults to "weekly" and direction defaults to "under" if missing or invalid. Target is set to 0 if not a valid number.
-func validateGaugeForm(r *http.Request) (string, string, string, float64, string, string, []components.FormError) {
+func validateGaugeTemplateForm(r *http.Request) (string, string, string, string, int64, string, string, bool, []components.FormError) {
 	var errors []components.FormError
 
 	// Validate name
@@ -102,6 +104,9 @@ func validateGaugeForm(r *http.Request) (string, string, string, float64, string
 	if name == "" {
 		errors = append(errors, components.FormError{Field: "name", Message: "Name is required"})
 	}
+
+	// Get description (optional)
+	description := r.FormValue("description")
 
 	// Validate icon
 	icon := r.FormValue("icon")
@@ -117,9 +122,9 @@ func validateGaugeForm(r *http.Request) (string, string, string, float64, string
 
 	// Validate target
 	targetStr := r.FormValue("target")
-	target, err := strconv.ParseFloat(targetStr, 64)
+	target, err := strconv.ParseInt(targetStr, 10, 64)
 	if err != nil || targetStr == "" {
-		errors = append(errors, components.FormError{Field: "target", Message: "Target must be a valid number"})
+		errors = append(errors, components.FormError{Field: "target", Message: "Target must be a valid integer"})
 		target = 0
 	}
 
@@ -142,49 +147,56 @@ func validateGaugeForm(r *http.Request) (string, string, string, float64, string
 		direction = "under" // Default to under if invalid
 	}
 
-	return name, icon, unit, target, frequency, direction, errors
+	// Parse active status (checkbox)
+	active := r.FormValue("active") == "on" || r.FormValue("active") == "true"
+
+	return name, description, icon, unit, target, frequency, direction, active, errors
 }
 
-// handleCreateGauge handles the creation of a new gauge
+// handleCreateGauge handles the creation of a new gauge template
 func (h *GaugeHandler) handleCreateGauge(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to parse form: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	name, icon, unit, target, frequency, direction, errors := validateGaugeForm(r)
+	name, description, icon, unit, target, frequency, direction, active, errors := validateGaugeTemplateForm(r)
 
 	// If there are validation errors, re-render the form
 	if len(errors) > 0 {
 		w.Header().Set("Content-Type", "text/html")
-		// Create a dummy gauge to maintain form values
-		dummyGauge := &db.Gauge{
-			Name:      name,
-			Icon:      icon,
-			Unit:      unit,
-			Target:    target,
-			Frequency: frequency,
-			Direction: direction,
+		// Create a dummy gauge template to maintain form values
+		dummyTemplate := &db.GaugeTemplate{
+			Name:        name,
+			Description: sql.NullString{String: description, Valid: description != ""},
+			Icon:        icon,
+			Unit:        unit,
+			Target:      target,
+			Frequency:   frequency,
+			Direction:   direction,
+			Active:      active,
 		}
-		err := layouts.Base("New Gauge", components.GaugeForm("POST", "/admin/gauges", dummyGauge, errors)).Render(r.Context(), w)
+		err := layouts.Base("New Gauge", components.GaugeTemplateForm("POST", "/admin/gauges", dummyTemplate, errors)).Render(r.Context(), w)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}
 
-	// Create the gauge
-	_, err := h.queries.CreateGauge(r.Context(), db.CreateGaugeParams{
-		Name:      name,
-		Icon:      icon,
-		Unit:      unit,
-		Target:    target,
-		Frequency: frequency,
-		Direction: direction,
+	// Create the gauge template
+	_, err := h.queries.CreateGaugeTemplate(r.Context(), db.CreateGaugeTemplateParams{
+		Name:        name,
+		Description: sql.NullString{String: description, Valid: description != ""},
+		Icon:        icon,
+		Unit:        unit,
+		Target:      target,
+		Frequency:   frequency,
+		Direction:   direction,
+		Active:      active,
 	})
 
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to create gauge: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to create gauge template: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -192,38 +204,38 @@ func (h *GaugeHandler) handleCreateGauge(w http.ResponseWriter, r *http.Request)
 	h.handleAdmin(w, r)
 }
 
-// handleEditGaugeForm renders the form for editing an existing gauge
+// handleEditGaugeForm renders the form for editing an existing gauge template
 func (h *GaugeHandler) handleEditGaugeForm(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid gauge ID: %v", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid gauge template ID: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	// Get the gauge
-	gauge, err := h.queries.GetGauge(r.Context(), id)
+	// Get the gauge template
+	gaugeTemplate, err := h.queries.GetGaugeTemplate(r.Context(), id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to get gauge: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to get gauge template: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	// Render the edit form
 	w.Header().Set("Content-Type", "text/html")
-	err = layouts.Base("Edit Gauge", components.GaugeForm("PUT", fmt.Sprintf("/admin/gauges/%d", id), &gauge, []components.FormError{})).Render(r.Context(), w)
+	err = layouts.Base("Edit Gauge", components.GaugeTemplateForm("PUT", fmt.Sprintf("/admin/gauges/%d", id), &gaugeTemplate, []components.FormError{})).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-// handleUpdateGauge handles updating an existing gauge
+// handleUpdateGauge handles updating an existing gauge template
 func (h *GaugeHandler) handleUpdateGauge(w http.ResponseWriter, r *http.Request) {
 	// Parse ID from URL
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid gauge ID: %v", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid gauge template ID: %v", err), http.StatusBadRequest)
 		return
 	}
 
@@ -234,40 +246,44 @@ func (h *GaugeHandler) handleUpdateGauge(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Validate form data
-	name, icon, unit, target, frequency, direction, errors := validateGaugeForm(r)
+	name, description, icon, unit, target, frequency, direction, active, errors := validateGaugeTemplateForm(r)
 
 	// If there are validation errors, re-render the form
 	if len(errors) > 0 {
 		w.Header().Set("Content-Type", "text/html")
-		// Create a gauge with the current values to maintain form state
-		currentGauge := db.Gauge{
-			ID:        id,
-			Name:      name,
-			Icon:      icon,
-			Unit:      unit,
-			Target:    target,
-			Frequency: frequency,
-			Direction: direction,
+		// Create a gauge template with the current values to maintain form state
+		currentTemplate := db.GaugeTemplate{
+			ID:          id,
+			Name:        name,
+			Description: sql.NullString{String: description, Valid: description != ""},
+			Icon:        icon,
+			Unit:        unit,
+			Target:      target,
+			Frequency:   frequency,
+			Direction:   direction,
+			Active:      active,
 		}
-		err := layouts.Base("Edit Gauge", components.GaugeForm("PUT", fmt.Sprintf("/admin/gauges/%d", id), &currentGauge, errors)).Render(r.Context(), w)
+		err := layouts.Base("Edit Gauge", components.GaugeTemplateForm("PUT", fmt.Sprintf("/admin/gauges/%d", id), &currentTemplate, errors)).Render(r.Context(), w)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		return
 	}
 
-	// Update the gauge
-	err = h.queries.UpdateGauge(r.Context(), db.UpdateGaugeParams{
-		ID:        id,
-		Name:      name,
-		Icon:      icon,
-		Unit:      unit,
-		Target:    target,
-		Frequency: frequency,
-		Direction: direction,
+	// Update the gauge template
+	err = h.queries.UpdateGaugeTemplate(r.Context(), db.UpdateGaugeTemplateParams{
+		ID:          id,
+		Name:        name,
+		Description: sql.NullString{String: description, Valid: description != ""},
+		Icon:        icon,
+		Unit:        unit,
+		Target:      target,
+		Frequency:   frequency,
+		Direction:   direction,
+		Active:      active,
 	})
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to update gauge: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to update gauge template: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -275,20 +291,20 @@ func (h *GaugeHandler) handleUpdateGauge(w http.ResponseWriter, r *http.Request)
 	h.handleAdmin(w, r)
 }
 
-// handleDeleteGauge handles the deletion of a gauge
+// handleDeleteGauge handles the deletion of a gauge template
 func (h *GaugeHandler) handleDeleteGauge(w http.ResponseWriter, r *http.Request) {
 	// Parse ID from URL
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid gauge ID: %v", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid gauge template ID: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	// Delete the gauge
-	err = h.queries.DeleteGauge(r.Context(), id)
+	// Delete the gauge template
+	err = h.queries.DeleteGaugeTemplate(r.Context(), id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to delete gauge: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to delete gauge template: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -296,88 +312,88 @@ func (h *GaugeHandler) handleDeleteGauge(w http.ResponseWriter, r *http.Request)
 	h.handleAdmin(w, r)
 }
 
-// handleIncrementGauge handles incrementing a gauge's value
+// handleIncrementGauge handles incrementing a gauge instance's value
 func (h *GaugeHandler) handleIncrementGauge(w http.ResponseWriter, r *http.Request) {
 	// Parse ID from URL
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid gauge ID: %v", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid gauge instance ID: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	// Get the current gauge
-	gauge, err := h.queries.GetGauge(r.Context(), id)
+	// Get the current gauge instance
+	gaugeInstance, err := h.queries.GetGaugeInstance(r.Context(), id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to get gauge: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to get gauge instance: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	// Increment the value
-	err = h.queries.UpdateGaugeValue(r.Context(), db.UpdateGaugeValueParams{
+	err = h.queries.UpdateGaugeInstanceValue(r.Context(), db.UpdateGaugeInstanceValueParams{
 		ID:    id,
-		Value: gauge.Value + 1,
+		Value: gaugeInstance.Value + 1,
 	})
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to increment gauge: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to increment gauge instance: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	// Get the updated gauge
-	updatedGauge, err := h.queries.GetGauge(r.Context(), id)
+	// Get the updated gauge instance
+	updatedInstance, err := h.queries.GetGaugeInstance(r.Context(), id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to get updated gauge: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to get updated gauge instance: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	// Render just the updated gauge value component
 	w.Header().Set("Content-Type", "text/html")
-	err = components.GaugeValue(&updatedGauge, updatedGauge.Value).Render(r.Context(), w)
+	err = components.GaugeInstanceValue(&updatedInstance).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-// handleDecrementGauge handles decrementing a gauge's value
+// handleDecrementGauge handles decrementing a gauge instance's value
 func (h *GaugeHandler) handleDecrementGauge(w http.ResponseWriter, r *http.Request) {
 	// Parse ID from URL
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid gauge ID: %v", err), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Invalid gauge instance ID: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	// Get the current gauge
-	gauge, err := h.queries.GetGauge(r.Context(), id)
+	// Get the current gauge instance
+	gaugeInstance, err := h.queries.GetGaugeInstance(r.Context(), id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to get gauge: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to get gauge instance: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	// Only decrement if value is greater than 0
-	if gauge.Value > 0 {
-		err = h.queries.UpdateGaugeValue(r.Context(), db.UpdateGaugeValueParams{
+	if gaugeInstance.Value > 0 {
+		err = h.queries.UpdateGaugeInstanceValue(r.Context(), db.UpdateGaugeInstanceValueParams{
 			ID:    id,
-			Value: gauge.Value - 1,
+			Value: gaugeInstance.Value - 1,
 		})
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to decrement gauge: %v", err), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("Failed to decrement gauge instance: %v", err), http.StatusInternalServerError)
 			return
 		}
 	}
 
-	// Get the updated gauge
-	updatedGauge, err := h.queries.GetGauge(r.Context(), id)
+	// Get the updated gauge instance
+	updatedInstance, err := h.queries.GetGaugeInstance(r.Context(), id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to get updated gauge: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to get updated gauge instance: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	// Render just the updated gauge value component
 	w.Header().Set("Content-Type", "text/html")
-	err = components.GaugeValue(&updatedGauge, updatedGauge.Value).Render(r.Context(), w)
+	err = components.GaugeInstanceValue(&updatedInstance).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

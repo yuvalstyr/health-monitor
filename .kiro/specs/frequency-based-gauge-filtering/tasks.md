@@ -63,19 +63,26 @@
   - Test error handling when database operations fail
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 6. Update gauge handlers to work with template/instance model
+- [x] 6. Update gauge handlers to work with template/instance model
   - Modify gauge creation handler to create gauge templates
   - Update gauge form validation to include active field
   - Modify gauge editing handler to work with templates
   - Update admin page to show gauge templates instead of instances
   - _Requirements: 2.1, 2.2, 2.5_
 
-- [ ] 6.1 Write unit tests for gauge template handlers
+- [x] 6.1 Write unit tests for gauge template handlers
   - Test gauge template creation with valid data
   - Test form validation for required fields (frequency, active status)
   - Test gauge template editing and updates
   - Test error handling for invalid template data
   - _Requirements: 2.1, 2.2, 2.5_
+
+- [ ] 6.2 Create database seeding command for development
+  - Create seed command to populate database with sample gauge templates
+  - Create sample gauge instances for current periods
+  - Add Makefile target for easy seeding (`make seed`)
+  - Include variety of frequencies and realistic sample data
+  - _Development tool for easier testing and demo purposes_
 
 - [ ] 7. Implement dashboard filtering for current period gauges
   - Update dashboard handler to query current period gauge instances
