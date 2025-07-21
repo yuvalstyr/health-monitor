@@ -63,7 +63,7 @@
   - Test error handling when database operations fail
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 6. Update gauge handlers to work with template/instance model
+- [x] 6. Update gauge handlers to work with template/instance model
   - Modify gauge creation handler to create gauge templates
   - Update gauge form validation to include active field
   - Modify gauge editing handler to work with templates

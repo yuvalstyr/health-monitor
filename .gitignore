@@ -23,7 +23,7 @@
 vendor/
 
 # Generated files
-*.templ.go
+*_templ.go
 coverage.html
 tmp/app
 tmp/
