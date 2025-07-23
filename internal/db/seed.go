@@ -52,26 +52,51 @@ func (s *SeedData) SeedDatabase(ctx context.Context) error {
 	return nil
 }
 
-// clearExistingData removes all existing gauge data
+// clearExistingData removes all existing gauge data within a transaction
 func (s *SeedData) clearExistingData(ctx context.Context) error {
 	log.Println("Clearing existing data...")
 	
+	// Get the underlying *sql.DB from the queries
+	db, ok := s.queries.db.(*sql.DB)
+	if !ok {
+		return fmt.Errorf("unable to get database connection for transaction")
+	}
+	
+	// Start transaction
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	
+	// Ensure transaction is rolled back if we don't commit
+	defer func() {
+		if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			log.Printf("Warning: failed to rollback transaction: %v", err)
+		}
+	}()
+	
 	// Delete in correct order due to foreign key constraints
-	_, err := s.queries.db.ExecContext(ctx, "DELETE FROM gauge_values")
+	_, err = tx.ExecContext(ctx, "DELETE FROM gauge_values")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to delete gauge_values: %w", err)
 	}
 	
-	_, err = s.queries.db.ExecContext(ctx, "DELETE FROM gauge_instances")
+	_, err = tx.ExecContext(ctx, "DELETE FROM gauge_instances")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to delete gauge_instances: %w", err)
 	}
 	
-	_, err = s.queries.db.ExecContext(ctx, "DELETE FROM gauge_templates")
+	_, err = tx.ExecContext(ctx, "DELETE FROM gauge_templates")
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to delete gauge_templates: %w", err)
 	}
 	
+	// Commit transaction only if all deletions succeeded
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+	
+	log.Println("Successfully cleared existing data")
 	return nil
 }
 
@@ -307,22 +332,36 @@ func (s *SeedData) addSampleProgressToInstance(ctx context.Context, instance Gau
 		numEntries = daysSincePeriodStart
 	}
 	
-	for i := 0; i < numEntries; i++ {
-		// Distribute entries across the period
-		daysAgo := daysSincePeriodStart - (i * daysSincePeriodStart / numEntries)
-		entryDate := now.AddDate(0, 0, -daysAgo)
-		
-		// Calculate progressive value (building up to current value)
-		progressRatio := float64(numEntries-i) / float64(numEntries)
-		entryValue := int64(float64(currentValue) * progressRatio)
-		
-		err := s.queries.CreateGaugeValue(ctx, CreateGaugeValueParams{
-			GaugeID: instance.ID,
-			Value:   entryValue,
-			Date:    entryDate,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to create gauge value: %w", err)
+	// Only create historical entries if we have enough days and entries to distribute
+	if numEntries > 0 && daysSincePeriodStart > 1 {
+		for i := 0; i < numEntries; i++ {
+			// Distribute entries across the period, avoiding today (day 0) and period start
+			// daysAgo ranges from 1 to daysSincePeriodStart-1 to avoid duplicates
+			maxDaysBack := daysSincePeriodStart - 1
+			if maxDaysBack < 1 {
+				maxDaysBack = 1
+			}
+			
+			// Calculate daysAgo to distribute entries evenly, starting from 1 day ago
+			daysAgo := 1 + (i * maxDaysBack / numEntries)
+			if daysAgo > maxDaysBack {
+				daysAgo = maxDaysBack
+			}
+			
+			entryDate := now.AddDate(0, 0, -daysAgo)
+			
+			// Calculate progressive value (building up to current value)
+			progressRatio := float64(numEntries-i) / float64(numEntries)
+			entryValue := int64(float64(currentValue) * progressRatio)
+			
+			err := s.queries.CreateGaugeValue(ctx, CreateGaugeValueParams{
+				GaugeID: instance.ID,
+				Value:   entryValue,
+				Date:    entryDate,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to create gauge value: %w", err)
+			}
 		}
 	}
 
