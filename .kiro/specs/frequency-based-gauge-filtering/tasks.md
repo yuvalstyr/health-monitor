@@ -77,7 +77,7 @@
   - Test error handling for invalid template data
   - _Requirements: 2.1, 2.2, 2.5_
 
-- [ ] 6.2 Create database seeding command for development
+- [x] 6.2 Create database seeding command for development
   - Create seed command to populate database with sample gauge templates
   - Create sample gauge instances for current periods
   - Add Makefile target for easy seeding (`make seed`)

@@ -1,4 +1,4 @@
-.PHONY: all build run clean generate test test-coverage dev dev-restart migrate-status migrate-up migrate-down migrate-create migrate-reset
+.PHONY: all build run clean generate test test-coverage dev dev-restart migrate-status migrate-up migrate-down migrate-create migrate-reset seed
 
 all: generate build
 
@@ -62,3 +62,7 @@ migrate-create:
 
 migrate-reset:
 	go run github.com/pressly/goose/v3/cmd/goose@latest -dir migrations sqlite3 health-monitor.db reset
+
+# Database seeding for development
+seed:
+	go run cmd/seed/main.go -db health-monitor.db
