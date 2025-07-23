@@ -27,6 +27,9 @@ func NewSeedData(db *sql.DB) *SeedData {
 func (s *SeedData) SeedDatabase(ctx context.Context) error {
 	log.Println("Starting database seeding...")
 
+	// Seed the random number generator for varied sample data
+	rand.Seed(time.Now().UnixNano())
+
 	// Clear existing data
 	if err := s.clearExistingData(ctx); err != nil {
 		return fmt.Errorf("failed to clear existing data: %w", err)
@@ -237,8 +240,11 @@ func (s *SeedData) createSampleTemplates(ctx context.Context) ([]GaugeTemplate, 
 			return nil, fmt.Errorf("failed to create template %s: %w", template.name, err)
 		}
 		templates = append(templates, created)
-		log.Printf("Created template: %s (%s, %s)", created.Name, created.Frequency, 
-			map[bool]string{true: "active", false: "inactive"}[created.Active])
+		status := "inactive"
+		if created.Active {
+			status = "active"
+		}
+		log.Printf("Created template: %s (%s, %s)", created.Name, created.Frequency, status)
 	}
 
 	return templates, nil
