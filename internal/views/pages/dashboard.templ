@@ -6,26 +6,48 @@ import (
 )
 
 templ Dashboard(gaugeInstances []db.ListCurrentPeriodGaugeInstancesRow) {
-	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-		for _, instance := range gaugeInstances {
-			@components.GaugeCard(&db.GaugeInstance{
-				ID: instance.ID,
-				TemplateID: instance.TemplateID,
-				PeriodStart: instance.PeriodStart,
-				Value: instance.Value,
-				CreatedAt: instance.CreatedAt,
-				UpdatedAt: instance.UpdatedAt,
-			}, &db.GaugeTemplate{
-				ID: instance.TemplateID,
-				Name: instance.Name,
-				Description: instance.Description,
-				Target: instance.Target,
-				Unit: instance.Unit,
-				Icon: instance.Icon,
-				Frequency: instance.Frequency,
-				Direction: instance.Direction,
-				Active: true, // Only active templates are returned
-			})
+	<div class="dashboard-container">
+		<!-- Current Period Indicator -->
+		<div class="dashboard-header mb-6">
+			@components.CurrentPeriodIndicator()
+		</div>
+		
+		<!-- Gauge Instances Grid -->
+		if len(gaugeInstances) == 0 {
+			<div class="text-center py-12">
+				<div class="text-6xl mb-4">📊</div>
+				<h2 class="text-2xl font-bold text-base-content/70 mb-2">No Active Gauges</h2>
+				<p class="text-base-content/60 mb-4">No gauge instances are active for the current time period.</p>
+				<a href="/admin" class="btn btn-primary">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+					</svg>
+					Create Gauge Templates
+				</a>
+			</div>
+		} else {
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				for _, instance := range gaugeInstances {
+					@components.GaugeCard(&db.GaugeInstance{
+						ID: instance.ID,
+						TemplateID: instance.TemplateID,
+						PeriodStart: instance.PeriodStart,
+						Value: instance.Value,
+						CreatedAt: instance.CreatedAt,
+						UpdatedAt: instance.UpdatedAt,
+					}, &db.GaugeTemplate{
+						ID: instance.TemplateID,
+						Name: instance.Name,
+						Description: instance.Description,
+						Target: instance.Target,
+						Unit: instance.Unit,
+						Icon: instance.Icon,
+						Frequency: instance.Frequency,
+						Direction: instance.Direction,
+						Active: true, // Only active templates are returned
+					})
+				}
+			</div>
 		}
 	</div>
 }

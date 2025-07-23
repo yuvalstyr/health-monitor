@@ -84,14 +84,14 @@
   - Include variety of frequencies and realistic sample data
   - _Development tool for easier testing and demo purposes_
 
-- [ ] 7. Implement dashboard filtering for current period gauges
+- [x] 7. Implement dashboard filtering for current period gauges
   - Update dashboard handler to query current period gauge instances
   - Implement filtering logic based on current time and frequency
   - Update dashboard template to show only current period gauges
   - Add "no active gauges" message when no instances exist
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 4.1, 4.2, 4.4_
 
-- [ ] 7.1 Write unit tests for dashboard filtering logic
+- [x] 7.1 Write unit tests for dashboard filtering logic
   - Test dashboard shows only current period gauge instances
   - Test filtering works correctly for weekly, bi-weekly, and monthly frequencies
   - Test "no active gauges" message displays when no instances exist

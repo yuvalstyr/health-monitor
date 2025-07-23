@@ -1,0 +1,54 @@
+package components
+
+import (
+	"fmt"
+	"health-monitor/internal/timeutil"
+	"time"
+)
+
+templ CurrentPeriodIndicator() {
+	<div class="bg-base-200 rounded-lg p-4 mb-4">
+		<div class="flex items-center justify-center gap-4">
+			<div class="text-center">
+				<div class="text-sm text-base-content/70 mb-1">Current Period</div>
+				<div class="text-lg font-semibold">{ formatCurrentDate() }</div>
+			</div>
+			<div class="divider divider-horizontal"></div>
+			<div class="flex gap-6">
+				<div class="text-center">
+					<div class="text-xs text-base-content/60">Weekly</div>
+					<div class="text-sm font-medium">{ formatPeriodRange("weekly") }</div>
+				</div>
+				<div class="text-center">
+					<div class="text-xs text-base-content/60">Bi-weekly</div>
+					<div class="text-sm font-medium">{ formatPeriodRange("bi-weekly") }</div>
+				</div>
+				<div class="text-center">
+					<div class="text-xs text-base-content/60">Monthly</div>
+					<div class="text-sm font-medium">{ formatPeriodRange("monthly") }</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+func formatCurrentDate() string {
+	return time.Now().Format("Monday, January 2, 2006")
+}
+
+func formatPeriodRange(frequency string) string {
+	currentTime := time.Now()
+	start := timeutil.CalculateCurrentPeriodStart(frequency, currentTime)
+	end := timeutil.CalculatePeriodEnd(frequency, start)
+	
+	switch frequency {
+	case "weekly":
+		return fmt.Sprintf("%s - %s", start.Format("Jan 2"), end.Format("Jan 2"))
+	case "bi-weekly":
+		return fmt.Sprintf("%s - %s", start.Format("Jan 2"), end.Format("Jan 2"))
+	case "monthly":
+		return start.Format("January 2006")
+	default:
+		return start.Format("Jan 2")
+	}
+}
