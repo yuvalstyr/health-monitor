@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -11,9 +10,6 @@ import (
 	"health-monitor/internal/db"
 	"health-monitor/internal/handlers"
 	"health-monitor/internal/logger"
-	"health-monitor/internal/timeutil"
-	"health-monitor/internal/views/layouts"
-	"health-monitor/internal/views/pages"
 )
 
 // main starts the health-monitor web service, initializing logging, database connections, HTTP routing, middleware, and serving HTTP requests.
@@ -51,35 +47,6 @@ func main() {
 			next.ServeHTTP(w, r)
 			logger.Debug().Str("method", r.Method).Str("path", r.URL.Path).Msg("Request completed")
 		})
-	})
-
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		// Calculate current period starts for all frequencies
-		currentTime := time.Now()
-		weeklyStart := timeutil.CalculateCurrentPeriodStart("weekly", currentTime)
-		biWeeklyStart := timeutil.CalculateCurrentPeriodStart("bi-weekly", currentTime)
-		monthlyStart := timeutil.CalculateCurrentPeriodStart("monthly", currentTime)
-
-		// Query current period gauge instances
-		gaugeInstances, err := queries.ListCurrentPeriodGaugeInstances(r.Context(), db.ListCurrentPeriodGaugeInstancesParams{
-			PeriodStart:   weeklyStart,
-			PeriodStart_2: biWeeklyStart,
-			PeriodStart_3: monthlyStart,
-		})
-		if err != nil {
-			logger.Error().Err(err).Msg("Failed to fetch current period gauge instances")
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-
-		logger.Debug().Int("count", len(gaugeInstances)).Msg("Fetched current period gauge instances")
-
-		w.Header().Set("Content-Type", "text/html")
-		err = layouts.Base("Dashboard", pages.Dashboard(gaugeInstances)).Render(r.Context(), w)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
 	})
 
 	// Create gauge handler and register all gauge-related routes

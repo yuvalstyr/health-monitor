@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"fmt"
 	"health-monitor/internal/db"
+	"health-monitor/internal/timeutil"
 	"health-monitor/internal/views/components"
 	"health-monitor/internal/views/layouts"
 	"health-monitor/internal/views/pages"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -25,6 +27,9 @@ type Querier interface {
 	// Gauge Instance methods (for increment/decrement operations)
 	GetGaugeInstance(ctx context.Context, id int64) (db.GaugeInstance, error)
 	UpdateGaugeInstanceValue(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error
+	
+	// Dashboard methods
+	ListCurrentPeriodGaugeInstances(ctx context.Context, params db.ListCurrentPeriodGaugeInstancesParams) ([]db.ListCurrentPeriodGaugeInstancesRow, error)
 }
 
 type GaugeHandler struct {
@@ -37,8 +42,39 @@ func NewGaugeHandler(queries Querier) *GaugeHandler {
 	}
 }
 
+// handleDashboard renders the main dashboard page with current period gauge instances
+func (h *GaugeHandler) handleDashboard(w http.ResponseWriter, r *http.Request) {
+	// Calculate current period starts for all frequencies
+	currentTime := time.Now()
+	weeklyStart := timeutil.CalculateCurrentPeriodStart("weekly", currentTime)
+	biWeeklyStart := timeutil.CalculateCurrentPeriodStart("bi-weekly", currentTime)
+	monthlyStart := timeutil.CalculateCurrentPeriodStart("monthly", currentTime)
+
+	// Query current period gauge instances
+	gaugeInstances, err := h.queries.ListCurrentPeriodGaugeInstances(r.Context(), db.ListCurrentPeriodGaugeInstancesParams{
+		PeriodStart:   weeklyStart,
+		PeriodStart_2: biWeeklyStart,
+		PeriodStart_3: monthlyStart,
+	})
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to fetch current period gauge instances: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Render dashboard
+	w.Header().Set("Content-Type", "text/html")
+	err = layouts.Base("Dashboard", pages.Dashboard(gaugeInstances)).Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to render dashboard: %v", err), http.StatusInternalServerError)
+		return
+	}
+}
+
 // RegisterRoutes registers all gauge-related routes on the provided router
 func (h *GaugeHandler) RegisterRoutes(r chi.Router) {
+	// Dashboard
+	r.Get("/", h.handleDashboard)
+	
 	// Admin dashboard
 	r.Get("/admin", h.handleAdmin)
 
