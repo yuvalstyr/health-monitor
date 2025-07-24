@@ -137,6 +137,24 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 		}
 
 		if len(history) > 0 {
+			<!-- Chart data as JSON -->
+			<script type="application/json" id="chartData">
+				{
+					"labels": [
+						for i, h := range history {
+							if i > 0 { "," }
+							{ fmt.Sprintf("\"%v\"", h.Month) }
+						}
+					],
+					"values": [
+						for i, h := range history {
+							if i > 0 { "," }
+							{ h.AverageValue }
+						}
+					],
+					"target": { template.Target }
+				}
+			</script>
 			<script>
 				document.addEventListener('DOMContentLoaded', function() {
 					// Check if Chart.js is loaded
@@ -154,14 +172,17 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 
 					const ctx = canvas.getContext('2d');
 					
-					// Prepare chart data
-					const labels = [];
-					const values = [];
-					{ for _, h := range history }
-						labels.push("{ h.Month }");
-						values.push({ h.AverageValue });
-					{ end }
-					const target = { template.Target };
+					// Get chart data from JSON script tag
+					const chartDataElement = document.getElementById('chartData');
+					if (!chartDataElement) {
+						console.error('Chart data not found');
+						return;
+					}
+					
+					const chartData = JSON.parse(chartDataElement.textContent);
+					const labels = chartData.labels;
+					const values = chartData.values;
+					const target = chartData.target;
 					
 					console.log('Chart data:', { labels, values, target });
 
