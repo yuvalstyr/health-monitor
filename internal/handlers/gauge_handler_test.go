@@ -365,12 +365,28 @@ func TestGaugeTemplateHandler(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			// Mock database calls
 			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
+				if id == 1 {
+					return db.GaugeInstance{
+						ID:    1,
+						Value: 10,
+					}, nil
+				}
+				// Return updated value for second call
 				return db.GaugeInstance{
 					ID:    1,
-					Value: 10,
+					Value: 11,
 				}, nil
 			}
 			queries.UpdateGaugeInstanceValueFn = func(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error {
+				// Verify correct parameters
+				assert.Equal(t, int64(1), params.ID)
+				assert.Equal(t, int64(11), params.Value)
+				return nil
+			}
+			queries.CreateGaugeValueFn = func(ctx context.Context, params db.CreateGaugeValueParams) error {
+				// Verify gauge value is created for historical tracking
+				assert.Equal(t, int64(1), params.GaugeID)
+				assert.Equal(t, int64(11), params.Value)
 				return nil
 			}
 
@@ -390,12 +406,33 @@ func TestGaugeTemplateHandler(t *testing.T) {
 
 			// Check response
 			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Contains(t, w.Header().Get("Content-Type"), "text/html")
 		})
 
-		t.Run("error", func(t *testing.T) {
+		t.Run("invalid gauge instance ID", func(t *testing.T) {
+			// Create test request with invalid ID
+			r := httptest.NewRequest("POST", "/gauges/invalid/increment", nil)
+
+			// Setup chi router context with invalid ID
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", "invalid")
+			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+			// Create a response recorder
+			w := httptest.NewRecorder()
+
+			// Call the handler directly
+			handler.handleIncrementGauge(w, r)
+
+			// Check response
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+			assert.Contains(t, w.Body.String(), "Invalid gauge instance ID")
+		})
+
+		t.Run("gauge instance not found", func(t *testing.T) {
 			// Mock database calls with error
 			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
-				return db.GaugeInstance{}, fmt.Errorf("failed to get gauge instance")
+				return db.GaugeInstance{}, fmt.Errorf("gauge instance not found")
 			}
 
 			// Create test request
@@ -414,12 +451,10 @@ func TestGaugeTemplateHandler(t *testing.T) {
 
 			// Check response
 			assert.Equal(t, http.StatusInternalServerError, w.Code)
-			assert.Contains(t, w.Body.String(), "failed to get gauge instance")
+			assert.Contains(t, w.Body.String(), "Failed to get gauge instance")
 		})
-	})
 
-	t.Run("DecrementGaugeInstance", func(t *testing.T) {
-		t.Run("success", func(t *testing.T) {
+		t.Run("update gauge instance value fails", func(t *testing.T) {
 			// Mock database calls
 			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
 				return db.GaugeInstance{
@@ -428,6 +463,136 @@ func TestGaugeTemplateHandler(t *testing.T) {
 				}, nil
 			}
 			queries.UpdateGaugeInstanceValueFn = func(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error {
+				return fmt.Errorf("database update failed")
+			}
+
+			// Create test request
+			r := httptest.NewRequest("POST", "/gauges/1/increment", nil)
+
+			// Setup chi router context
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", "1")
+			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+			// Create a response recorder
+			w := httptest.NewRecorder()
+
+			// Call the handler directly
+			handler.handleIncrementGauge(w, r)
+
+			// Check response
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+			assert.Contains(t, w.Body.String(), "Failed to increment gauge instance")
+		})
+
+		t.Run("create gauge value fails", func(t *testing.T) {
+			// Mock database calls
+			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
+				if id == 1 {
+					return db.GaugeInstance{
+						ID:    1,
+						Value: 10,
+					}, nil
+				}
+				// Return updated value for second call
+				return db.GaugeInstance{
+					ID:    1,
+					Value: 11,
+				}, nil
+			}
+			queries.UpdateGaugeInstanceValueFn = func(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error {
+				return nil
+			}
+			queries.CreateGaugeValueFn = func(ctx context.Context, params db.CreateGaugeValueParams) error {
+				return fmt.Errorf("failed to create gauge value")
+			}
+
+			// Create test request
+			r := httptest.NewRequest("POST", "/gauges/1/increment", nil)
+
+			// Setup chi router context
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", "1")
+			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+			// Create a response recorder
+			w := httptest.NewRecorder()
+
+			// Call the handler directly
+			handler.handleIncrementGauge(w, r)
+
+			// Check response
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+			assert.Contains(t, w.Body.String(), "Failed to create gauge value")
+		})
+
+		t.Run("get updated gauge instance fails", func(t *testing.T) {
+			callCount := 0
+			// Mock database calls
+			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
+				callCount++
+				if callCount == 1 {
+					return db.GaugeInstance{
+						ID:    1,
+						Value: 10,
+					}, nil
+				}
+				// Second call fails
+				return db.GaugeInstance{}, fmt.Errorf("failed to get updated gauge instance")
+			}
+			queries.UpdateGaugeInstanceValueFn = func(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error {
+				return nil
+			}
+			queries.CreateGaugeValueFn = func(ctx context.Context, params db.CreateGaugeValueParams) error {
+				return nil
+			}
+
+			// Create test request
+			r := httptest.NewRequest("POST", "/gauges/1/increment", nil)
+
+			// Setup chi router context
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", "1")
+			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+			// Create a response recorder
+			w := httptest.NewRecorder()
+
+			// Call the handler directly
+			handler.handleIncrementGauge(w, r)
+
+			// Check response
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+			assert.Contains(t, w.Body.String(), "Failed to get updated gauge instance")
+		})
+	})
+
+	t.Run("DecrementGaugeInstance", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			// Mock database calls
+			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
+				if id == 1 {
+					return db.GaugeInstance{
+						ID:    1,
+						Value: 10,
+					}, nil
+				}
+				// Return updated value for second call
+				return db.GaugeInstance{
+					ID:    1,
+					Value: 9,
+				}, nil
+			}
+			queries.UpdateGaugeInstanceValueFn = func(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error {
+				// Verify correct parameters
+				assert.Equal(t, int64(1), params.ID)
+				assert.Equal(t, int64(9), params.Value)
+				return nil
+			}
+			queries.CreateGaugeValueFn = func(ctx context.Context, params db.CreateGaugeValueParams) error {
+				// Verify gauge value is created for historical tracking
+				assert.Equal(t, int64(1), params.GaugeID)
+				assert.Equal(t, int64(9), params.Value)
 				return nil
 			}
 
@@ -447,12 +612,33 @@ func TestGaugeTemplateHandler(t *testing.T) {
 
 			// Check response
 			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Contains(t, w.Header().Get("Content-Type"), "text/html")
 		})
 
-		t.Run("error", func(t *testing.T) {
+		t.Run("invalid gauge instance ID", func(t *testing.T) {
+			// Create test request with invalid ID
+			r := httptest.NewRequest("POST", "/gauges/invalid/decrement", nil)
+
+			// Setup chi router context with invalid ID
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", "invalid")
+			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+			// Create a response recorder
+			w := httptest.NewRecorder()
+
+			// Call the handler directly
+			handler.handleDecrementGauge(w, r)
+
+			// Check response
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+			assert.Contains(t, w.Body.String(), "Invalid gauge instance ID")
+		})
+
+		t.Run("gauge instance not found", func(t *testing.T) {
 			// Mock database calls with error
 			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
-				return db.GaugeInstance{}, fmt.Errorf("failed to get gauge instance")
+				return db.GaugeInstance{}, fmt.Errorf("gauge instance not found")
 			}
 
 			// Create test request
@@ -471,7 +657,7 @@ func TestGaugeTemplateHandler(t *testing.T) {
 
 			// Check response
 			assert.Equal(t, http.StatusInternalServerError, w.Code)
-			assert.Contains(t, w.Body.String(), "failed to get gauge instance")
+			assert.Contains(t, w.Body.String(), "Failed to get gauge instance")
 		})
 
 		t.Run("prevents negative values", func(t *testing.T) {
@@ -487,6 +673,11 @@ func TestGaugeTemplateHandler(t *testing.T) {
 				t.Error("UpdateGaugeInstanceValue should not be called when value is 0")
 				return nil
 			}
+			// Should not call CreateGaugeValue when value is 0
+			queries.CreateGaugeValueFn = func(ctx context.Context, params db.CreateGaugeValueParams) error {
+				t.Error("CreateGaugeValue should not be called when value is 0")
+				return nil
+			}
 
 			// Create test request
 			r := httptest.NewRequest("POST", "/gauges/1/decrement", nil)
@@ -504,6 +695,118 @@ func TestGaugeTemplateHandler(t *testing.T) {
 
 			// Check response
 			assert.Equal(t, http.StatusOK, w.Code)
+		})
+
+		t.Run("update gauge instance value fails", func(t *testing.T) {
+			// Mock database calls
+			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
+				return db.GaugeInstance{
+					ID:    1,
+					Value: 10,
+				}, nil
+			}
+			queries.UpdateGaugeInstanceValueFn = func(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error {
+				return fmt.Errorf("database update failed")
+			}
+
+			// Create test request
+			r := httptest.NewRequest("POST", "/gauges/1/decrement", nil)
+
+			// Setup chi router context
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", "1")
+			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+			// Create a response recorder
+			w := httptest.NewRecorder()
+
+			// Call the handler directly
+			handler.handleDecrementGauge(w, r)
+
+			// Check response
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+			assert.Contains(t, w.Body.String(), "Failed to decrement gauge instance")
+		})
+
+		t.Run("create gauge value fails", func(t *testing.T) {
+			// Mock database calls
+			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
+				if id == 1 {
+					return db.GaugeInstance{
+						ID:    1,
+						Value: 10,
+					}, nil
+				}
+				// Return updated value for second call
+				return db.GaugeInstance{
+					ID:    1,
+					Value: 9,
+				}, nil
+			}
+			queries.UpdateGaugeInstanceValueFn = func(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error {
+				return nil
+			}
+			queries.CreateGaugeValueFn = func(ctx context.Context, params db.CreateGaugeValueParams) error {
+				return fmt.Errorf("failed to create gauge value")
+			}
+
+			// Create test request
+			r := httptest.NewRequest("POST", "/gauges/1/decrement", nil)
+
+			// Setup chi router context
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", "1")
+			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+			// Create a response recorder
+			w := httptest.NewRecorder()
+
+			// Call the handler directly
+			handler.handleDecrementGauge(w, r)
+
+			// Check response
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+			assert.Contains(t, w.Body.String(), "Failed to create gauge value")
+		})
+
+		t.Run("get updated gauge instance fails", func(t *testing.T) {
+			callCount := 0
+			// Mock database calls
+			queries.GetGaugeInstanceFn = func(ctx context.Context, id int64) (db.GaugeInstance, error) {
+				callCount++
+				if callCount == 1 {
+					return db.GaugeInstance{
+						ID:    1,
+						Value: 10,
+					}, nil
+				}
+				// Second call fails
+				return db.GaugeInstance{}, fmt.Errorf("failed to get updated gauge instance")
+			}
+			queries.UpdateGaugeInstanceValueFn = func(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error {
+				return nil
+			}
+			queries.CreateGaugeValueFn = func(ctx context.Context, params db.CreateGaugeValueParams) error {
+				return nil
+			}
+
+			// Create test request
+			r := httptest.NewRequest("POST", "/gauges/1/decrement", nil)
+
+			// Setup chi router context
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", "1")
+			r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+
+			// Create a response recorder
+			w := httptest.NewRecorder()
+
+			// Call the handler directly
+			handler.handleDecrementGauge(w, r)
+
+			// Check response
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+			assert.Contains(t, w.Body.String(), "Failed to get updated gauge instance")
 		})
 	})
 }

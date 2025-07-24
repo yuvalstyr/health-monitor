@@ -53,6 +53,11 @@ func (m *MockQuerier) UpdateGaugeInstanceValue(ctx context.Context, params db.Up
 	return args.Error(0)
 }
 
+func (m *MockQuerier) CreateGaugeValue(ctx context.Context, params db.CreateGaugeValueParams) error {
+	args := m.Called(ctx, params)
+	return args.Error(0)
+}
+
 func (m *MockQuerier) ListCurrentPeriodGaugeInstances(ctx context.Context, params db.ListCurrentPeriodGaugeInstancesParams) ([]db.ListCurrentPeriodGaugeInstancesRow, error) {
 	args := m.Called(ctx, params)
 	return args.Get(0).([]db.ListCurrentPeriodGaugeInstancesRow), args.Error(1)

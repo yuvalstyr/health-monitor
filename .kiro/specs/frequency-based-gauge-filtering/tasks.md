@@ -105,14 +105,14 @@
   - Add graceful shutdown handling for background service
   - _Requirements: 3.1, 3.5_
 
-- [ ] 9. Update gauge increment/decrement handlers for instances
+- [x] 9. Update gauge increment/decrement handlers for instances
   - Modify increment handler to work with gauge instances
   - Modify decrement handler to work with gauge instances
   - Update HTMX responses to work with new data structure
   - Ensure gauge values are properly updated in instances
   - _Requirements: 1.1, 4.3_
 
-- [ ] 9.1 Write unit tests for gauge instance value handlers
+- [x] 9.1 Write unit tests for gauge instance value handlers
   - Test increment handler updates gauge instance values correctly
   - Test decrement handler prevents negative values
   - Test HTMX responses return correct updated gauge data
