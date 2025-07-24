@@ -35,7 +35,7 @@ func (a *App) Run() error {
 	// Open database connection
 	database, err := db.Open()
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Error opening database")
+		logger.Error().Err(err).Msg("Error opening database")
 		return err
 	}
 	defer database.Close()
@@ -57,6 +57,9 @@ func (a *App) Run() error {
 
 	var wg sync.WaitGroup
 
+	// Create error channel for server startup errors
+	serverErrChan := make(chan error, 1)
+
 	// Start background scheduling service
 	schedulerRunner.Start(ctx, &wg)
 
@@ -64,13 +67,24 @@ func (a *App) Run() error {
 	go func() {
 		logger.Info().Str("port", a.config.Port).Msg("Server listening")
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatal().Err(err).Msg("Server failed to start")
+			logger.Error().Err(err).Msg("Server failed to start")
+			serverErrChan <- err
 		}
 	}()
 
-	// Set up shutdown manager and wait for shutdown
+	// Set up shutdown manager
 	shutdownManager := shutdown.New(httpServer, cancel, &wg)
-	shutdownManager.WaitForShutdown()
 
-	return nil
+	// Wait for either shutdown signal or server error
+	select {
+	case err := <-serverErrChan:
+		logger.Error().Err(err).Msg("Server startup failed, initiating shutdown")
+		cancel() // Cancel context to stop other services
+		shutdownManager.WaitForShutdown()
+		return err
+	case <-ctx.Done():
+		// Normal shutdown initiated
+		shutdownManager.WaitForShutdown()
+		return nil
+	}
 }
