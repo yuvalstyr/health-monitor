@@ -138,52 +138,79 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 
 		if len(history) > 0 {
 			<script>
-				// Prepare chart data
-				const ctx = document.getElementById('trendsChart').getContext('2d');
-				const data = {
-					labels: [ for _, h := range history { fmt.Sprintf("%v", h.Month) } ],
-					datasets: [{
-						label: 'Average Value',
-						data: [ for _, h := range history { h.AverageValue } ],
-						borderColor: '#570DF8',
-						backgroundColor: '#570DF822',
-						fill: true,
-						tension: 0.4
-					}, {
-						label: 'Target',
-						data: Array({ fmt.Sprintf("%d", len(history)) }).fill({ fmt.Sprintf("%d", template.Target) }),
-						borderColor: '#F87272',
-						borderDash: [5, 5],
-						fill: false
-					}]
-				};
+				document.addEventListener('DOMContentLoaded', function() {
+					// Check if Chart.js is loaded
+					if (typeof Chart === 'undefined') {
+						console.error('Chart.js is not loaded');
+						return;
+					}
 
-				// Create chart
-				new Chart(ctx, {
-					type: 'line',
-					data: data,
-					options: {
-						responsive: true,
-						maintainAspectRatio: false,
-						plugins: {
-							legend: {
-								position: 'top',
-							}
-						},
-						scales: {
-							y: {
-								beginAtZero: true,
-								ticks: {
-									callback: function(value) {
-										return value + ' ' + '{ template.Unit }';
+					// Get canvas element
+					const canvas = document.getElementById('trendsChart');
+					if (!canvas) {
+						console.error('Canvas element not found');
+						return;
+					}
+
+					const ctx = canvas.getContext('2d');
+					
+					// Prepare chart data
+					const labels = [ for _, h := range history { fmt.Sprintf("\"%v\"", h.Month) } ];
+					const values = [ for _, h := range history { h.AverageValue } ];
+					const target = { fmt.Sprintf("%d", template.Target) };
+					
+					console.log('Chart data:', { labels, values, target });
+
+					const data = {
+						labels: labels,
+						datasets: [{
+							label: 'Average Value',
+							data: values,
+							borderColor: '#570DF8',
+							backgroundColor: '#570DF822',
+							fill: true,
+							tension: 0.4
+						}, {
+							label: 'Target',
+							data: Array(labels.length).fill(target),
+							borderColor: '#F87272',
+							borderDash: [5, 5],
+							fill: false
+						}]
+					};
+
+					// Create chart
+					try {
+						new Chart(ctx, {
+							type: 'line',
+							data: data,
+							options: {
+								responsive: true,
+								maintainAspectRatio: false,
+								plugins: {
+									legend: {
+										position: 'top',
 									}
+								},
+								scales: {
+									y: {
+										beginAtZero: true,
+										ticks: {
+											callback: function(value) {
+												return value + ' ' + '{ template.Unit }';
+											}
+										}
+									}
+								},
+								interaction: {
+									intersect: false,
+									mode: 'index'
 								}
 							}
-						},
-						interaction: {
-							intersect: false,
-							mode: 'index'
-						}
+						});
+						console.log('Chart created successfully');
+					} catch (error) {
+						console.error('Error creating chart:', error);
 					}
 				});
 			</script>
