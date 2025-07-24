@@ -155,9 +155,9 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 					const ctx = canvas.getContext('2d');
 					
 					// Prepare chart data
-					const labels = [ for _, h := range history { fmt.Sprintf("\"%v\"", h.Month) } ];
-					const values = [ for _, h := range history { h.AverageValue } ];
-					const target = { fmt.Sprintf("%d", template.Target) };
+					const labels = [{ for i, h := range history }{ if i > 0 },{ end }"{ h.Month }"{ end }];
+					const values = [{ for i, h := range history }{ if i > 0 },{ end }{ h.AverageValue }{ end }];
+					const target = { template.Target };
 					
 					console.log('Chart data:', { labels, values, target });
 
