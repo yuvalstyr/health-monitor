@@ -119,20 +119,20 @@
   - Test error handling for invalid gauge instance IDs
   - _Requirements: 1.1, 4.3_
 
-- [ ] 10. Add current period indicator to dashboard
+- [x] 10. Add current period indicator to dashboard
   - Create component to show current time period context
   - Display current week/bi-weekly/monthly period information
   - Add simple styling to make period context clear
   - _Requirements: 4.5_
 
-- [ ] 11. Update historical data queries for new structure
+- [x] 11. Update historical data queries for new structure
   - Modify gauge history queries to work with instances
   - Group historical data by time periods based on frequency
   - Update trends page to show data from gauge instances
   - Ensure historical data displays correctly for all frequencies
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 11.1 Write unit tests for historical data functionality
+- [x] 11.1 Write unit tests for historical data functionality
   - Test gauge history queries return correct data for instances
   - Test data grouping by time periods for each frequency type
   - Test trends page displays historical data correctly

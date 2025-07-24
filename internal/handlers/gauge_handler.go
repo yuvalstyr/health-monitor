@@ -33,6 +33,9 @@ type Querier interface {
 	
 	// Dashboard methods
 	ListCurrentPeriodGaugeInstances(ctx context.Context, params db.ListCurrentPeriodGaugeInstancesParams) ([]db.ListCurrentPeriodGaugeInstancesRow, error)
+	
+	// Historical data methods
+	GetGaugeHistoryByTemplate(ctx context.Context, id int64) ([]db.GetGaugeHistoryByTemplateRow, error)
 }
 
 type GaugeHandler struct {
@@ -104,6 +107,12 @@ func (h *GaugeHandler) RegisterRoutes(r chi.Router) {
 		r.Post("/increment", h.handleIncrementGauge)
 		r.Post("/decrement", h.handleDecrementGauge)
 	})
+}
+
+// RegisterTrendsRoutes registers trends-related routes on the provided router
+func (h *GaugeHandler) RegisterTrendsRoutes(r chi.Router) {
+	// Trends page
+	r.Get("/trends/{id}", h.handleTrends)
 }
 
 // handleAdmin renders the admin dashboard page
@@ -463,6 +472,117 @@ func (h *GaugeHandler) handleDecrementGauge(w http.ResponseWriter, r *http.Reque
 	err = components.GaugeInstanceValue(&updatedInstance).Render(r.Context(), w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+// GaugeHistoryPeriod represents a historical period for a gauge template
+type GaugeHistoryPeriod struct {
+	PeriodStart  string  `json:"period_start"`
+	Frequency    string  `json:"frequency"`
+	AverageValue float64 `json:"average_value"`
+	ValueCount   int64   `json:"value_count"`
+}
+
+// getGaugeHistoryByTemplate retrieves historical data for a gauge template
+// grouped by time periods based on frequency
+func (h *GaugeHandler) getGaugeHistoryByTemplate(ctx context.Context, templateID int64) ([]GaugeHistoryPeriod, error) {
+	rows, err := h.queries.GetGaugeHistoryByTemplate(ctx, templateID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gauge history: %w", err)
+	}
+
+	history := make([]GaugeHistoryPeriod, len(rows))
+	for i, row := range rows {
+		// Handle the interface{} type from the database query
+		avgValue := 0.0
+		if row.AverageValue != nil {
+			if val, ok := row.AverageValue.(float64); ok {
+				avgValue = val
+			} else if val, ok := row.AverageValue.(int64); ok {
+				avgValue = float64(val)
+			}
+		}
+		
+		history[i] = GaugeHistoryPeriod{
+			PeriodStart:  row.PeriodStart.Format("2006-01-02"),
+			Frequency:    row.Frequency,
+			AverageValue: avgValue,
+			ValueCount:   row.ValueCount,
+		}
+	}
+
+	return history, nil
+}
+
+// handleTrends renders the trends page for a specific gauge template
+func (h *GaugeHandler) handleTrends(w http.ResponseWriter, r *http.Request) {
+	// Parse template ID from URL
+	idStr := chi.URLParam(r, "id")
+	templateID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid gauge template ID: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Get the gauge template
+	template, err := h.queries.GetGaugeTemplate(r.Context(), templateID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get gauge template: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Get historical data for the template
+	history, err := h.getGaugeHistoryByTemplate(r.Context(), templateID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get gauge history: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Convert to the format expected by the template
+	// For compatibility with existing trends template, we need to convert to GetGaugeHistoryRow format
+	historyRows := make([]db.GetGaugeHistoryRow, len(history))
+	for i, period := range history {
+		// Format period start based on frequency for display
+		var displayPeriod string
+		if t, err := time.Parse("2006-01-02", period.PeriodStart); err == nil {
+			switch period.Frequency {
+			case "weekly":
+				// Format as "Week of Jan 7, 2024"
+				displayPeriod = fmt.Sprintf("Week of %s", t.Format("Jan 2, 2006"))
+			case "bi-weekly":
+				// Format as "Bi-weekly Jan 7, 2024"
+				displayPeriod = fmt.Sprintf("Bi-weekly %s", t.Format("Jan 2, 2006"))
+			case "monthly":
+				// Format as "January 2024" for monthly
+				displayPeriod = t.Format("January 2006")
+			default:
+				displayPeriod = t.Format("Jan 2, 2006")
+			}
+		} else {
+			// Fallback to original format if parsing fails
+			switch period.Frequency {
+			case "weekly":
+				displayPeriod = fmt.Sprintf("Week of %s", period.PeriodStart)
+			case "bi-weekly":
+				displayPeriod = fmt.Sprintf("Bi-weekly %s", period.PeriodStart)
+			case "monthly":
+				displayPeriod = period.PeriodStart
+			default:
+				displayPeriod = period.PeriodStart
+			}
+		}
+
+		historyRows[i] = db.GetGaugeHistoryRow{
+			Month:        displayPeriod,
+			AverageValue: int64(period.AverageValue),
+		}
+	}
+
+	// Render trends page
+	w.Header().Set("Content-Type", "text/html")
+	err = pages.TrendsPage(&template, historyRows).Render(r.Context(), w)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to render trends page: %v", err), http.StatusInternalServerError)
 		return
 	}
 }

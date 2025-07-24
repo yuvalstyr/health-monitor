@@ -84,9 +84,29 @@ WHERE gauge_id = ?
 ORDER BY date DESC;
 
 -- name: GetGaugeHistory :many
+-- Get historical data for a specific gauge instance (grouped by month)
+-- Note: For template-level historical data, use GetGaugeHistoryByTemplate instead
 SELECT strftime('%Y-%m', date) as month,
        CAST(AVG(value) AS INTEGER) as average_value
 FROM gauge_values
 WHERE gauge_id = ?
 GROUP BY strftime('%Y-%m', date)
 ORDER BY month DESC;
+
+-- name: GetGaugeHistoryByTemplate :many
+-- Get historical data for a gauge template grouped by time periods based on frequency
+-- Returns one row per gauge instance (period) with aggregated values
+SELECT 
+    gi.period_start,
+    gt.frequency,
+    CASE 
+        WHEN COUNT(gv.value) > 0 THEN AVG(gv.value)
+        ELSE gi.value
+    END as average_value,
+    COUNT(gv.value) as value_count
+FROM gauge_instances gi
+JOIN gauge_templates gt ON gi.template_id = gt.id
+LEFT JOIN gauge_values gv ON gi.id = gv.gauge_id
+WHERE gt.id = ?
+GROUP BY gi.id, gi.period_start, gt.frequency, gi.value
+ORDER BY gi.period_start DESC;

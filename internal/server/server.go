@@ -34,6 +34,7 @@ func SetupRouter(queries db.Querier) *chi.Mux {
 	// Create gauge handler and register all gauge-related routes
 	gaugeHandler := handlers.NewGaugeHandler(queries)
 	gaugeHandler.RegisterRoutes(r)
+	gaugeHandler.RegisterTrendsRoutes(r)
 
 	// Add static file server for assets with directory listing protection
 	fs := http.FileServer(neuteredFileSystem{http.Dir("./static")})
