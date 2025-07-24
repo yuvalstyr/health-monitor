@@ -28,6 +28,9 @@ type Querier interface {
 	GetGaugeInstance(ctx context.Context, id int64) (db.GaugeInstance, error)
 	UpdateGaugeInstanceValue(ctx context.Context, params db.UpdateGaugeInstanceValueParams) error
 	
+	// Gauge Value methods (for historical tracking)
+	CreateGaugeValue(ctx context.Context, params db.CreateGaugeValueParams) error
+	
 	// Dashboard methods
 	ListCurrentPeriodGaugeInstances(ctx context.Context, params db.ListCurrentPeriodGaugeInstancesParams) ([]db.ListCurrentPeriodGaugeInstancesRow, error)
 }
@@ -365,13 +368,27 @@ func (h *GaugeHandler) handleIncrementGauge(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Increment the value
+	// Calculate new value
+	newValue := gaugeInstance.Value + 1
+
+	// Update the gauge instance value
 	err = h.queries.UpdateGaugeInstanceValue(r.Context(), db.UpdateGaugeInstanceValueParams{
 		ID:    id,
-		Value: gaugeInstance.Value + 1,
+		Value: newValue,
 	})
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to increment gauge instance: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Create gauge value entry for historical tracking
+	err = h.queries.CreateGaugeValue(r.Context(), db.CreateGaugeValueParams{
+		GaugeID: id,
+		Value:   newValue,
+		Date:    time.Now(),
+	})
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to create gauge value: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -410,12 +427,26 @@ func (h *GaugeHandler) handleDecrementGauge(w http.ResponseWriter, r *http.Reque
 
 	// Only decrement if value is greater than 0
 	if gaugeInstance.Value > 0 {
+		newValue := gaugeInstance.Value - 1
+
+		// Update the gauge instance value
 		err = h.queries.UpdateGaugeInstanceValue(r.Context(), db.UpdateGaugeInstanceValueParams{
 			ID:    id,
-			Value: gaugeInstance.Value - 1,
+			Value: newValue,
 		})
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to decrement gauge instance: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Create gauge value entry for historical tracking
+		err = h.queries.CreateGaugeValue(r.Context(), db.CreateGaugeValueParams{
+			GaugeID: id,
+			Value:   newValue,
+			Date:    time.Now(),
+		})
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to create gauge value: %v", err), http.StatusInternalServerError)
 			return
 		}
 	}
