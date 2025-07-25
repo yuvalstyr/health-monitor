@@ -12,7 +12,7 @@ func TestNewGaugeTemplateWithStatus(t *testing.T) {
 	tests := []struct {
 		name         string
 		template     *db.GaugeTemplate
-		currentValue float64
+		currentValue int64
 		expected     *GaugeTemplateWithStatus
 	}{
 		{
@@ -100,11 +100,11 @@ func TestNewGaugeHistory(t *testing.T) {
 			history: []db.GetGaugeHistoryRow{
 				{
 					Month:        "2025-03",
-					AverageValue: 75.5,
+					AverageValue: 75,
 				},
 				{
 					Month:        "2025-02",
-					AverageValue: 82.3,
+					AverageValue: 82,
 				},
 			},
 			expected: &GaugeHistory{
@@ -114,11 +114,11 @@ func TestNewGaugeHistory(t *testing.T) {
 				Values: []MonthlyValue{
 					{
 						Month:        "2025-03",
-						AverageValue: 75.5,
+						AverageValue: 75,
 					},
 					{
 						Month:        "2025-02",
-						AverageValue: 82.3,
+						AverageValue: 82,
 					},
 				},
 			},
@@ -150,7 +150,7 @@ func TestMonthTypeAssertion(t *testing.T) {
 	history := []db.GetGaugeHistoryRow{
 		{
 			Month:        "2025-03",
-			AverageValue: 75.5,
+			AverageValue: 75,
 		},
 	}
 
@@ -161,7 +161,7 @@ func TestMonthTypeAssertion(t *testing.T) {
 	historyNil := []db.GetGaugeHistoryRow{
 		{
 			Month:        nil,
-			AverageValue: 82.3,
+			AverageValue: 82,
 		},
 	}
 
