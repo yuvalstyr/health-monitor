@@ -12,6 +12,32 @@ func min(a, b int) int {
 	return b
 }
 
+func getGaugeStatus(value, target int64, direction string) string {
+	if direction == "under" {
+		if value <= target {
+			return "success" // Green - meeting target
+		}
+		return "error" // Red - over target
+	} else { // direction == "over" 
+		if value >= target {
+			return "success" // Green - meeting target
+		}
+		return "error" // Red - under target
+	}
+}
+
+func getProgressPercentage(value, target int64) float64 {
+	if target == 0 {
+		return 0
+	}
+	
+	percentage := (float64(value) / float64(target)) * 100
+	if percentage > 100 {
+		return 100
+	}
+	return percentage
+}
+
 templ GaugeValue(gaugeInstance *db.GaugeInstance) {
 	<div id={ fmt.Sprintf("gauge-instance-value-%d", gaugeInstance.ID) } class="space-y-2 sm:space-y-3">
 			<!-- Gauge value -->
@@ -24,8 +50,19 @@ templ GaugeValue(gaugeInstance *db.GaugeInstance) {
 }
 
 templ GaugeCard(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {
-	<div id={ fmt.Sprintf("gauge-card-%d", gaugeInstance.ID) } class="card w-64 h-64 aspect-square bg-base-100 shadow-lg hover:shadow-xl transition-all" style="min-width: 16rem; min-height: 16rem; max-width: 16rem; max-height: 16rem;">
-		<div class="card-body p-3 relative flex flex-col">
+	if getGaugeStatus(gaugeInstance.Value, template.Target, template.Direction) == "success" {
+		<div id={ fmt.Sprintf("gauge-card-%d", gaugeInstance.ID) } class="card bg-base-100 shadow-lg hover:shadow-xl transition-all border-l-4 border-l-green-500">
+			@gaugeCardContent(gaugeInstance, template)
+		</div>
+	} else {
+		<div id={ fmt.Sprintf("gauge-card-%d", gaugeInstance.ID) } class="card bg-base-100 shadow-lg hover:shadow-xl transition-all border-l-4 border-l-red-500">
+			@gaugeCardContent(gaugeInstance, template)
+		</div>
+	}
+}
+
+templ gaugeCardContent(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {
+		<div class="card-body p-4 relative flex flex-col">
 			<!-- Action buttons in top right corner -->
 			<div class="absolute top-2 right-2 flex gap-1">
 				<a href={ templ.URL(fmt.Sprintf("/trends/%d", template.ID)) } class="btn btn-circle btn-sm btn-ghost" title="View Trends">
@@ -59,6 +96,20 @@ templ GaugeCard(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {
 				@GaugeInstanceValue(gaugeInstance)
 			</div>
 			
+			<!-- Progress bar showing percentage to target -->
+			<div class="mt-3 mb-2">
+				<div class="w-full bg-base-300 rounded-full h-2">
+					if getGaugeStatus(gaugeInstance.Value, template.Target, template.Direction) == "success" {
+						<div class="h-2 rounded-full transition-all duration-300 bg-green-500" style={ fmt.Sprintf("width: %.1f%%", getProgressPercentage(gaugeInstance.Value, template.Target)) }></div>
+					} else {
+						<div class="h-2 rounded-full transition-all duration-300 bg-red-500" style={ fmt.Sprintf("width: %.1f%%", getProgressPercentage(gaugeInstance.Value, template.Target)) }></div>
+					}
+				</div>
+				<div class="text-xs text-center mt-1 text-base-content/70">
+					{ fmt.Sprintf("%.0f%% to target", getProgressPercentage(gaugeInstance.Value, template.Target)) }
+				</div>
+			</div>
+			
 			<!-- Larger increment/decrement buttons, vertically centered -->
 			<div class="flex justify-center gap-4 items-center flex-grow mt-2">
 				<button 
@@ -79,7 +130,6 @@ templ GaugeCard(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {
 				</button>
 			</div>
 		</div>
-	</div>
 }
 
 templ Gauge(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {

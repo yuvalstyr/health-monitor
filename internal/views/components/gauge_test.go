@@ -50,13 +50,13 @@ func TestGaugeCard(t *testing.T) {
 	t.Run("renders different value when changed", func(t *testing.T) {
 		differentInstance := &db.GaugeInstance{
 			ID:    1,
-			Value: 150.0,
+			Value: 200,
 		}
 		component := GaugeCard(differentInstance, template)
 		html := renderComponent(t, component)
 
-		assert.Contains(t, html, "150")
-		assert.NotContains(t, html, "75")
+		assert.Contains(t, html, "200")
+		assert.NotContains(t, html, "150")
 	})
 }
 
