@@ -19,12 +19,13 @@ func renderChart(data charts.ChartData, chartID string) string {
 	return string(html)
 }
 
+
 // ChartWithHTMX renders a chart that can be updated via HTMX
 templ ChartWithHTMX(data charts.ChartData, chartID string, updateURL string, updateInterval string) {
 	<div 
 		class="chart-container" 
 		hx-get={ updateURL }
-		hx-trigger={ "every " + updateInterval }
+		hx-trigger={ "every " + ValidateUpdateInterval(updateInterval) }
 		hx-target="this"
 		hx-swap="outerHTML"
 	>

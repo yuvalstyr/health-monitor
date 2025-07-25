@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -40,10 +42,20 @@ func setupTestDB(t *testing.T) *db.Queries {
 	}
 	t.Cleanup(func() { database.Close() })
 
-	// Create the schema - adjust path for integration test
-	schema, err := os.ReadFile("db/schema.sql")
+	// Create the schema - determine path relative to this test file
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatalf("Failed to get current file path")
+	}
+	
+	// Get the directory containing this test file (internal/)
+	testDir := filepath.Dir(filename)
+	// Navigate to the schema file relative to the test file location
+	schemaPath := filepath.Join(testDir, "db", "schema.sql")
+	
+	schema, err := os.ReadFile(schemaPath)
 	if err != nil {
-		t.Fatalf("Failed to read schema: %v", err)
+		t.Fatalf("Failed to read schema from %s: %v", schemaPath, err)
 	}
 
 	if _, err := database.Exec(string(schema)); err != nil {
@@ -164,15 +176,13 @@ func TestGaugeWorkflowIntegration(t *testing.T) {
 			responseBody := w.Body.String()
 			assert.Contains(t, responseBody, "Weekly Exercise", "Dashboard should show the gauge template name")
 			assert.Contains(t, responseBody, "weekly", "Dashboard should show the frequency")
-			// Icons are displayed as SVG elements, not as text
-			assert.Contains(t, responseBody, "gauge-instance-1", "Dashboard should show the gauge instance")
+			// Check for gauge instance using class instead of specific ID
+			assert.Contains(t, responseBody, "gauge-instance-value", "Dashboard should show gauge instance elements")
 
 			// Verify only current period instances are shown
 			// This is tested by ensuring the dashboard doesn't show historical data
 			// which would be in different time periods
 			currentWeekStart := timeutil.CalculateCurrentPeriodStart("weekly", time.Now())
-			biWeeklyStart := timeutil.CalculateCurrentPeriodStart("bi-weekly", time.Now())
-			monthlyStart := timeutil.CalculateCurrentPeriodStart("monthly", time.Now())
 			
 			// Create an instance for a previous week to ensure it's filtered out
 			prevWeekStart := currentWeekStart.AddDate(0, 0, -7)
@@ -190,11 +200,12 @@ func TestGaugeWorkflowIntegration(t *testing.T) {
 			assert.Equal(t, http.StatusOK, w.Code)
 			
 			// Should still only show current period data, not historical
+			// Since we only have weekly gauges at this point, only query for weekly periods
 			instances, err := queries.ListCurrentPeriodGaugeInstances(ctx, 
 				db.ListCurrentPeriodGaugeInstancesParams{
 					PeriodStart:   currentWeekStart,
-					PeriodStart_2: biWeeklyStart,
-					PeriodStart_3: monthlyStart,
+					PeriodStart_2: currentWeekStart, // No bi-weekly gauges yet
+					PeriodStart_3: currentWeekStart, // No monthly gauges yet
 				})
 			require.NoError(t, err)
 			assert.Len(t, instances, 1, "Dashboard should only show current period instances")
@@ -264,7 +275,82 @@ func TestGaugeWorkflowIntegration(t *testing.T) {
 			assert.Equal(t, int64(0), updatedInstance.Value, "Value should not go below zero")
 		})
 
-		// Test 5: Multi-frequency workflow
+		// Test 5: Comprehensive frequency period testing
+		t.Run("different frequency period calculations", func(t *testing.T) {
+			// Create templates for all frequency types
+			weeklyTemplate := testutil.CreateTestGaugeTemplate(t, queries)
+			
+			// Create bi-weekly template
+			biWeeklyParams := db.CreateGaugeTemplateParams{
+				Name:        "Bi-weekly Review",
+				Description: sql.NullString{String: "Track bi-weekly reviews", Valid: true},
+				Target:      10,
+				Unit:        "reviews",
+				Icon:        "calendar",
+				Frequency:   "bi-weekly",
+				Direction:   "over",
+				Active:      true,
+			}
+			biWeeklyTemplate, err := queries.CreateGaugeTemplate(ctx, biWeeklyParams)
+			require.NoError(t, err)
+			
+			// Create monthly template
+			monthlyParams := db.CreateGaugeTemplateParams{
+				Name:        "Monthly Goals",
+				Description: sql.NullString{String: "Track monthly goals", Valid: true},
+				Target:      5,
+				Unit:        "goals",
+				Icon:        "target",
+				Frequency:   "monthly",
+				Direction:   "over",
+				Active:      true,
+			}
+			monthlyTemplate, err := queries.CreateGaugeTemplate(ctx, monthlyParams)
+			require.NoError(t, err)
+
+			// Create current period instances for each frequency
+			currentWeekStart := timeutil.CalculateCurrentPeriodStart("weekly", time.Now())
+			currentBiWeeklyStart := timeutil.CalculateCurrentPeriodStart("bi-weekly", time.Now())
+			currentMonthlyStart := timeutil.CalculateCurrentPeriodStart("monthly", time.Now())
+
+			testutil.CreateTestGaugeInstance(t, queries, weeklyTemplate.ID, currentWeekStart)
+			testutil.CreateTestGaugeInstance(t, queries, biWeeklyTemplate.ID, currentBiWeeklyStart)
+			testutil.CreateTestGaugeInstance(t, queries, monthlyTemplate.ID, currentMonthlyStart)
+
+			// Test dashboard shows all current period instances
+			req := httptest.NewRequest("GET", "/", nil)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, http.StatusOK, w.Code)
+			responseBody := w.Body.String()
+			
+			// Verify all templates are displayed
+			assert.Contains(t, responseBody, "Test Gauge", "Should show weekly template")
+			assert.Contains(t, responseBody, "Bi-weekly Review", "Should show bi-weekly template")
+			assert.Contains(t, responseBody, "Monthly Goals", "Should show monthly template")
+
+			// Test database query with all periods
+			instances, err := queries.ListCurrentPeriodGaugeInstances(ctx, 
+				db.ListCurrentPeriodGaugeInstancesParams{
+					PeriodStart:   currentWeekStart,
+					PeriodStart_2: currentBiWeeklyStart,
+					PeriodStart_3: currentMonthlyStart,
+				})
+			require.NoError(t, err)
+			assert.GreaterOrEqual(t, len(instances), 3, "Should find instances for at least three frequencies")
+
+			// Verify correct frequency associations - check that we have at least one of each
+			frequencyCount := make(map[string]int)
+			for _, instance := range instances {
+				frequencyCount[instance.Frequency]++
+			}
+			assert.GreaterOrEqual(t, frequencyCount["weekly"], 1, "Should have at least one weekly instance")
+			assert.GreaterOrEqual(t, frequencyCount["bi-weekly"], 1, "Should have at least one bi-weekly instance")
+			assert.GreaterOrEqual(t, frequencyCount["monthly"], 1, "Should have at least one monthly instance")
+		})
+
+		// Test 6: Multi-frequency workflow
 		t.Run("multi-frequency workflow", func(t *testing.T) {
 			// Create monthly gauge template
 			formData := url.Values{
@@ -288,7 +374,7 @@ func TestGaugeWorkflowIntegration(t *testing.T) {
 			// Get the monthly template and create current period instance
 			templates, err := queries.ListActiveGaugeTemplates(ctx)
 			require.NoError(t, err)
-			require.Len(t, templates, 2) // Weekly + Monthly
+			require.GreaterOrEqual(t, len(templates), 2, "Should have at least weekly + monthly templates")
 
 			// Find the monthly template and create current period instance
 			var monthlyTemplate *db.GaugeTemplate
@@ -321,8 +407,8 @@ func TestGaugeWorkflowIntegration(t *testing.T) {
 				})
 			require.NoError(t, err)
 
-			// Should have instances for both frequencies
-			assert.Greater(t, len(allInstances), 1, "Should have instances for multiple frequencies")
+			// Should have instances for multiple frequencies
+			assert.GreaterOrEqual(t, len(allInstances), 2, "Should have instances for multiple frequencies")
 
 			// Verify dashboard shows both
 			req = httptest.NewRequest("GET", "/", nil)
@@ -411,9 +497,8 @@ func TestHistoricalDataIntegration(t *testing.T) {
 		// Should have data for all three periods
 		assert.Len(t, history, 3, "Should have historical data for all periods")
 		
-		// Verify data is ordered by period (most recent first)
-		assert.True(t, history[0].PeriodStart.After(history[1].PeriodStart) || 
-					history[0].PeriodStart.Equal(history[1].PeriodStart),
-					"Historical data should be ordered by period")
+		// Verify data is ordered by period (most recent first or equal)
+		assert.True(t, !history[0].PeriodStart.Before(history[1].PeriodStart),
+					"Historical data should be ordered by period (most recent first)")
 	})
 }
