@@ -192,7 +192,7 @@ func chartTestContent(weekly, monthly, biWeekly, empty, single charts.ChartData)
 		}
 
 		// Render HTMX chart
-		err = components.ChartWithHTMX(weekly, "htmxChart", "/test/chart-data").Render(ctx, w)
+		err = components.ChartWithHTMX(weekly, "htmxChart", "/test/chart-data", "10s").Render(ctx, w)
 		if err != nil {
 			return err
 		}
