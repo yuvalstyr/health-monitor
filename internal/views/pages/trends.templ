@@ -67,10 +67,18 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 								<p class="text-xl font-bold">{ fmt.Sprintf("%d", h.AverageValue) } <span class="text-sm font-normal">{ template.Unit }</span></p>
 							</div>
 							<div>
-								if h.AverageValue >= template.Target {
-									<div class="badge badge-error">Above Target</div>
+								if template.Direction == "under" {
+									if h.AverageValue <= template.Target {
+										<div class="badge badge-success">On Track</div>
+									} else {
+										<div class="badge badge-error">Above Target</div>
+									}
 								} else {
-									<div class="badge badge-success">On Track</div>
+									if h.AverageValue >= template.Target {
+										<div class="badge badge-success">On Track</div>
+									} else {
+										<div class="badge badge-error">Below Target</div>
+									}
 								}
 							</div>
 						</div>

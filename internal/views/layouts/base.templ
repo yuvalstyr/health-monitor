@@ -51,9 +51,29 @@ templ Base(title string, content templ.Component) {
                 /* Chart styling */
                 .chart-container {
                     background: transparent !important;
+                    border-radius: 12px;
+                    position: relative;
+                    overflow: hidden;
                 }
                 .chart-container > div {
                     background: transparent !important;
+                }
+                
+                /* Chart hover effects */
+                .chart-container:hover {
+                    box-shadow: 0 8px 32px rgba(87, 13, 248, 0.1);
+                    transition: box-shadow 0.3s ease-in-out;
+                }
+                
+                /* Chart loading animation */
+                @keyframes chartPulse {
+                    0% { opacity: 0.6; }
+                    50% { opacity: 1; }
+                    100% { opacity: 0.6; }
+                }
+                
+                .chart-loading {
+                    animation: chartPulse 2s infinite;
                 }
             </style>
         </head>
