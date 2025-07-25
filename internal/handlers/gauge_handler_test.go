@@ -93,7 +93,7 @@ func TestGaugeTemplateHandler(t *testing.T) {
 			handler.handleCreateGauge(w, r)
 
 			// Check response contains validation errors
-			assert.Equal(t, http.StatusOK, w.Code) // Form validation returns OK with errors in form
+			assert.Equal(t, http.StatusBadRequest, w.Code) // Form validation returns BadRequest with errors
 			assert.Contains(t, w.Body.String(), "errors")
 			assert.Contains(t, w.Body.String(), "required")
 		})
@@ -301,7 +301,7 @@ func TestGaugeTemplateHandler(t *testing.T) {
 			handler.handleUpdateGauge(w, r)
 
 			// Check response contains validation errors
-			assert.Equal(t, http.StatusOK, w.Code) // Form validation returns OK with errors in form
+			assert.Equal(t, http.StatusBadRequest, w.Code) // Form validation returns BadRequest with errors
 			assert.Contains(t, w.Body.String(), "errors")
 			assert.Contains(t, w.Body.String(), "required")
 		})
