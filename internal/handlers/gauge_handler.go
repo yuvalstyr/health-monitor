@@ -220,6 +220,7 @@ func (h *GaugeHandler) handleCreateGauge(w http.ResponseWriter, r *http.Request)
 
 	// If there are validation errors, re-render the form
 	if len(errors) > 0 {
+		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "text/html")
 		// Create a dummy gauge template to maintain form values
 		dummyTemplate := &db.GaugeTemplate{
@@ -306,6 +307,7 @@ func (h *GaugeHandler) handleUpdateGauge(w http.ResponseWriter, r *http.Request)
 
 	// If there are validation errors, re-render the form
 	if len(errors) > 0 {
+		w.WriteHeader(http.StatusBadRequest)
 		w.Header().Set("Content-Type", "text/html")
 		// Create a gauge template with the current values to maintain form state
 		currentTemplate := db.GaugeTemplate{
