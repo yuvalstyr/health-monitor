@@ -2,9 +2,30 @@ package pages
 
 import (
 	"fmt"
+	"health-monitor/internal/charts"
 	"health-monitor/internal/db"
+	"health-monitor/internal/views/components"
 	"health-monitor/internal/views/layouts"
 )
+
+// prepareChartData converts database history to chart data
+func prepareChartData(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) charts.ChartData {
+	labels := make([]string, len(history))
+	values := make([]float64, len(history))
+
+	for i, h := range history {
+		labels[i] = fmt.Sprintf("%v", h.Month)
+		values[i] = float64(h.AverageValue)
+	}
+
+	return charts.ChartData{
+		Labels: labels,
+		Values: values,
+		Target: float64(template.Target),
+		Unit:   template.Unit,
+		Title:  template.Name + " Historical Trends",
+	}
+}
 
 templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) {
 	<div class="container mx-auto px-4 py-8">
@@ -13,24 +34,27 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 				<h1 class="text-2xl sm:text-3xl font-bold">{ template.Name }</h1>
 				<p class="text-base-content/70 text-sm sm:text-base mt-1">Historical Trends</p>
 			</div>
-			<a 
-				href="/" 
+			<a
+				href="/"
 				class="btn btn-outline btn-primary btn-sm sm:btn-md"
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
 				</svg>
 				Back to Dashboard
 			</a>
 		</div>
-
 		// Chart
 		<div class="card bg-base-100 shadow-xl mb-8">
 			<div class="card-body p-4 sm:p-6">
-				<canvas id="trendsChart" class="w-full h-64 sm:h-80"></canvas>
+				<h2 class="card-title text-xl mb-4">Historical Trends ({ template.Frequency })</h2>
+				if len(history) > 0 {
+					@components.LineChart(prepareChartData(template, history), "trendsChart")
+				} else {
+					@components.EmptyChart("No historical data available yet. Data will appear here as you use this gauge over time.")
+				}
 			</div>
 		</div>
-
 		// Stats cards for mobile
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 md:hidden">
 			for _, h := range history {
@@ -43,10 +67,18 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 								<p class="text-xl font-bold">{ fmt.Sprintf("%d", h.AverageValue) } <span class="text-sm font-normal">{ template.Unit }</span></p>
 							</div>
 							<div>
-								if h.AverageValue >= template.Target {
-									<div class="badge badge-error">Above Target</div>
+								if template.Direction == "under" {
+									if h.AverageValue <= template.Target {
+										<div class="badge badge-success">On Track</div>
+									} else {
+										<div class="badge badge-error">Above Target</div>
+									}
 								} else {
-									<div class="badge badge-success">On Track</div>
+									if h.AverageValue >= template.Target {
+										<div class="badge badge-success">On Track</div>
+									} else {
+										<div class="badge badge-error">Below Target</div>
+									}
 								}
 							</div>
 						</div>
@@ -54,110 +86,78 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 				</div>
 			}
 		</div>
-
 		// Table (hidden on small screens)
-		<div class="hidden md:block">
-			<div class="card bg-base-100 shadow-xl overflow-x-auto">
-				<div class="card-body p-4 sm:p-6">
-					<h2 class="card-title text-xl mb-4">Monthly Data</h2>
-					<div class="overflow-x-auto">
-						<table class="table table-zebra">
-							<thead>
-								<tr>
-									<th>Month</th>
-									<th>Average</th>
-									<th>Target</th>
-									<th>Status</th>
-								</tr>
-							</thead>
-							<tbody>
-								for _, h := range history {
-									<tr class="hover">
-										<td class="font-medium">{ fmt.Sprintf("%v", h.Month) }</td>
-										<td>
-											<span class="font-semibold">{ fmt.Sprintf("%d", h.AverageValue) }</span>
-											<span class="text-base-content/70 ml-1">{ template.Unit }</span>
-										</td>
-										<td>
-											<span class="font-semibold">{ fmt.Sprintf("%d", template.Target) }</span>
-											<span class="text-base-content/70 ml-1">{ template.Unit }</span>
-										</td>
-										<td>
-											if h.AverageValue >= template.Target {
-												<div class="badge badge-error gap-2">
-													<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-													</svg>
-													Above Target
-												</div>
-											} else {
-												<div class="badge badge-success gap-2">
-													<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-													</svg>
-													On Track
-												</div>
-											}
-										</td>
+		if len(history) > 0 {
+			<div class="hidden md:block">
+				<div class="card bg-base-100 shadow-xl overflow-x-auto">
+					<div class="card-body p-4 sm:p-6">
+						<h2 class="card-title text-xl mb-4">Historical Data</h2>
+						<div class="overflow-x-auto">
+							<table class="table table-zebra">
+								<thead>
+									<tr>
+										<th>Period</th>
+										<th>Average</th>
+										<th>Target</th>
+										<th>Status</th>
 									</tr>
-								}
-							</tbody>
-						</table>
+								</thead>
+								<tbody>
+									for _, h := range history {
+										<tr class="hover">
+											<td class="font-medium">{ fmt.Sprintf("%v", h.Month) }</td>
+											<td>
+												<span class="font-semibold">{ fmt.Sprintf("%d", h.AverageValue) }</span>
+												<span class="text-base-content/70 ml-1">{ template.Unit }</span>
+											</td>
+											<td>
+												<span class="font-semibold">{ fmt.Sprintf("%d", template.Target) }</span>
+												<span class="text-base-content/70 ml-1">{ template.Unit }</span>
+											</td>
+											<td>
+												if template.Direction == "under" {
+													if h.AverageValue <= template.Target {
+														<div class="badge badge-success gap-2">
+															<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+															</svg>
+															On Track
+														</div>
+													} else {
+														<div class="badge badge-error gap-2">
+															<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+															</svg>
+															Above Target
+														</div>
+													}
+												} else {
+													if h.AverageValue >= template.Target {
+														<div class="badge badge-success gap-2">
+															<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+															</svg>
+															On Track
+														</div>
+													} else {
+														<div class="badge badge-error gap-2">
+															<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+															</svg>
+															Below Target
+														</div>
+													}
+												}
+											</td>
+										</tr>
+									}
+								</tbody>
+							</table>
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-
-		<script>
-			// Prepare chart data
-			const ctx = document.getElementById('trendsChart').getContext('2d');
-			const data = {
-				labels: [ for _, h := range history { fmt.Sprintf("%v", h.Month) } ],
-				datasets: [{
-					label: 'Average Value',
-					data: [ for _, h := range history { h.AverageValue } ],
-					borderColor: '#570DF8',
-					backgroundColor: '#570DF822',
-					fill: true,
-					tension: 0.4
-				}, {
-					label: 'Target',
-					data: Array(history.length).fill({ fmt.Sprintf("%d", template.Target) }),
-					borderColor: '#F87272',
-					borderDash: [5, 5],
-					fill: false
-				}]
-			};
-
-			// Create chart
-			new Chart(ctx, {
-				type: 'line',
-				data: data,
-				options: {
-					responsive: true,
-					maintainAspectRatio: false,
-					plugins: {
-						legend: {
-							position: 'top',
-						}
-					},
-					scales: {
-						y: {
-							beginAtZero: true,
-							ticks: {
-								callback: function(value) {
-									return value + ' ' + { template.Unit };
-								}
-							}
-						}
-					},
-					interaction: {
-						intersect: false,
-						mode: 'index'
-					}
-				}
-			});
-		</script>
+		}
 	</div>
 }
 

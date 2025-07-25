@@ -143,6 +143,8 @@ type GetGaugeHistoryRow struct {
 	AverageValue int64       `json:"average_value"`
 }
 
+// Get historical data for a specific gauge instance (grouped by month)
+// Note: For template-level historical data, use GetGaugeHistoryByTemplate instead
 func (q *Queries) GetGaugeHistory(ctx context.Context, gaugeID int64) ([]GetGaugeHistoryRow, error) {
 	rows, err := q.db.QueryContext(ctx, getGaugeHistory, gaugeID)
 	if err != nil {
@@ -153,6 +155,60 @@ func (q *Queries) GetGaugeHistory(ctx context.Context, gaugeID int64) ([]GetGaug
 	for rows.Next() {
 		var i GetGaugeHistoryRow
 		if err := rows.Scan(&i.Month, &i.AverageValue); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getGaugeHistoryByTemplate = `-- name: GetGaugeHistoryByTemplate :many
+SELECT 
+    gi.period_start,
+    gt.frequency,
+    CASE 
+        WHEN COUNT(gv.value) > 0 THEN AVG(gv.value)
+        ELSE gi.value
+    END as average_value,
+    COUNT(gv.value) as value_count
+FROM gauge_instances gi
+JOIN gauge_templates gt ON gi.template_id = gt.id
+LEFT JOIN gauge_values gv ON gi.id = gv.gauge_id
+WHERE gt.id = ?
+GROUP BY gi.id, gi.period_start, gt.frequency, gi.value
+ORDER BY gi.period_start DESC
+`
+
+type GetGaugeHistoryByTemplateRow struct {
+	PeriodStart  time.Time   `json:"period_start"`
+	Frequency    string      `json:"frequency"`
+	AverageValue interface{} `json:"average_value"`
+	ValueCount   int64       `json:"value_count"`
+}
+
+// Get historical data for a gauge template grouped by time periods based on frequency
+// Returns one row per gauge instance (period) with aggregated values
+func (q *Queries) GetGaugeHistoryByTemplate(ctx context.Context, id int64) ([]GetGaugeHistoryByTemplateRow, error) {
+	rows, err := q.db.QueryContext(ctx, getGaugeHistoryByTemplate, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetGaugeHistoryByTemplateRow{}
+	for rows.Next() {
+		var i GetGaugeHistoryByTemplateRow
+		if err := rows.Scan(
+			&i.PeriodStart,
+			&i.Frequency,
+			&i.AverageValue,
+			&i.ValueCount,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

@@ -63,6 +63,11 @@ func (m *MockQuerier) ListCurrentPeriodGaugeInstances(ctx context.Context, param
 	return args.Get(0).([]db.ListCurrentPeriodGaugeInstancesRow), args.Error(1)
 }
 
+func (m *MockQuerier) GetGaugeHistoryByTemplate(ctx context.Context, id int64) ([]db.GetGaugeHistoryByTemplateRow, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).([]db.GetGaugeHistoryByTemplateRow), args.Error(1)
+}
+
 func TestHandleDashboard_WithActiveGauges(t *testing.T) {
 	// Create mock querier
 	mockQuerier := new(MockQuerier)

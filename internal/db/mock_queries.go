@@ -29,6 +29,7 @@ type MockQueries struct {
 	GetCurrentValueFn  func(ctx context.Context, gaugeID int64) (int64, error)
 	GetGaugeValuesFn   func(ctx context.Context, gaugeID int64) ([]GaugeValue, error)
 	GetGaugeHistoryFn  func(ctx context.Context, gaugeID int64) ([]GetGaugeHistoryRow, error)
+	GetGaugeHistoryByTemplateFn func(ctx context.Context, id int64) ([]GetGaugeHistoryByTemplateRow, error)
 }
 
 // Gauge Template methods
@@ -159,4 +160,11 @@ func (m *MockQueries) GetGaugeHistory(ctx context.Context, gaugeID int64) ([]Get
 		return []GetGaugeHistoryRow{}, nil
 	}
 	return m.GetGaugeHistoryFn(ctx, gaugeID)
+}
+
+func (m *MockQueries) GetGaugeHistoryByTemplate(ctx context.Context, id int64) ([]GetGaugeHistoryByTemplateRow, error) {
+	if m.GetGaugeHistoryByTemplateFn == nil {
+		return []GetGaugeHistoryByTemplateRow{}, nil
+	}
+	return m.GetGaugeHistoryByTemplateFn(ctx, id)
 }

@@ -15,7 +15,12 @@ type Querier interface {
 	DeleteGaugeInstance(ctx context.Context, id int64) error
 	DeleteGaugeTemplate(ctx context.Context, id int64) error
 	GetCurrentValue(ctx context.Context, gaugeID int64) (int64, error)
+	// Get historical data for a specific gauge instance (grouped by month)
+	// Note: For template-level historical data, use GetGaugeHistoryByTemplate instead
 	GetGaugeHistory(ctx context.Context, gaugeID int64) ([]GetGaugeHistoryRow, error)
+	// Get historical data for a gauge template grouped by time periods based on frequency
+	// Returns one row per gauge instance (period) with aggregated values
+	GetGaugeHistoryByTemplate(ctx context.Context, id int64) ([]GetGaugeHistoryByTemplateRow, error)
 	// Gauge Instances CRUD Operations
 	GetGaugeInstance(ctx context.Context, id int64) (GaugeInstance, error)
 	// Gauge Templates CRUD Operations

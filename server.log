@@ -1,0 +1,9 @@
+[90m2025-07-25T14:10:31+03:00[0m [32mINF[0m [1mStarting health-monitor service[0m
+2025/07/25 14:10:31 goose: no migrations to run. current version: 2
+[90m2025-07-25T14:10:31+03:00[0m DBG Connected to database
+[90m2025-07-25T14:10:31+03:00[0m [32mINF[0m [1mServer listening[0m [36mport=[0m8080
+[90m2025-07-25T14:10:31+03:00[0m [32mINF[0m [1mBackground scheduling service started[0m
+[90m2025-07-25T14:10:46+03:00[0m DBG Request received [36mmethod=[0mGET [36mpath=[0m/
+[90m2025-07-25T14:10:46+03:00[0m DBG Request completed [36mmethod=[0mGET [36mpath=[0m/
+[90m2025-07-25T14:10:46+03:00[0m [32mINF[0m [1m"GET http://localhost:8080/ HTTP/1.1" from [::1]:64499 - 200 30315B in 1.146584ms
+[0m

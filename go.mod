@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.24.4
 
 require (
-	github.com/a-h/templ v0.3.906
+	github.com/a-h/templ v0.3.920
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/rs/zerolog v1.34.0
@@ -16,6 +16,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/go-echarts/go-echarts/v2 v2.6.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

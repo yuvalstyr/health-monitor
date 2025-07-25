@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "@anthropic-ai/claude-code": "^1.0.35"
+    "@anthropic-ai/claude-code": "^1.0.35",
+    "apexcharts": "^3.45.2"
   }
 }
