@@ -147,7 +147,7 @@
   - Test chart rendering with various data sets and frequencies
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 12. Write integration tests for complete workflow
+- [x] 12. Write integration tests for complete workflow
   - Test gauge template creation and activation
   - Test automated instance creation by scheduling service
   - Test dashboard filtering shows correct instances
