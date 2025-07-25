@@ -1,0 +1,45 @@
+package components
+
+import (
+	"health-monitor/internal/charts"
+)
+
+// LineChart renders a go-echarts line chart with server-side generation
+templ LineChart(data charts.ChartData, chartID string) {
+	if len(data.Values) == 0 {
+		@EmptyChart("No data available for " + data.Title)
+	} else {
+		@templ.Raw(renderChart(data, chartID))
+	}
+}
+
+// Helper function to generate chart HTML using go-echarts
+func renderChart(data charts.ChartData, chartID string) string {
+	html := charts.RenderChartHTML(data, chartID)
+	return string(html)
+}
+
+// ChartWithHTMX renders a chart that can be updated via HTMX
+templ ChartWithHTMX(data charts.ChartData, chartID string, updateURL string) {
+	<div 
+		class="chart-container" 
+		hx-get={ updateURL }
+		hx-trigger="every 30s"
+		hx-target="this"
+		hx-swap="outerHTML"
+	>
+		@LineChart(data, chartID)
+	</div>
+}
+
+// EmptyChart renders a placeholder when no data is available
+templ EmptyChart(message string) {
+	<div class="flex items-center justify-center h-96 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+		<div class="text-center">
+			<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+			</svg>
+			<h3 class="mt-2 text-sm font-medium text-gray-900">{ message }</h3>
+		</div>
+	</div>
+}

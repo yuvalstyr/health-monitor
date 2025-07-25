@@ -2,9 +2,30 @@ package pages
 
 import (
 	"fmt"
+	"health-monitor/internal/charts"
 	"health-monitor/internal/db"
+	"health-monitor/internal/views/components"
 	"health-monitor/internal/views/layouts"
 )
+
+// prepareChartData converts database history to chart data
+func prepareChartData(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) charts.ChartData {
+	labels := make([]string, len(history))
+	values := make([]float64, len(history))
+
+	for i, h := range history {
+		labels[i] = fmt.Sprintf("%v", h.Month)
+		values[i] = float64(h.AverageValue)
+	}
+
+	return charts.ChartData{
+		Labels: labels,
+		Values: values,
+		Target: float64(template.Target),
+		Unit:   template.Unit,
+		Title:  template.Name + " Historical Trends",
+	}
+}
 
 templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow) {
 	<div class="container mx-auto px-4 py-8">
@@ -13,32 +34,27 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 				<h1 class="text-2xl sm:text-3xl font-bold">{ template.Name }</h1>
 				<p class="text-base-content/70 text-sm sm:text-base mt-1">Historical Trends</p>
 			</div>
-			<a 
-				href="/" 
+			<a
+				href="/"
 				class="btn btn-outline btn-primary btn-sm sm:btn-md"
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
 				</svg>
 				Back to Dashboard
 			</a>
 		</div>
-
 		// Chart
 		<div class="card bg-base-100 shadow-xl mb-8">
 			<div class="card-body p-4 sm:p-6">
 				<h2 class="card-title text-xl mb-4">Historical Trends ({ template.Frequency })</h2>
 				if len(history) > 0 {
-					<canvas id="trendsChart" class="w-full h-64 sm:h-80"></canvas>
+					@components.LineChart(prepareChartData(template, history), "trendsChart")
 				} else {
-					<div class="text-center py-8">
-						<p class="text-base-content/70">No historical data available yet.</p>
-						<p class="text-sm text-base-content/50 mt-2">Data will appear here as you use this gauge over time.</p>
-					</div>
+					@components.EmptyChart("No historical data available yet. Data will appear here as you use this gauge over time.")
 				}
 			</div>
 		</div>
-
 		// Stats cards for mobile
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 md:hidden">
 			for _, h := range history {
@@ -62,7 +78,6 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 				</div>
 			}
 		</div>
-
 		// Table (hidden on small screens)
 		if len(history) > 0 {
 			<div class="hidden md:block">
@@ -96,14 +111,14 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 													if h.AverageValue <= template.Target {
 														<div class="badge badge-success gap-2">
 															<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
 															</svg>
 															On Track
 														</div>
 													} else {
 														<div class="badge badge-error gap-2">
 															<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
 															</svg>
 															Above Target
 														</div>
@@ -112,14 +127,14 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 													if h.AverageValue >= template.Target {
 														<div class="badge badge-success gap-2">
 															<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
 															</svg>
 															On Track
 														</div>
 													} else {
 														<div class="badge badge-error gap-2">
 															<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
 															</svg>
 															Below Target
 														</div>
@@ -134,111 +149,6 @@ templ TrendsContent(template *db.GaugeTemplate, history []db.GetGaugeHistoryRow)
 					</div>
 				</div>
 			</div>
-		}
-
-		if len(history) > 0 {
-			<!-- Chart data as JSON -->
-			<script type="application/json" id="chartData">
-				{
-					"labels": [
-						for i, h := range history {
-							if i > 0 { "," }
-							{ fmt.Sprintf("\"%v\"", h.Month) }
-						}
-					],
-					"values": [
-						for i, h := range history {
-							if i > 0 { "," }
-							{ h.AverageValue }
-						}
-					],
-					"target": { template.Target }
-				}
-			</script>
-			<script>
-				document.addEventListener('DOMContentLoaded', function() {
-					// Check if Chart.js is loaded
-					if (typeof Chart === 'undefined') {
-						console.error('Chart.js is not loaded');
-						return;
-					}
-
-					// Get canvas element
-					const canvas = document.getElementById('trendsChart');
-					if (!canvas) {
-						console.error('Canvas element not found');
-						return;
-					}
-
-					const ctx = canvas.getContext('2d');
-					
-					// Get chart data from JSON script tag
-					const chartDataElement = document.getElementById('chartData');
-					if (!chartDataElement) {
-						console.error('Chart data not found');
-						return;
-					}
-					
-					const chartData = JSON.parse(chartDataElement.textContent);
-					const labels = chartData.labels;
-					const values = chartData.values;
-					const target = chartData.target;
-					
-					console.log('Chart data:', { labels, values, target });
-
-					const data = {
-						labels: labels,
-						datasets: [{
-							label: 'Average Value',
-							data: values,
-							borderColor: '#570DF8',
-							backgroundColor: '#570DF822',
-							fill: true,
-							tension: 0.4
-						}, {
-							label: 'Target',
-							data: Array(labels.length).fill(target),
-							borderColor: '#F87272',
-							borderDash: [5, 5],
-							fill: false
-						}]
-					};
-
-					// Create chart
-					try {
-						new Chart(ctx, {
-							type: 'line',
-							data: data,
-							options: {
-								responsive: true,
-								maintainAspectRatio: false,
-								plugins: {
-									legend: {
-										position: 'top',
-									}
-								},
-								scales: {
-									y: {
-										beginAtZero: true,
-										ticks: {
-											callback: function(value) {
-												return value + ' ' + '{ template.Unit }';
-											}
-										}
-									}
-								},
-								interaction: {
-									intersect: false,
-									mode: 'index'
-								}
-							}
-						});
-						console.log('Chart created successfully');
-					} catch (error) {
-						console.error('Error creating chart:', error);
-					}
-				});
-			</script>
 		}
 	</div>
 }

@@ -19,7 +19,7 @@ templ Base(title string, content templ.Component) {
                 }
             </script>
             <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
             <style>
                 /* Improved mobile touch targets */
                 @media (max-width: 768px) {
@@ -46,6 +46,14 @@ templ Base(title string, content templ.Component) {
                 }
                 .mobile-menu.hidden {
                     transform: translateX(-100%);
+                }
+                
+                /* Chart styling */
+                .chart-container {
+                    background: transparent !important;
+                }
+                .chart-container > div {
+                    background: transparent !important;
                 }
             </style>
         </head>
