@@ -1,5 +1,9 @@
 package layouts
 
+import (
+	"time"
+)
+
 templ Base(title string, content templ.Component) {
     <!DOCTYPE html>
     <html lang="en" data-theme="dark" class="antialiased">
@@ -47,6 +51,9 @@ templ Base(title string, content templ.Component) {
                         </div>
                         <div class="flex-1">
                             <a href="/" class="btn btn-ghost text-xl">Health Monitor App</a>
+                            <div class="text-sm text-base-content/70 ml-2 hidden sm:block">
+                                Today: { formatCurrentDate() }
+                            </div>
                         </div>
                         <div class="flex-none hidden lg:block">
                             <div class="flex justify-center space-x-8">
@@ -67,13 +74,6 @@ templ Base(title string, content templ.Component) {
                     <main class="container mx-auto px-4 py-8 flex-grow">
                         @content
                     </main>
-                    
-                    <!-- Sticky Footer -->
-                    <footer class="footer footer-center p-4 bg-base-100 text-base-content flex-shrink-0 mt-auto">
-                        <div>
-                            <p>Personal Health Monitor</p>
-                        </div>
-                    </footer>
                 </div>
 
                 <!-- Mobile drawer -->
@@ -106,4 +106,8 @@ templ Base(title string, content templ.Component) {
             </script>
         </body>
     </html>
+}
+
+func formatCurrentDate() string {
+	return time.Now().Format("Monday, January 2")
 }

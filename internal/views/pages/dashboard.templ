@@ -7,11 +7,6 @@ import (
 
 templ Dashboard(gaugeInstances []db.ListCurrentPeriodGaugeInstancesRow) {
 	<div class="dashboard-container">
-		<!-- Current Period Indicator -->
-		<div class="dashboard-header mb-6">
-			@components.CurrentPeriodIndicator()
-		</div>
-		
 		<!-- Gauge Instances Grid -->
 		if len(gaugeInstances) == 0 {
 			<div class="text-center py-12">

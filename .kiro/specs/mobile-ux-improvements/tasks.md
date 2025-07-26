@@ -31,7 +31,7 @@
   - Add "NEW" badge for gauges created within 24 hours
   - _Requirements: R3.1, R3.2_
 
-- [x] 5. Implement Sticky Footer
+- [ ] 5. Implement Sticky Footer
   - Modify layout structure to support sticky footer
   - Use CSS flexbox approach for footer positioning
   - Ensure footer remains visible at bottom of viewport
