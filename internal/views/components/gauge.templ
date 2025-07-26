@@ -74,7 +74,7 @@ templ gaugeCardContent(gaugeInstance *db.GaugeInstance, template *db.GaugeTempla
 					</div>
 					<div class="flex-1 min-w-0">
 						<div class="text-xs font-semibold truncate">{ template.Name }</div>
-						<div class="text-2xs text-base-content/60">{ template.Frequency }</div>
+						<div class="text-[0.5rem] leading-[0.75rem] text-base-content/60">{ template.Frequency }</div>
 					</div>
 					<div id={ fmt.Sprintf("gauge-value-container-%d", gaugeInstance.ID) } class="flex-shrink-0">
 						@GaugeInstanceValue(gaugeInstance)

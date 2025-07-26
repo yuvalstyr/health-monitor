@@ -21,59 +21,14 @@ templ Base(title string, content templ.Component) {
             <script src="https://unpkg.com/htmx.org@1.9.10"></script>
             <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
             <style>
-                /* Improved mobile touch targets */
-                @media (max-width: 768px) {
-                    .btn {
-                        min-height: 3rem;
-                    }
-                    .btn-sm {
-                        min-height: 2.5rem;
-                    }
-                }
-                
-                /* Smooth transitions */
-                .transition-all {
-                    transition: all 0.3s ease-in-out;
-                }
-                
-                /* Status colors */
-                .gauge-green { color: #4ade80; }
-                .gauge-red { color: #ef4444; }
-                
-                /* Mobile menu animation */
-                .mobile-menu {
-                    transition: transform 0.3s ease-in-out;
-                }
-                .mobile-menu.hidden {
-                    transform: translateX(-100%);
-                }
-                
-                /* Chart styling */
-                .chart-container {
-                    background: transparent !important;
-                    border-radius: 12px;
-                    position: relative;
-                    overflow: hidden;
-                }
+                /* Essential chart overrides that can't be replaced with Tailwind */
                 .chart-container > div {
                     background: transparent !important;
                 }
                 
-                /* Chart hover effects */
-                .chart-container:hover {
-                    box-shadow: 0 8px 32px rgba(87, 13, 248, 0.1);
-                    transition: box-shadow 0.3s ease-in-out;
-                }
-                
-                /* Chart loading animation */
-                @keyframes chartPulse {
-                    0% { opacity: 0.6; }
-                    50% { opacity: 1; }
-                    100% { opacity: 0.6; }
-                }
-                
+                /* Custom loading animation for charts */
                 .chart-loading {
-                    animation: chartPulse 2s infinite;
+                    animation: pulse 2s infinite;
                 }
             </style>
         </head>
