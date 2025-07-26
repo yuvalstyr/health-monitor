@@ -52,10 +52,15 @@ templ FormContent() {
 						hx-target="body" 
 						hx-swap="outerHTML"
 						hx-push-url="/admin"
-						class="btn btn-ghost">
+						class="btn btn-ghost hover:bg-base-200 active:bg-base-300 transition-all duration-150 active:scale-95"
+						style="min-height: 56px; padding: 0 24px;">
 						Cancel
 					</button>
-					<button type="submit" class="btn btn-primary">Create</button>
+					<button type="submit" 
+						class="btn btn-primary hover:btn-primary/90 active:btn-primary/95 transition-all duration-150 active:scale-95"
+						style="min-height: 56px; padding: 0 24px;">
+						Create
+					</button>
 				</div>
 			</form>
 	</div>

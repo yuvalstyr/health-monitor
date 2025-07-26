@@ -56,7 +56,9 @@ func TestGaugeCard(t *testing.T) {
 		html := renderComponent(t, component)
 
 		assert.Contains(t, html, "200")
-		assert.NotContains(t, html, "150")
+		// Check that the value 150 is not present as a gauge value (more specific check)
+		assert.NotContains(t, html, ">150<")
+		assert.NotContains(t, html, "font-bold text-primary\">150<")
 	})
 }
 

@@ -31,14 +31,14 @@
   - Add "NEW" badge for gauges created within 24 hours
   - _Requirements: R3.1, R3.2_
 
-- [ ] 5. Implement Sticky Footer
+- [x] 5. Implement Sticky Footer
   - Modify layout structure to support sticky footer
   - Use CSS flexbox approach for footer positioning
   - Ensure footer remains visible at bottom of viewport
   - Update base layout template with proper CSS classes
   - _Requirements: R4.2_
 
-- [ ] 6. Optimize Touch Targets for Mobile
+- [x] 6. Optimize Touch Targets for Mobile
   - Increase increment/decrement buttons to 56px circular targets
   - Improve button spacing and visual feedback on touch
   - Ensure all interactive elements meet 56px minimum touch target

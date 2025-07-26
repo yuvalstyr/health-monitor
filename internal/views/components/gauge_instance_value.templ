@@ -7,6 +7,6 @@ import (
 
 templ GaugeInstanceValue(instance *db.GaugeInstance) {
 	<div class="gauge-instance-value" id={ fmt.Sprintf("gauge-instance-value-%d", instance.ID) }>
-		<span class="text-base sm:text-2xl font-bold">{ fmt.Sprintf("%d", instance.Value) }</span>
+		<span class="text-3xl sm:text-2xl font-bold text-primary">{ fmt.Sprintf("%d", instance.Value) }</span>
 	</div>
 }

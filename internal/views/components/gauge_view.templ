@@ -15,8 +15,14 @@ templ GaugeView(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {
 				}
 			</div>
 			<div class="flex space-x-4">
-				<a href="/admin/gauges" class="btn btn-ghost">Back to Gauges</a>
-				<a href={ templ.SafeURL(fmt.Sprintf("/admin/gauges/%d", template.ID)) } class="btn btn-primary">
+				<a href="/admin/gauges" 
+				   class="btn btn-ghost hover:bg-base-200 active:bg-base-300 transition-all duration-150 active:scale-95"
+				   style="min-height: 56px; padding: 0 24px;">
+					Back to Gauges
+				</a>
+				<a href={ templ.SafeURL(fmt.Sprintf("/admin/gauges/%d", template.ID)) } 
+				   class="btn btn-primary hover:btn-primary/90 active:btn-primary/95 transition-all duration-150 active:scale-95"
+				   style="min-height: 56px; padding: 0 24px;">
 					Edit Gauge
 				</a>
 			</div>
@@ -52,20 +58,26 @@ templ GaugeView(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {
 							</div>
 							<div class="flex items-center justify-center space-x-4 mt-6">
 								<button 
-									class="btn btn-primary btn-circle"
+									class="btn btn-primary btn-circle hover:btn-primary/90 active:btn-primary/95 transition-all duration-150 active:scale-95"
+									style="min-width: 56px; min-height: 56px; width: 56px; height: 56px;"
 									hx-post={ fmt.Sprintf("/gauges/%d/decrement", gaugeInstance.ID) }
 									hx-target="#current-value"
 									hx-swap="innerHTML"
-								>-</button>
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
+								</button>
 								<div id="current-value" class="text-4xl font-bold min-w-24 text-center">
 									{ fmt.Sprintf("%d %s", gaugeInstance.Value, template.Unit) }
 								</div>
 								<button 
-									class="btn btn-primary btn-circle"
+									class="btn btn-primary btn-circle hover:btn-primary/90 active:btn-primary/95 transition-all duration-150 active:scale-95"
+									style="min-width: 56px; min-height: 56px; width: 56px; height: 56px;"
 									hx-post={ fmt.Sprintf("/gauges/%d/increment", gaugeInstance.ID) }
 									hx-target="#current-value"
 									hx-swap="innerHTML"
-								>+</button>
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+								</button>
 							</div>
 						</div>
 					</div>
