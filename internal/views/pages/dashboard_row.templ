@@ -20,19 +20,25 @@ templ DashboardRow(instance db.ListCurrentPeriodGaugeInstancesRow) {
 			</span>
 		</td>
 		<td>
-			<div class="join">
+			<div class="flex gap-2">
 				<button 
-					class="btn btn-sm join-item" 
+					class="btn btn-circle bg-error text-white hover:bg-error/90 active:bg-error/95 transition-all duration-150 active:scale-95" 
+					style="min-width: 56px; min-height: 56px; width: 56px; height: 56px;"
 					hx-post={ fmt.Sprintf("/dashboard/gauges/%d/decrement", instance.ID) }
 					hx-target="closest tr"
 					hx-swap="outerHTML"
-				>-</button>
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
+				</button>
 				<button 
-					class="btn btn-sm join-item" 
+					class="btn btn-circle bg-success text-white hover:bg-success/90 active:bg-success/95 transition-all duration-150 active:scale-95" 
+					style="min-width: 56px; min-height: 56px; width: 56px; height: 56px;"
 					hx-post={ fmt.Sprintf("/dashboard/gauges/%d/increment", instance.ID) }
 					hx-target="closest tr"
 					hx-swap="outerHTML"
-				>+</button>
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+				</button>
 			</div>
 		</td>
 	</tr>

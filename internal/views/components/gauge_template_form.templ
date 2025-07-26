@@ -290,7 +290,15 @@ templ gaugeTemplateFormFields(gaugeTemplate *db.GaugeTemplate, errors []FormErro
 	</div>
 
 	<div class="flex justify-end gap-4 pt-4">
-		<a href="/admin" class="btn">Cancel</a>
-		<button type="submit" class="btn btn-primary">Save Gauge</button>
+		<a href="/admin" 
+		   class="btn btn-ghost hover:bg-base-200 active:bg-base-300 transition-all duration-150 active:scale-95"
+		   style="min-height: 56px; padding: 0 24px;">
+			Cancel
+		</a>
+		<button type="submit" 
+			class="btn btn-primary hover:btn-primary/90 active:btn-primary/95 transition-all duration-150 active:scale-95"
+			style="min-height: 56px; padding: 0 24px;">
+			Save Gauge
+		</button>
 	</div>
 }
