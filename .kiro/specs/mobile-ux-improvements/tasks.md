@@ -30,14 +30,15 @@
   - Enhanced touch targets (36px mobile buttons, 56px desktop buttons)
   - _Status: COMPLETED ✅_
 
-- [ ] **Task 4: Add Frequency Visual Differentiation and Better Icons**
+- [x] **Task 4: Add Frequency Visual Differentiation and Better Icons**
   - Add simple colored badges:
     - Weekly: Blue badge
     - Bi-weekly: Purple badge
     - Monthly: Green badge
   - No complex icons for frequency - just colored text badges
   - Improve gauge type icons (make them better/more modern)
-  - _Priority: MEDIUM_
+  - Add "NEW" badge for gauges created in the last 24 hours
+  - _Status: COMPLETED ✅_
 
 - [ ] **Task 5: Implement Sticky Footer**
   - Make footer stick to bottom of viewport

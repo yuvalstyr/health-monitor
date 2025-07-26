@@ -7,7 +7,6 @@ import (
 
 templ GaugeTemplateForm(method string, action string, gaugeTemplate *db.GaugeTemplate, errors []FormError) {
 	<script>
-		// Function to update the icon preview when a different icon is selected
 		function updateIconPreview(iconName) {
 			const iconPreview = document.getElementById('icon-preview');
 			if (!iconName) {
@@ -15,33 +14,29 @@ templ GaugeTemplateForm(method string, action string, gaugeTemplate *db.GaugeTem
 				return;
 			}
 			
-			// Create SVG icon based on the selected icon name
-			let svgContent = '';
-			switch(iconName) {
-				case 'water':
-					svgContent = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 15c0 3.866-3.582 7-8 7s-8-3.134-8-7c0-2.57 1.578-4.827 4-6.165V5.787c-2.834 1.702-5 4.968-5 8.713 0 5.523 4.477 10 10 10s10-4.477 10-10c0-3.746-2.166-7.011-5-8.713v3.048c2.422 1.338 4 3.595 4 6.165z" /></svg>';
-					break;
-				case 'fire':
-					svgContent = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>';
-					break;
-				case 'heart':
-					svgContent = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>';
-					break;
-				case 'star':
-					svgContent = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>';
-					break;
-				case 'bolt':
-					svgContent = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>';
-					break;
-				case 'chart-bar':
-					svgContent = '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>';
-					break;
-			}
+			const icons = {
+				'activity': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 12-4-4-6 6-4-4-4 4"/><path d="M8 21h8"/></svg>',
+				'dumbbell': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>',
+				'footprints': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/></svg>',
+				'heart': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>',
+				'droplets': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/></svg>',
+				'moon': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>',
+				'sun': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>',
+				'star': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>',
+				'book-open': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+				'utensils': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>',
+				'scale': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h3a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-3"/><path d="M8 4H5a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3"/><path d="M12 4v16"/><path d="M8 15h8"/><path d="m6 19 6-2 6 2"/></svg>',
+				'trophy': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>',
+				'target': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+				'zap': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>',
+				'coffee': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8Z"/><line x1="6" x2="6" y1="1" y2="4"/><line x1="10" x2="10" y1="1" y2="4"/><line x1="14" x2="14" y1="1" y2="4"/></svg>',
+				'apple': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"/><path d="M10 2c1 .5 2 2 2 5"/></svg>',
+				'chart-bar': '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg>'
+			};
 			
-			iconPreview.innerHTML = svgContent;
+			iconPreview.innerHTML = icons[iconName] || icons['chart-bar'];
 		}
 		
-		// Initialize icon preview when the page loads
 		document.addEventListener('DOMContentLoaded', function() {
 			const iconSelect = document.getElementById('icon');
 			if (iconSelect && iconSelect.value) {
@@ -139,12 +134,23 @@ templ gaugeTemplateFormFields(gaugeTemplate *db.GaugeTemplate, errors []FormErro
 					onchange="updateIconPreview(this.value)"
 				>
 					<option value="">Select an icon</option>
-					<option value="water" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "water" }>Water</option>
-					<option value="fire" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "fire" }>Fire</option>
+					<option value="activity" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "activity" }>Activity</option>
+					<option value="dumbbell" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "dumbbell" }>Dumbbell</option>
+					<option value="footprints" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "footprints" }>Footprints</option>
 					<option value="heart" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "heart" }>Heart</option>
+					<option value="droplets" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "droplets" }>Water</option>
+					<option value="moon" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "moon" }>Sleep</option>
+					<option value="sun" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "sun" }>Sun</option>
 					<option value="star" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "star" }>Star</option>
-					<option value="bolt" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "bolt" }>Bolt</option>
-					<option value="chart-bar" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "chart-bar" }>Chart Bar</option>
+					<option value="book-open" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "book-open" }>Reading</option>
+					<option value="utensils" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "utensils" }>Food</option>
+					<option value="scale" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "scale" }>Weight</option>
+					<option value="trophy" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "trophy" }>Achievement</option>
+					<option value="target" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "target" }>Goal</option>
+					<option value="zap" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "zap" }>Energy</option>
+					<option value="coffee" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "coffee" }>Coffee</option>
+					<option value="apple" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "apple" }>Nutrition</option>
+					<option value="chart-bar" selected?={ gaugeTemplate != nil && gaugeTemplate.Icon == "chart-bar" }>Progress</option>
 				</select>
 				<div class="flex items-center justify-center w-12 h-12 bg-base-200 rounded-lg">
 					<div id="icon-preview" class="w-6 h-6">
