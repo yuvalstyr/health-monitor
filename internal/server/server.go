@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
@@ -15,7 +16,7 @@ import (
 )
 
 // SetupRouter creates and configures the HTTP router with all routes and middleware
-func SetupRouter(queries db.Querier) *chi.Mux {
+func SetupRouter(queries db.Querier, database *sql.DB, version string) *chi.Mux {
 	r := chi.NewRouter()
 
 	// Custom zerolog middleware for request logging
@@ -30,6 +31,10 @@ func SetupRouter(queries db.Querier) *chi.Mux {
 			logger.Debug().Str("method", r.Method).Str("path", r.URL.Path).Msg("Request completed")
 		})
 	})
+
+	// Create and register health check handler
+	healthHandler := handlers.NewHealthHandler(database, version)
+	r.Get("/health", healthHandler.HealthCheck)
 
 	// Create gauge handler and register all gauge-related routes
 	gaugeHandler := handlers.NewGaugeHandler(queries)

@@ -1,20 +1,22 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
 	"health-monitor/internal/db"
+	"health-monitor/internal/handlers"
 )
 
 func TestSetupRouter(t *testing.T) {
 	// Create a mock querier using the existing mock implementation
 	mockDB := &db.MockQueries{}
 	
-	// Setup router with mock
-	router := SetupRouter(mockDB)
+	// Setup router with mock (pass nil for database since we're using mock, and test version)
+	router := SetupRouter(mockDB, nil, "test-version")
 	
 	// Test that router is created and has basic middleware
 	if router == nil {
@@ -132,7 +134,7 @@ func TestNeuteredFileSystem(t *testing.T) {
 
 func TestSetupRouterStaticFiles(t *testing.T) {
 	mockDB := &db.MockQueries{}
-	router := SetupRouter(mockDB)
+	router := SetupRouter(mockDB, nil, "test-version")
 	
 	// Test static file route exists
 	req := httptest.NewRequest("GET", "/static/test.css", nil)
@@ -144,5 +146,48 @@ func TestSetupRouterStaticFiles(t *testing.T) {
 	// (not a 405 Method Not Allowed which would indicate route doesn't exist)
 	if w.Code != http.StatusNotFound {
 		t.Errorf("Expected 404 for non-existent static file, got %d", w.Code)
+	}
+}
+
+func TestSetupRouterHealthEndpoint(t *testing.T) {
+	mockDB := &db.MockQueries{}
+	
+	// Create a mock database connection for health check
+	// In a real test, you might use a test database, but for this test we'll pass nil
+	// since the health handler will handle nil gracefully
+	router := SetupRouter(mockDB, nil, "test-version")
+	
+	// Test health endpoint
+	req := httptest.NewRequest("GET", "/health", nil)
+	w := httptest.NewRecorder()
+	
+	router.ServeHTTP(w, req)
+	
+	// Should get 503 since database is nil (unhealthy)
+	if w.Code != http.StatusServiceUnavailable {
+		t.Errorf("Expected 503 for unhealthy service, got %d", w.Code)
+	}
+	
+	// Check response content type
+	if contentType := w.Header().Get("Content-Type"); contentType != "application/json" {
+		t.Errorf("Expected Content-Type application/json, got %s", contentType)
+	}
+	
+	// Check response body structure
+	var response handlers.HealthResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Errorf("Failed to unmarshal health response: %v", err)
+	}
+	
+	if response.Status != "unhealthy" {
+		t.Errorf("Expected status 'unhealthy', got '%s'", response.Status)
+	}
+	
+	if response.Database != false {
+		t.Errorf("Expected database false, got %v", response.Database)
+	}
+	
+	if response.Version != "test-version" {
+		t.Errorf("Expected version 'test-version', got '%s'", response.Version)
 	}
 }
