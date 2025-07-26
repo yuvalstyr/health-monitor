@@ -1,84 +1,76 @@
 # Mobile UX Improvements - Implementation Tasks
 
-## Simple Development Approach
+## Implementation Plan
 
-**Target: iPhone 16 Plus (430px width)**
-**Philosophy: Aggressive improvements, simple implementation, no legacy browser support**
+- [x] 1. Simplify Dashboard Header
+  - Remove complex frequency date ranges from dashboard header component
+  - Replace with simple "Today: [Current Date]" display
+  - Reduce header height by 50% for mobile screens
+  - Update dashboard.templ to show clean date format
+  - _Requirements: R1.1, R1.2, R1.3, R1.4_
 
-## Task List
+- [x] 2. Implement Gauge Status Visual Indicators
+  - Add status calculation function for green/red status determination
+  - Implement colored left border (4px) on gauge cards based on status
+  - Add progress bar component showing percentage to target
+  - Update gauge.templ with visual status indicators
+  - _Requirements: R2.1, R2.2_
 
-- [x] **Task 1: Simplify Dashboard Header**
-  - Remove complex frequency date ranges  
-  - Show only "Today: [Current Date]"
-  - Reduce header height for mobile
-  - _Status: COMPLETED ✅_
-
-- [x] **Task 2: Implement Gauge Status Visual Indicators**
-  - Add status calculation function (green/red only)
-  - Green: meeting target, Red: not meeting target
-  - Add colored left border to gauge cards (4px)
-  - Add progress bar showing percentage to target
-  - _Status: COMPLETED ✅_
-
-- [x] **Task 3: Optimize Layout for iPhone 16 Plus and Big Screen**
-  - Remove fixed card sizing (current: 16rem x 16rem)  
-  - Make cards fully responsive for mobile and desktop
-  - Single column layout on iPhone 16 Plus (430px)
-  - Multi-column layout on big screens (desktop)
+- [x] 3. Optimize Layout for iPhone 16 Plus
+  - Remove fixed card sizing (16rem x 16rem) from gauge components
+  - Implement responsive card layout with single column on 430px width
+  - Update CSS for multi-column layout on desktop screens
   - Improve card spacing for touch interaction
-  - Fix button functionality issues (HTMX targets)
-  - Enhanced touch targets (36px mobile buttons, 56px desktop buttons)
-  - _Status: COMPLETED ✅_
+  - Fix HTMX button targets and functionality
+  - _Requirements: R4.1, R4.4_
 
-- [x] **Task 4: Add Frequency Visual Differentiation and Better Icons**
-  - Add simple colored badges:
-    - Weekly: Blue badge
-    - Bi-weekly: Purple badge
-    - Monthly: Green badge
-  - No complex icons for frequency - just colored text badges
-  - Improve gauge type icons (make them better/more modern)
-  - Add "NEW" badge for gauges created in the last 24 hours
-  - _Status: COMPLETED ✅_
+- [x] 4. Add Frequency Visual Differentiation
+  - Implement colored badge system for frequency types
+  - Add Weekly (blue), Bi-weekly (purple), Monthly (green) badges
+  - Update gauge components to display frequency badges
+  - Add "NEW" badge for gauges created within 24 hours
+  - _Requirements: R3.1, R3.2_
 
-- [ ] **Task 5: Implement Sticky Footer**
-  - Make footer stick to bottom of viewport
-  - Use CSS flexbox approach
-  - Simple implementation without complex positioning
-  - _Priority: MEDIUM_
+- [ ] 5. Implement Sticky Footer
+  - Modify layout structure to support sticky footer
+  - Use CSS flexbox approach for footer positioning
+  - Ensure footer remains visible at bottom of viewport
+  - Update base layout template with proper CSS classes
+  - _Requirements: R4.2_
 
-- [ ] **Task 6: Optimize Touch Targets**
-  - Increase increment/decrement buttons to 56px circles
-  - Better button spacing and visual feedback
-  - Ensure all interactive elements work well on iPhone 16 Plus
-  - Add frequency badges (Weekly: Blue, Bi-weekly: Purple, Monthly: Green)
-  - _Priority: MEDIUM_
+- [ ] 6. Optimize Touch Targets for Mobile
+  - Increase increment/decrement buttons to 56px circular targets
+  - Improve button spacing and visual feedback on touch
+  - Ensure all interactive elements meet 56px minimum touch target
+  - Test touch interactions on iPhone 16 Plus (430px width)
+  - _Requirements: R5.1, R5.2, R5.3_
 
-## Files to Modify
+## Key Implementation Files
 
-1. `.kiro/specs/mobile-ux-improvements/requirements.md` - Updated requirements
-2. `.kiro/specs/mobile-ux-improvements/tasks.md` - This task list  
-3. `.kiro/specs/mobile-ux-improvements/design-guidelines.md` - Simplified design specs
+- `internal/views/pages/dashboard.templ` - Main dashboard layout and header
+- `internal/views/components/gauge.templ` - Individual gauge card components
+- `internal/views/components/gauge_list.templ` - Gauge list layout
+- `internal/views/layouts/` - Base layout templates for sticky footer
+- `cmd/server/web/static/style.css` - Custom CSS for mobile optimizations
 
-## Testing Requirements
+## Testing Strategy
 
-**CRITICAL: Before marking any task as completed, ALL tests must pass:**
+Each task should include:
+- Unit tests for any new Go functions or logic
+- Component tests for template changes
+- Integration tests to verify end-to-end functionality
+- Manual testing on iPhone 16 Plus (430px width)
 
+**Test Command:**
 ```bash
-make test  # Runs unit tests, integration tests, and all other tests
+make test  # Runs all test suites
 ```
 
-This includes:
+## Mobile Testing Checklist
 
-- Unit tests (`*_test.go` files)
-- Integration tests (`internal/integration_test.go`)
-- Component tests (`internal/views/components/*_test.go`)
-- All other test suites
-
-## Testing Checklist
-
-- [ ] Test on iPhone 16 Plus (430px width)
-- [ ] Verify 56px touch targets work well
-- [ ] Check footer stickiness
-- [ ] Verify status indicators are clearly visible
-- [ ] Test responsive card layout
-- [ ] **ALL unit and integration tests must pass before task completion**
+- [ ] Test responsive layout on iPhone 16 Plus (430px width)
+- [ ] Verify 56px touch targets are easily tappable
+- [ ] Check sticky footer behavior across different content heights
+- [ ] Validate color-coded status indicators are clearly visible
+- [ ] Test card layout responsiveness from mobile to desktop
+- [ ] Ensure all HTMX interactions work properly on touch devices
