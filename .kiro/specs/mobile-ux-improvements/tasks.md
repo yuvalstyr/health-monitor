@@ -13,21 +13,22 @@
   - Reduce header height for mobile
   - _Status: COMPLETED ✅_
 
-- [ ] **Task 2: Implement Gauge Status Visual Indicators**
+- [x] **Task 2: Implement Gauge Status Visual Indicators**
   - Add status calculation function (green/red only)
   - Green: meeting target, Red: not meeting target
   - Add colored left border to gauge cards (4px)
   - Add progress bar showing percentage to target
-  - _Priority: HIGH_
+  - _Status: COMPLETED ✅_
 
-- [ ] **Task 3: Optimize Layout for iPhone 16 Plus and Big Screen**
+- [x] **Task 3: Optimize Layout for iPhone 16 Plus and Big Screen**
   - Remove fixed card sizing (current: 16rem x 16rem)  
   - Make cards fully responsive for mobile and desktop
   - Single column layout on iPhone 16 Plus (430px)
   - Multi-column layout on big screens (desktop)
   - Improve card spacing for touch interaction
   - Fix button functionality issues (HTMX targets)
-  - _Priority: HIGH_
+  - Enhanced touch targets (36px mobile buttons, 56px desktop buttons)
+  - _Status: COMPLETED ✅_
 
 - [ ] **Task 4: Add Frequency Visual Differentiation and Better Icons**
   - Add simple colored badges:
@@ -60,11 +61,13 @@
 ## Testing Requirements
 
 **CRITICAL: Before marking any task as completed, ALL tests must pass:**
+
 ```bash
 make test  # Runs unit tests, integration tests, and all other tests
 ```
 
 This includes:
+
 - Unit tests (`*_test.go` files)
 - Integration tests (`internal/integration_test.go`)
 - Component tests (`internal/views/components/*_test.go`)
@@ -78,4 +81,3 @@ This includes:
 - [ ] Verify status indicators are clearly visible
 - [ ] Test responsive card layout
 - [ ] **ALL unit and integration tests must pass before task completion**
-

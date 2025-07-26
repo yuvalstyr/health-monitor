@@ -23,7 +23,7 @@ func renderChart(data charts.ChartData, chartID string) string {
 // ChartWithHTMX renders a chart that can be updated via HTMX
 templ ChartWithHTMX(data charts.ChartData, chartID string, updateURL string, updateInterval string) {
 	<div 
-		class="chart-container" 
+		class="chart-container relative overflow-hidden rounded-xl bg-transparent hover:shadow-lg hover:shadow-purple-500/10 transition-shadow duration-300" 
 		hx-get={ updateURL }
 		hx-trigger={ "every " + ValidateUpdateInterval(updateInterval) }
 		hx-target="this"

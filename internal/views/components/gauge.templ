@@ -62,11 +62,62 @@ templ GaugeCard(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {
 }
 
 templ gaugeCardContent(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {
-		<div class="card-body p-4 relative flex flex-col">
+	<div class="card-body p-2 sm:p-4 relative flex flex-col">
+		<!-- Mobile-first compact layout -->
+		<div class="sm:hidden space-y-1">
+			<!-- Ultra compact horizontal layout for mobile -->
+			<div class="flex items-center justify-between gap-2">
+				<!-- Icon + Name + Value in one row -->
+				<div class="flex items-center gap-2 flex-1 min-w-0">
+					<div class="flex-shrink-0">
+						@Icon(template.Icon, "w-5 h-5 text-primary")
+					</div>
+					<div class="flex-1 min-w-0">
+						<div class="text-xs font-semibold truncate">{ template.Name }</div>
+						<div class="text-[0.5rem] leading-[0.75rem] text-base-content/60">{ template.Frequency }</div>
+					</div>
+					<div id={ fmt.Sprintf("gauge-value-container-%d", gaugeInstance.ID) } class="flex-shrink-0">
+						@GaugeInstanceValue(gaugeInstance)
+					</div>
+				</div>
+				<!-- Touch-friendly buttons -->
+				<div class="flex gap-2 flex-shrink-0">
+					<button 
+						class="btn btn-circle btn-sm bg-error text-white hover:bg-error/80 shadow-sm"
+						style="min-width: 36px; min-height: 36px;"
+						hx-post={ fmt.Sprintf("/gauges/%d/decrement", gaugeInstance.ID) }
+						hx-target={ fmt.Sprintf("#gauge-instance-value-%d", gaugeInstance.ID) }
+						hx-swap="outerHTML"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
+					</button>
+					<button 
+						class="btn btn-circle btn-sm bg-success text-white hover:bg-success/80 shadow-sm"
+						style="min-width: 36px; min-height: 36px;"
+						hx-post={ fmt.Sprintf("/gauges/%d/increment", gaugeInstance.ID) }
+						hx-target={ fmt.Sprintf("#gauge-instance-value-%d", gaugeInstance.ID) }
+						hx-swap="outerHTML"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+					</button>
+				</div>
+			</div>
+			<!-- Progress bar in second row -->
+			<div class="w-full bg-base-300 rounded-full h-1">
+				if getGaugeStatus(gaugeInstance.Value, template.Target, template.Direction) == "success" {
+					<div class="h-1 rounded-full transition-all duration-300 bg-green-500" style={ fmt.Sprintf("width: %.1f%%", getProgressPercentage(gaugeInstance.Value, template.Target)) }></div>
+				} else {
+					<div class="h-1 rounded-full transition-all duration-300 bg-red-500" style={ fmt.Sprintf("width: %.1f%%", getProgressPercentage(gaugeInstance.Value, template.Target)) }></div>
+				}
+			</div>
+		</div>
+
+		<!-- Desktop layout (hidden on mobile) -->
+		<div class="hidden sm:block">
 			<!-- Action buttons in top right corner -->
 			<div class="absolute top-2 right-2 flex gap-1">
 				<a href={ templ.URL(fmt.Sprintf("/trends/%d", template.ID)) } class="btn btn-circle btn-sm btn-ghost" title="View Trends">
-					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 712-2h2a2 2 0 712 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 712-2h2a2 2 0 712 2v14a2 2 0 71-2 2h-2a2 2 0 71-2-2z" /></svg>
 				</a>
 				<a href={ templ.URL(fmt.Sprintf("/admin/gauges/%d", template.ID)) } class="btn btn-circle btn-sm btn-ghost" title="Edit Gauge">
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -113,7 +164,8 @@ templ gaugeCardContent(gaugeInstance *db.GaugeInstance, template *db.GaugeTempla
 			<!-- Larger increment/decrement buttons, vertically centered -->
 			<div class="flex justify-center gap-4 items-center flex-grow mt-2">
 				<button 
-					class="btn btn-circle btn-md bg-error text-white shadow-md"
+					class="btn btn-circle btn-lg bg-error text-white shadow-md hover:bg-error/90 transition-colors"
+					style="min-width: 56px; min-height: 56px;"
 					hx-post={ fmt.Sprintf("/gauges/%d/decrement", gaugeInstance.ID) }
 					hx-target={ fmt.Sprintf("#gauge-instance-value-%d", gaugeInstance.ID) }
 					hx-swap="outerHTML"
@@ -121,7 +173,8 @@ templ gaugeCardContent(gaugeInstance *db.GaugeInstance, template *db.GaugeTempla
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
 				</button>
 				<button 
-					class="btn btn-circle btn-md bg-success text-white shadow-md"
+					class="btn btn-circle btn-lg bg-success text-white shadow-md hover:bg-success/90 transition-colors"
+					style="min-width: 56px; min-height: 56px;"
 					hx-post={ fmt.Sprintf("/gauges/%d/increment", gaugeInstance.ID) }
 					hx-target={ fmt.Sprintf("#gauge-instance-value-%d", gaugeInstance.ID) }
 					hx-swap="outerHTML"
@@ -130,6 +183,7 @@ templ gaugeCardContent(gaugeInstance *db.GaugeInstance, template *db.GaugeTempla
 				</button>
 			</div>
 		</div>
+	</div>
 }
 
 templ Gauge(gaugeInstance *db.GaugeInstance, template *db.GaugeTemplate) {

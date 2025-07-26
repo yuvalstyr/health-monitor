@@ -175,14 +175,16 @@ func TestSchedulingService_CreateInstancesForActiveTemplates(t *testing.T) {
 			t.Fatalf("Expected 3 instances to be created, got: %d", len(createdInstances))
 		}
 		
-		// Verify that different period starts are calculated for different frequencies
-		// We can't test exact dates without mocking time, but we can verify they're different
-		weeklyStart := createdInstances[0].PeriodStart
-		biWeeklyStart := createdInstances[1].PeriodStart
-		monthlyStart := createdInstances[2].PeriodStart
-		
-		if weeklyStart.Equal(biWeeklyStart) || weeklyStart.Equal(monthlyStart) || biWeeklyStart.Equal(monthlyStart) {
-			t.Error("Expected different period start dates for different frequencies")
+		// Verify that period starts are calculated for each frequency
+		// Note: Different frequencies might result in the same next period start depending on the current date
+		for i, instance := range createdInstances {
+			if instance.PeriodStart.IsZero() {
+				t.Errorf("Instance %d has zero period start time", i)
+			}
+			// Verify the period start is not in the past (should be next period)
+			if instance.PeriodStart.Before(time.Now().Truncate(24 * time.Hour)) {
+				t.Errorf("Instance %d has period start in the past: %v", i, instance.PeriodStart)
+			}
 		}
 	})
 

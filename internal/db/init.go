@@ -25,11 +25,16 @@ func Open() (*sql.DB, error) {
 		file.Close()
 	}
 
-	// Open database connection
-	db, err := sql.Open("sqlite", dbPath)
+	// Open database connection with proper SQLite settings for concurrency
+	db, err := sql.Open("sqlite", dbPath+"?_busy_timeout=30000&_journal_mode=DELETE&_foreign_keys=on&_synchronous=NORMAL")
 	if err != nil {
 		return nil, err
 	}
+	
+	// Set reasonable connection pool settings for SQLite
+	db.SetMaxOpenConns(1)  // SQLite works best with single writer
+	db.SetMaxIdleConns(1)
+	db.SetConnMaxLifetime(0) // Connections never expire
 
 	// Run Goose migrations
 	if err := RunMigrations(db); err != nil {
