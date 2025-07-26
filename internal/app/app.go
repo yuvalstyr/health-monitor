@@ -44,7 +44,7 @@ func (a *App) Run() error {
 	queries := db.New(database)
 
 	// Set up HTTP router with health check
-	router := server.SetupRouter(queries, database, "1.0.0")
+	router := server.SetupRouter(queries, database, a.config.Version)
 	httpServer := server.New(a.config.Port, router)
 
 	// Create and start background scheduling service

@@ -12,6 +12,7 @@ type Config struct {
 	Port     string
 	DBPath   string
 	LogLevel string
+	Version  string
 	IsProduction bool
 }
 
@@ -23,7 +24,11 @@ func Load() *Config {
 	// Port configuration
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3000"
+		if isProduction {
+			port = "8080" // Production default
+		} else {
+			port = "3000" // Development default
+		}
 		logger.Debug().Str("port", port).Msg("Using default port")
 	}
 
@@ -49,10 +54,16 @@ func Load() *Config {
 		}
 	}
 
+	// Version configuration
+	version := os.Getenv("APP_VERSION")
+	if version == "" {
+		version = "1.0.0" // Default version
+	}
+
 	// Ensure database directory exists in production
 	if isProduction {
 		dbDir := filepath.Dir(dbPath)
-		if err := os.MkdirAll(dbDir, 0755); err != nil {
+		if err := os.MkdirAll(dbDir, 0750); err != nil {
 			logger.Error().Err(err).Str("dir", dbDir).Msg("Failed to create database directory")
 		} else {
 			logger.Info().Str("dir", dbDir).Msg("Database directory ensured")
@@ -63,6 +74,7 @@ func Load() *Config {
 		Port:         port,
 		DBPath:       dbPath,
 		LogLevel:     logLevel,
+		Version:      version,
 		IsProduction: isProduction,
 	}
 
@@ -70,6 +82,7 @@ func Load() *Config {
 		Str("port", config.Port).
 		Str("db_path", config.DBPath).
 		Str("log_level", config.LogLevel).
+		Str("version", config.Version).
 		Bool("is_production", config.IsProduction).
 		Msg("Configuration loaded")
 

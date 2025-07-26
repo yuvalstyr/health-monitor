@@ -191,3 +191,50 @@ func TestSetupRouterHealthEndpoint(t *testing.T) {
 		t.Errorf("Expected version 'test-version', got '%s'", response.Version)
 	}
 }
+
+func TestSetupRouterHealthEndpointHealthy(t *testing.T) {
+	// Create a temporary database for testing
+	tempDB := t.TempDir() + "/test.db"
+	database, err := db.Open(tempDB)
+	if err != nil {
+		t.Fatalf("Failed to open test database: %v", err)
+	}
+	defer database.Close()
+	
+	queries := db.New(database)
+	router := SetupRouter(queries, database, "test-version")
+	
+	// Test health endpoint with real database
+	req := httptest.NewRequest("GET", "/health", nil)
+	w := httptest.NewRecorder()
+	
+	router.ServeHTTP(w, req)
+	
+	// Should get 200 since database is healthy
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected 200 for healthy service, got %d", w.Code)
+	}
+	
+	// Check response content type
+	if contentType := w.Header().Get("Content-Type"); contentType != "application/json" {
+		t.Errorf("Expected Content-Type application/json, got %s", contentType)
+	}
+	
+	// Check response body structure
+	var response handlers.HealthResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Errorf("Failed to unmarshal health response: %v", err)
+	}
+	
+	if response.Status != "healthy" {
+		t.Errorf("Expected status 'healthy', got '%s'", response.Status)
+	}
+	
+	if response.Database != true {
+		t.Errorf("Expected database true, got %v", response.Database)
+	}
+	
+	if response.Version != "test-version" {
+		t.Errorf("Expected version 'test-version', got '%s'", response.Version)
+	}
+}
