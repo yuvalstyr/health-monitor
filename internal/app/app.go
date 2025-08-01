@@ -32,19 +32,19 @@ func (a *App) Run() error {
 	logger.Setup()
 	logger.Info().Msg("Starting health-monitor service")
 
-	// Open database connection
-	database, err := db.Open()
+	// Open database connection with configured path
+	database, err := db.Open(a.config.DBPath)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error opening database")
 		return err
 	}
 	defer database.Close()
-	logger.Debug().Msg("Connected to database")
+	logger.Debug().Str("db_path", a.config.DBPath).Msg("Connected to database")
 
 	queries := db.New(database)
 
-	// Set up HTTP router
-	router := server.SetupRouter(queries)
+	// Set up HTTP router with health check
+	router := server.SetupRouter(queries, database, a.config.Version)
 	httpServer := server.New(a.config.Port, router)
 
 	// Create and start background scheduling service
