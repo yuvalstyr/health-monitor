@@ -32,14 +32,23 @@ func (a *App) Run() error {
 	logger.Setup()
 	logger.Info().Msg("Starting health-monitor service")
 
+	// Log configuration for debugging
+	logger.Info().
+		Str("port", a.config.Port).
+		Str("db_path", a.config.DBPath).
+		Bool("is_production", a.config.IsProduction).
+		Str("log_level", a.config.LogLevel).
+		Msg("Application configuration loaded")
+
 	// Open database connection with configured path
+	logger.Info().Str("db_path", a.config.DBPath).Msg("Initializing database connection...")
 	database, err := db.Open(a.config.DBPath)
 	if err != nil {
-		logger.Error().Err(err).Msg("Error opening database")
+		logger.Error().Err(err).Str("db_path", a.config.DBPath).Msg("CRITICAL: Failed to open database")
 		return err
 	}
 	defer database.Close()
-	logger.Debug().Str("db_path", a.config.DBPath).Msg("Connected to database")
+	logger.Info().Str("db_path", a.config.DBPath).Msg("✅ Database connection established successfully")
 
 	queries := db.New(database)
 

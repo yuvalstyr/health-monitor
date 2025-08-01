@@ -15,6 +15,13 @@ railway-build: install-tools generate
 
 # Railway-specific start target
 railway-start:
+	@echo "🚀 Starting health-monitor server..."
+	@echo "Environment: RAILWAY_ENVIRONMENT=$(RAILWAY_ENVIRONMENT)"
+	@echo "Port: $(PORT)"
+	@echo "DB Path: $(DB_PATH)"
+	@mkdir -p /data || echo "⚠️ Warning: Could not create /data directory"
+	@ls -la /data || echo "⚠️ Warning: Could not list /data directory"
+	@echo "✅ Pre-start checks completed"
 	./bin/server
 
 run: generate
