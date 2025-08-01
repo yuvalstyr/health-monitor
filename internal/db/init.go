@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"health-monitor/internal/logger"
@@ -192,24 +193,99 @@ func runMigrationsWithRetry(db *sql.DB, isProduction bool) error {
 		retryDelay = 5 * time.Second
 	}
 
+	var lastErr error
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		logger.Info().Int("attempt", attempt).Bool("production", isProduction).Msg("Running database migrations")
 		
+		// Get migration status before attempting migration
+		status, statusErr := GetMigrationStatus(db)
+		if statusErr != nil {
+			logger.Warn().Err(statusErr).Msg("Failed to get migration status, proceeding with migration")
+		} else {
+			logger.Info().
+				Int64("current_version", status.CurrentVersion).
+				Bool("up_to_date", status.IsUpToDate).
+				Msg("Pre-migration database status")
+		}
+		
 		if err := RunMigrations(db); err != nil {
-			logger.Error().Err(err).Int("attempt", attempt).Msg("Database migration failed")
+			lastErr = err
+			logger.Error().
+				Err(err).
+				Int("attempt", attempt).
+				Int("max_retries", maxRetries).
+				Msg("Database migration failed")
+			
+			// Don't retry if this is a critical migration error that won't be fixed by retrying
+			if isCriticalMigrationError(err) {
+				logger.Error().Err(err).Msg("Critical migration error detected, not retrying")
+				return fmt.Errorf("critical database migration error on attempt %d: %w", attempt, err)
+			}
+			
 			if attempt < maxRetries {
-				logger.Info().Dur("delay", retryDelay).Int("attempt", attempt).Msg("Retrying database migrations")
+				logger.Info().
+					Dur("delay", retryDelay).
+					Int("attempt", attempt).
+					Int("remaining", maxRetries-attempt).
+					Msg("Retrying database migrations")
 				time.Sleep(retryDelay)
 				continue
 			}
-			return fmt.Errorf("database migration failed after %d attempts: %w", maxRetries, err)
+			
+			// Final attempt failed
+			logger.Error().
+				Err(err).
+				Int("total_attempts", maxRetries).
+				Msg("All migration attempts failed")
+			return fmt.Errorf("database migration failed after %d attempts, last error: %w", maxRetries, err)
 		}
 
-		logger.Info().Int("attempt", attempt).Msg("Database migrations completed successfully")
+		// Migration succeeded, log final status
+		finalStatus, statusErr := GetMigrationStatus(db)
+		if statusErr != nil {
+			logger.Warn().Err(statusErr).Msg("Failed to get final migration status")
+		} else {
+			logger.Info().
+				Int64("final_version", finalStatus.CurrentVersion).
+				Bool("up_to_date", finalStatus.IsUpToDate).
+				Int("attempt", attempt).
+				Msg("Database migrations completed successfully")
+		}
+		
 		return nil
 	}
 
-	return fmt.Errorf("database migration failed after %d attempts", maxRetries)
+	return fmt.Errorf("database migration failed after %d attempts, last error: %w", maxRetries, lastErr)
 }
+
+// isCriticalMigrationError determines if a migration error is critical and shouldn't be retried
+func isCriticalMigrationError(err error) bool {
+	if err == nil {
+		return false
+	}
+	
+	errorStr := err.Error()
+	
+	// Critical errors that indicate structural problems that won't be fixed by retrying
+	criticalPatterns := []string{
+		"syntax error",
+		"no such table",
+		"duplicate column name",
+		"constraint failed",
+		"database is locked", // This might be retryable in some cases, but often indicates a deeper issue
+		"rollback failed",
+		"backup failed",
+	}
+	
+	for _, pattern := range criticalPatterns {
+		if strings.Contains(errorStr, pattern) {
+			return true
+		}
+	}
+	
+	return false
+}
+
+
 
 
