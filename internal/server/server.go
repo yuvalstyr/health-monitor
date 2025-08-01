@@ -88,7 +88,7 @@ func New(port string, handler http.Handler) *http.Server {
 	}
 
 	return &http.Server{
-		Addr:    ":" + port,
+		Addr:    "0.0.0.0:" + port,
 		Handler: handler,
 	}
 }
