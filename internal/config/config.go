@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"path/filepath"
 
 	"health-monitor/internal/logger"
 )
@@ -60,15 +59,7 @@ func Load() *Config {
 		version = "1.0.0" // Default version
 	}
 
-	// Ensure database directory exists in production
-	if isProduction {
-		dbDir := filepath.Dir(dbPath)
-		if err := os.MkdirAll(dbDir, 0750); err != nil {
-			logger.Error().Err(err).Str("dir", dbDir).Msg("Failed to create database directory")
-		} else {
-			logger.Info().Str("dir", dbDir).Msg("Database directory ensured")
-		}
-	}
+	// Note: Database directory initialization is handled by the db package during Open()
 
 	config := &Config{
 		Port:         port,
@@ -88,3 +79,4 @@ func Load() *Config {
 
 	return config
 }
+
