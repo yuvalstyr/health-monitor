@@ -251,8 +251,8 @@ func isRollbackAllowed(r *http.Request) bool {
 
 // getEnvironment returns the current environment string
 func getEnvironment() string {
-	if os.Getenv("RAILWAY_ENVIRONMENT") != "" {
-		return "production"
+	if env := os.Getenv("RAILWAY_ENVIRONMENT"); env != "" {
+		return env
 	}
 	return "development"
 }

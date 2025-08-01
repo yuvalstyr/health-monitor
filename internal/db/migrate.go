@@ -199,26 +199,59 @@ func GetMigrationStatus(db *sql.DB) (MigrationStatus, error) {
 	}
 	
 	status.CurrentVersion = currentVersion
-	status.IsUpToDate = true // We'll determine this by checking for pending migrations
 	
-	// Check if there are pending migrations by trying to get the next version
-	// This is a bit of a hack since Goose doesn't provide a direct way to check pending migrations
+	// Set up Goose to check for pending migrations
 	goose.SetBaseFS(embedMigrations)
 	if err := goose.SetDialect("sqlite3"); err != nil {
 		return status, fmt.Errorf("failed to set dialect for status check: %w", err)
 	}
 	
-	// Create a temporary connection to test if migrations are pending
-	// We do this by checking if Up would do anything
+	// Create a test database with current schema to check for pending migrations
 	testDB, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
 		return status, fmt.Errorf("failed to create test database for status check: %w", err)
 	}
 	defer testDB.Close()
 	
-	// Copy the current schema to test database and see if there are pending migrations
-	// This is a simplified check - in practice you might want a more sophisticated approach
-	status.HasPendingMigrations = false // Default assumption
+	// Apply migrations up to current version to test database
+	if currentVersion > 0 {
+		if err := goose.UpTo(testDB, "migrations", currentVersion); err != nil {
+			// If we can't apply migrations to test DB, assume no pending migrations
+			// This is a fallback to avoid breaking the status check
+			status.HasPendingMigrations = false
+			status.IsUpToDate = true
+		} else {
+			// Try to apply one more migration to see if there are pending ones
+			testCurrentVersion, err := goose.GetDBVersion(testDB)
+			if err != nil {
+				status.HasPendingMigrations = false
+				status.IsUpToDate = true
+			} else {
+				// Try to go up one more version to see if there are pending migrations
+				if err := goose.UpByOne(testDB, "migrations"); err != nil {
+					// No more migrations available
+					status.HasPendingMigrations = false
+					status.IsUpToDate = true
+				} else {
+					// There was another migration available
+					newVersion, _ := goose.GetDBVersion(testDB)
+					status.HasPendingMigrations = newVersion > testCurrentVersion
+					status.IsUpToDate = !status.HasPendingMigrations
+				}
+			}
+		}
+	} else {
+		// If current version is 0, check if there are any migrations available
+		if err := goose.UpByOne(testDB, "migrations"); err != nil {
+			// No migrations available
+			status.HasPendingMigrations = false
+			status.IsUpToDate = true
+		} else {
+			// There are migrations available
+			status.HasPendingMigrations = true
+			status.IsUpToDate = false
+		}
+	}
 	
 	logger.Info().
 		Int64("current_version", status.CurrentVersion).

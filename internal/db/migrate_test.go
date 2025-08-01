@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"testing"
 
@@ -153,18 +154,15 @@ func TestCriticalMigrationErrorDetection(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
 			if tc.errorMsg != "" {
-				err = assert.AnError // Create a dummy error for testing
-				// We can't easily test the actual error message matching without
-				// creating real errors, so this is a simplified test
+				// Create a real error with the expected message
+				err = fmt.Errorf("migration failed: %s", tc.errorMsg)
 			}
 			
-			// Test that the function doesn't panic
+			// Test the actual error message matching logic
 			result := isCriticalMigrationError(err)
 			
-			// For nil error, should always return false
-			if tc.errorMsg == "" {
-				assert.False(t, result, "Nil error should not be critical")
-			}
+			assert.Equal(t, tc.isCritical, result, 
+				"Expected isCritical=%v for error message: %s", tc.isCritical, tc.errorMsg)
 		})
 	}
 }

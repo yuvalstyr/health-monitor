@@ -67,34 +67,32 @@ func (h *HealthHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 		Migrations: migrationHealth,
 	}
 
-	// Set appropriate HTTP status code
-	if !dbHealthy {
+	// Set appropriate HTTP status code and log
+	migrationStatus := "unknown"
+	if migrationHealth != nil {
+		migrationStatus = migrationHealth.Status
+	}
+
+	switch {
+	case !dbHealthy:
 		w.WriteHeader(http.StatusServiceUnavailable)
 		logger.Warn().
 			Bool("database", dbHealthy).
-			Str("migration_status", func() string {
-				if migrationHealth != nil {
-					return migrationHealth.Status
-				}
-				return "unknown"
-			}()).
+			Str("migration_status", migrationStatus).
 			Msg("Health check failed")
-	} else if migrationHealth != nil && !migrationHealth.IsUpToDate {
+	
+	case migrationHealth != nil && !migrationHealth.IsUpToDate:
 		w.WriteHeader(http.StatusOK) // Still OK but with degraded status
 		logger.Warn().
 			Bool("database", dbHealthy).
 			Int64("migration_version", migrationHealth.CurrentVersion).
 			Msg("Health check passed but migrations are pending")
-	} else {
+	
+	default:
 		w.WriteHeader(http.StatusOK)
 		logger.Debug().
 			Bool("database", dbHealthy).
-			Str("migration_status", func() string {
-				if migrationHealth != nil {
-					return migrationHealth.Status
-				}
-				return "unknown"
-			}()).
+			Str("migration_status", migrationStatus).
 			Msg("Health check passed")
 	}
 
