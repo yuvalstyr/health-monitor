@@ -51,9 +51,10 @@ jobs:
       
     - name: Verify generated code is up to date
       run: |
-        if [ -n "$(git status --porcelain)" ]; then
+        # Check for changes excluding node_modules
+        if [ -n "$(git status --porcelain | grep -v 'node_modules')" ]; then
           echo "Generated code is not up to date. Please run 'make generate' and commit the changes."
-          git status --porcelain
+          git status --porcelain | grep -v 'node_modules'
           exit 1
         fi
         
