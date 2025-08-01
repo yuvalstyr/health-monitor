@@ -75,6 +75,17 @@ This is a Go web application using:
 ## Environment Variables
 Check `internal/config/config.go` for configuration options. Set environment variables or use command-line flags.
 
+### Development Environment Variables
+- `PORT` - Server port (default: 3000)
+- `DB_PATH` - Database file path (default: "health-monitor.db")
+- `LOG_LEVEL` - Logging level (default: "debug")
+
+### Production Environment Variables (Railway)
+- `PORT` - Server port (automatically provided by Railway)
+- `DB_PATH` - Database file path (set to "/data/health-monitor.db" for volume persistence)
+- `LOG_LEVEL` - Logging level (set to "info" for production)
+- `RAILWAY_ENVIRONMENT` - Railway environment indicator (automatically set by Railway)
+
 ## End of Task Workflow
 When completing a task, follow these steps:
 1. **Test**: Run `make test` to ensure all tests pass

@@ -10,6 +10,9 @@ restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 
 [environments.production]
+# Railway automatically provides PORT environment variable
+# LOG_LEVEL = "info" for production logging
+# DB_PATH = "/data/health-monitor.db" for persistent SQLite database on volume
 variables = { LOG_LEVEL = "info", DB_PATH = "/data/health-monitor.db" }
 
 [environments.production.volumes]
