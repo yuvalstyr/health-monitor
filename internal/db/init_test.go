@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	
 	_ "modernc.org/sqlite"
@@ -82,7 +83,7 @@ func TestBuildConnectionString(t *testing.T) {
 			result := buildConnectionString(dbPath, tt.isProduction)
 			
 			for _, want := range tt.wantContains {
-				if !contains(result, want) {
+				if !strings.Contains(result, want) {
 					t.Errorf("buildConnectionString() = %v, should contain %v", result, want)
 				}
 			}
@@ -126,18 +127,3 @@ func TestConfigureDatabasePool(t *testing.T) {
 	// If we get here without panicking, the test passes
 }
 
-// Helper function to check if a string contains a substring
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || 
-		(len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || 
-		containsAt(s, substr))))
-}
-
-func containsAt(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
-}
