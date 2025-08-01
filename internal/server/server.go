@@ -36,6 +36,10 @@ func SetupRouter(queries db.Querier, database *sql.DB, version string) *chi.Mux 
 	healthHandler := handlers.NewHealthHandler(database, version)
 	r.Get("/health", healthHandler.HealthCheck)
 
+	// Create migration management handler and register routes
+	migrationHandler := handlers.NewMigrationHandler(database)
+	migrationHandler.RegisterRoutes(r)
+
 	// Create gauge handler and register all gauge-related routes
 	gaugeHandler := handlers.NewGaugeHandler(queries)
 	gaugeHandler.RegisterRoutes(r)
