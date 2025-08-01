@@ -3,7 +3,7 @@ builder = "nixpacks"
 buildCommand = "make railway-build"
 
 [deploy]
-startCommand = "make railway-start"
+startCommand = "./bin/server"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
