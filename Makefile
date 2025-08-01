@@ -26,8 +26,8 @@ clean:
 	rm -f coverage.out
 
 generate:
-	$(shell go env GOPATH)/bin/templ generate
-	$(shell go env GOPATH)/bin/sqlc generate
+	@GOBIN=$$(go env GOBIN); if [ -z "$$GOBIN" ]; then GOBIN=$$(go env GOPATH)/bin; fi; $$GOBIN/templ generate
+	@GOBIN=$$(go env GOBIN); if [ -z "$$GOBIN" ]; then GOBIN=$$(go env GOPATH)/bin; fi; $$GOBIN/sqlc generate
 
 dev-restart: clean
 	lsof -i :3000 | awk 'NR!=1 {print $$2}' | xargs kill -9 2>/dev/null || true
