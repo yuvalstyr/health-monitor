@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -60,13 +61,10 @@ func Load() *Config {
 		version = "1.0.0" // Default version
 	}
 
-	// Ensure database directory exists in production
+	// Ensure database directory exists and is properly configured for production
 	if isProduction {
-		dbDir := filepath.Dir(dbPath)
-		if err := os.MkdirAll(dbDir, 0750); err != nil {
-			logger.Error().Err(err).Str("dir", dbDir).Msg("Failed to create database directory")
-		} else {
-			logger.Info().Str("dir", dbDir).Msg("Database directory ensured")
+		if err := ensureProductionDatabaseDirectory(dbPath); err != nil {
+			logger.Error().Err(err).Str("db_path", dbPath).Msg("Failed to ensure production database directory")
 		}
 	}
 
@@ -87,4 +85,33 @@ func Load() *Config {
 		Msg("Configuration loaded")
 
 	return config
+}
+
+// ensureProductionDatabaseDirectory ensures the database directory exists and is properly configured for production
+func ensureProductionDatabaseDirectory(dbPath string) error {
+	dbDir := filepath.Dir(dbPath)
+	
+	// Create directory with restrictive permissions for production
+	if err := os.MkdirAll(dbDir, 0750); err != nil {
+		return fmt.Errorf("failed to create database directory %s: %w", dbDir, err)
+	}
+
+	// Verify directory exists and is accessible
+	if stat, err := os.Stat(dbDir); err != nil {
+		return fmt.Errorf("failed to verify database directory %s: %w", dbDir, err)
+	} else if !stat.IsDir() {
+		return fmt.Errorf("database path %s is not a directory", dbDir)
+	}
+
+	// Test write permissions by creating a temporary file
+	testFile := filepath.Join(dbDir, ".write_test_config")
+	if file, err := os.Create(testFile); err != nil {
+		return fmt.Errorf("database directory %s is not writable: %w", dbDir, err)
+	} else {
+		file.Close()
+		os.Remove(testFile)
+	}
+
+	logger.Info().Str("dir", dbDir).Msg("Production database directory verified and ready")
+	return nil
 }
