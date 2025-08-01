@@ -67,6 +67,9 @@ func (h *HealthHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 		Migrations: migrationHealth,
 	}
 
+	// Set content type first
+	w.Header().Set("Content-Type", "application/json")
+
 	// Set appropriate HTTP status code and log
 	migrationStatus := "unknown"
 	if migrationHealth != nil {
@@ -95,9 +98,6 @@ func (h *HealthHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 			Str("migration_status", migrationStatus).
 			Msg("Health check passed")
 	}
-
-	// Set content type and encode response
-	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		logger.Error().Err(err).Msg("Failed to encode health check response")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
