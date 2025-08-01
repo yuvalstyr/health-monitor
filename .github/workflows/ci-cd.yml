@@ -1,0 +1,118 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ '**' ]  # Run tests on all branches
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  GO_VERSION: '1.23'
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+          
+    - name: Install Node.js dependencies
+      run: npm install
+      
+    - name: Install tools
+      run: make install-tools
+      
+    - name: Generate code
+      run: make generate
+      
+    - name: Verify generated code is up to date
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "Generated code is not up to date. Please run 'make generate' and commit the changes."
+          git status --porcelain
+          exit 1
+        fi
+        
+    - name: Run tests
+      run: make test
+      
+    - name: Generate test coverage
+      run: make test-coverage
+      
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.out
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+        
+    - name: Build application
+      run: make build-prod
+      
+    - name: Verify build artifacts
+      run: |
+        if [ ! -f "bin/server" ]; then
+          echo "Build failed: server binary not found"
+          exit 1
+        fi
+        echo "Build successful: server binary created"
+        
+    - name: Test binary execution
+      run: |
+        # Test that the binary is executable and has correct permissions
+        if [ -x "bin/server" ]; then
+          echo "✅ Binary is executable"
+        else
+          echo "❌ Binary is not executable"
+          exit 1
+        fi
+        
+        # Test binary file type
+        file bin/server
+        echo "Binary execution test completed"
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Deploy to Railway
+      run: |
+        echo "🚀 Deployment to Railway will be configured in task 7"
+        echo "✅ Tests passed, ready for deployment"
+        
+    - name: Deployment status
+      run: |
+        echo "Deployment job executed successfully"
+        echo "Main branch: ${{ github.ref }}"
+        echo "Event: ${{ github.event_name }}"
