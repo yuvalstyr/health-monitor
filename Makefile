@@ -1,9 +1,21 @@
-.PHONY: all build run clean generate test test-coverage dev dev-restart migrate-status migrate-up migrate-down migrate-create migrate-reset seed
+.PHONY: all build build-prod run clean generate test test-coverage dev dev-restart migrate-status migrate-up migrate-down migrate-create migrate-reset seed railway-build railway-start
 
 all: generate build
 
 build:
 	go build -o bin/server cmd/server/main.go
+
+# Production build with optimizations (local build for testing)
+build-prod: generate
+	go build -ldflags="-w -s" -o bin/server cmd/server/main.go
+
+# Railway-specific build target (called by Railway)
+railway-build: install-tools generate
+	go build -ldflags="-w -s" -o bin/server cmd/server/main.go
+
+# Railway-specific start target
+railway-start:
+	./bin/server
 
 run: generate
 	go run cmd/server/main.go
@@ -14,8 +26,8 @@ clean:
 	rm -f coverage.out
 
 generate:
-	templ generate
-	sqlc generate
+	$(shell go env GOPATH)/bin/templ generate
+	$(shell go env GOPATH)/bin/sqlc generate
 
 dev-restart: clean
 	lsof -i :3000 | awk 'NR!=1 {print $$2}' | xargs kill -9 2>/dev/null || true
@@ -66,3 +78,19 @@ migrate-reset:
 # Database seeding for development
 seed:
 	go run cmd/seed/main.go -db health-monitor.db
+
+# Production deployment helpers
+deploy-check:
+	@echo "Checking production build requirements..."
+	@command -v go >/dev/null 2>&1 || { echo "Go is required but not installed. Aborting." >&2; exit 1; }
+	@echo "✓ Go is installed"
+	@make generate >/dev/null 2>&1 && echo "✓ Code generation successful" || { echo "✗ Code generation failed" >&2; exit 1; }
+	@make test-short >/dev/null 2>&1 && echo "✓ Tests passing" || { echo "✗ Tests failing" >&2; exit 1; }
+	@echo "✓ Ready for production deployment"
+
+# Clean production artifacts
+clean-prod:
+	rm -rf bin/
+	rm -rf tmp/
+	rm -f coverage.out
+	rm -f *.log

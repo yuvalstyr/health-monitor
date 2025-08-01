@@ -1,0 +1,16 @@
+[build]
+builder = "nixpacks"
+buildCommand = "make railway-build"
+
+[deploy]
+startCommand = "make railway-start"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[environments.production]
+variables = { LOG_LEVEL = "info", DB_PATH = "/data/health-monitor.db" }
+
+[environments.production.volumes]
+data = { mountPath = "/data" }

@@ -36,11 +36,8 @@ func main() {
 
 	log.Printf("Starting database seeding with database: %s", *dbPath)
 
-	// Set the DB_PATH environment variable for the db.Open() function
-	os.Setenv("DB_PATH", *dbPath)
-
 	// Open database connection
-	database, err := db.Open()
+	database, err := db.Open(*dbPath)
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
 	}
