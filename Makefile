@@ -40,10 +40,14 @@ railway-build:
 	@echo "  PWD: $$(pwd)"
 	@echo "  Go version: $$(go version)"
 	@ls -la go.* || echo "No go files found"
-	@echo "🏗️ BUILDING WITH MODULE MODE..."
+	@echo "🏗️ BUILDING SERVER WITH MODULE MODE..."
 	GOWORK=off go build -ldflags="-w -s" -o bin/server ./cmd/server || \
 	(echo "⚠️ FALLBACK: Building without workspace..." && \
 	 cd cmd/server && go build -ldflags="-w -s" -o ../../bin/server .)
+	@echo "🌱 BUILDING SEED UTILITY..."
+	GOWORK=off go build -ldflags="-w -s" -o bin/seed ./cmd/seed || \
+	(echo "⚠️ FALLBACK: Building seed without workspace..." && \
+	 cd cmd/seed && go build -ldflags="-w -s" -o ../../bin/seed .)
 	@echo "==============================================="
 	@echo "✅ RAILWAY BUILD COMPLETED SUCCESSFULLY"
 	@echo "==============================================="
