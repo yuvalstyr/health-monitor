@@ -12,6 +12,12 @@ build-prod: generate
 # Railway-specific build target (called by Railway)
 railway-build:
 	@echo "🚀 Starting Railway build process..."
+	@echo "📋 Git Information:"
+	@echo "  Branch: $$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')"
+	@echo "  Commit: $$(git rev-parse --short HEAD 2>/dev/null || echo 'unknown')"
+	@echo "  Author: $$(git log -1 --pretty=format:'%an' 2>/dev/null || echo 'unknown')"
+	@echo "  Message: $$(git log -1 --pretty=format:'%s' 2>/dev/null || echo 'unknown')"
+	@echo "  Date: $$(git log -1 --pretty=format:'%ci' 2>/dev/null || echo 'unknown')"
 	@echo "📦 Installing required tools..."
 	go install github.com/a-h/templ/cmd/templ@latest
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
@@ -26,7 +32,12 @@ railway-build:
 # Railway-specific start target
 railway-start:
 	@echo "🚀 Starting health-monitor server..."
-	@echo "Environment Variables:"
+	@echo "📋 Deployment Information:"
+	@echo "  Branch: $$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')"
+	@echo "  Commit: $$(git rev-parse --short HEAD 2>/dev/null || echo 'unknown')"
+	@echo "  Author: $$(git log -1 --pretty=format:'%an' 2>/dev/null || echo 'unknown')"
+	@echo "  Build Time: $$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+	@echo "🌍 Environment Variables:"
 	@echo "  RAILWAY_ENVIRONMENT=$(RAILWAY_ENVIRONMENT)"
 	@echo "  PORT=$(PORT)"
 	@echo "  DB_PATH=$(DB_PATH)"
@@ -35,6 +46,8 @@ railway-start:
 	@mkdir -p /data || echo "  ⚠️ Warning: Could not create /data directory (this is normal in some environments)"
 	@ls -la /data 2>/dev/null || echo "  📂 /data directory status: not accessible or doesn't exist yet"
 	@echo "🎯 Starting server binary..."
+	@echo "  Binary: ./bin/server"
+	@echo "  Ready to serve requests!"
 	./bin/server
 	@ls -la /data || echo "  ⚠️ Warning: Could not list /data directory"
 	@echo "✅ Pre-start checks completed"
