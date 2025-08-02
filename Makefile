@@ -10,8 +10,13 @@ build-prod: generate
 	go build -ldflags="-w -s" -o bin/server cmd/server/main.go
 
 # Railway-specific build target (called by Railway)
-railway-build: install-tools generate
+railway-build:
+	@echo "🚀 Starting Railway build process..."
+	@echo "✅ Using pre-generated code files (committed to repository)"
+	@echo "🏗️ Building Go application..."
+	@mkdir -p bin
 	go build -ldflags="-w -s" -o bin/server cmd/server/main.go
+	@echo "✅ Railway build completed successfully"
 
 # Railway-specific start target
 railway-start:
@@ -22,7 +27,10 @@ railway-start:
 	@echo "  DB_PATH=$(DB_PATH)"
 	@echo "  LOG_LEVEL=$(LOG_LEVEL)"
 	@echo "📁 Data directory setup:"
-	@mkdir -p /data || echo "  ⚠️ Warning: Could not create /data directory"
+	@mkdir -p /data || echo "  ⚠️ Warning: Could not create /data directory (this is normal in some environments)"
+	@ls -la /data 2>/dev/null || echo "  📂 /data directory status: not accessible or doesn't exist yet"
+	@echo "🎯 Starting server binary..."
+	./bin/server
 	@ls -la /data || echo "  ⚠️ Warning: Could not list /data directory"
 	@echo "✅ Pre-start checks completed"
 	@echo "🔄 Starting application..."
