@@ -26,7 +26,9 @@ railway-build:
 	@GOBIN=$$(go env GOBIN); if [ -z "$$GOBIN" ]; then GOBIN=$$(go env GOPATH)/bin; fi; $$GOBIN/sqlc generate
 	@echo "🏗️ Building Go application..."
 	@mkdir -p bin
-	go build -ldflags="-w -s" -o bin/server cmd/server/main.go
+	@echo "  Working directory: $$(pwd)"
+	@echo "  Checking main.go: $$(ls -la cmd/server/main.go 2>/dev/null || echo 'not found')"
+	go build -ldflags="-w -s" -o bin/server ./cmd/server
 	@echo "✅ Railway build completed successfully"
 
 # Railway-specific start target
