@@ -15,10 +15,10 @@ railway-build:
 	@echo "� GRAILWAY BUILD STARTING"
 	@echo "==============================================="
 	@echo "📋 GIT INFORMATION:"
-	@echo "  Branch: $$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '$${RAILWAY_GIT_BRANCH:-unknown}')"
-	@echo "  Commit: $$(git rev-parse --short HEAD 2>/dev/null || echo '$${RAILWAY_GIT_COMMIT_SHA:-unknown}')"
-	@echo "  Author: $$(git log -1 --pretty=format:'%an' 2>/dev/null || echo '$${RAILWAY_GIT_AUTHOR:-unknown}')"
-	@echo "  Message: $$(git log -1 --pretty=format:'%s' 2>/dev/null || echo '$${RAILWAY_GIT_COMMIT_MESSAGE:-unknown}')"
+	@echo "  Branch: $$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'Railway Build')"
+	@echo "  Commit: $$(git rev-parse --short HEAD 2>/dev/null || echo 'Railway Deploy')"
+	@echo "  Author: $$(git log -1 --pretty=format:'%an' 2>/dev/null || echo 'Railway User')"
+	@echo "  Message: $$(git log -1 --pretty=format:'%s' 2>/dev/null || echo 'Automated Railway Deployment')"
 	@echo "  Date: $$(git log -1 --pretty=format:'%ci' 2>/dev/null || echo 'unknown')"
 	@echo "  Railway Environment: $(RAILWAY_ENVIRONMENT)"
 	@echo "  Railway Service: $(RAILWAY_SERVICE_NAME)"
@@ -52,9 +52,10 @@ railway-build:
 railway-start:
 	@echo "🚀 Starting health-monitor server..."
 	@echo "📋 Deployment Information:"
-	@echo "  Branch: $$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '$${RAILWAY_GIT_BRANCH:-unknown}')"
-	@echo "  Commit: $$(git rev-parse --short HEAD 2>/dev/null || echo '$${RAILWAY_GIT_COMMIT_SHA:-unknown}')"
-	@echo "  Author: $$(git log -1 --pretty=format:'%an' 2>/dev/null || echo '$${RAILWAY_GIT_AUTHOR:-unknown}')"
+	@echo "  Branch: $${RAILWAY_GIT_BRANCH:-unknown}"
+	@echo "  Commit: $${RAILWAY_GIT_COMMIT_SHA:-unknown}"
+	@echo "  Author: $${RAILWAY_GIT_AUTHOR:-unknown}"
+	@echo "  Message: $${RAILWAY_GIT_COMMIT_MESSAGE:-unknown}"
 	@echo "  Build Time: $$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 	@echo "🌍 Environment Variables:"
 	@echo "  RAILWAY_ENVIRONMENT=$(RAILWAY_ENVIRONMENT)"
@@ -65,7 +66,7 @@ railway-start:
 	@mkdir -p /data || echo "  ⚠️ Warning: Could not create /data directory (this is normal in some environments)"
 	@ls -la /data 2>/dev/null || echo "  📂 /data directory status: not accessible or doesn't exist yet"
 	@echo "🌱 Database seeding for development branches..."
-	@CURRENT_BRANCH=$$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '$${RAILWAY_GIT_BRANCH:-unknown}'); \
+	@CURRENT_BRANCH=$$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'railway-build'); \
 	if [ "$$CURRENT_BRANCH" != "main" ] && [ "$$CURRENT_BRANCH" != "unknown" ] && [ "$$CURRENT_BRANCH" != "" ]; then \
 		echo "  🌱 Seeding database for branch: $$CURRENT_BRANCH"; \
 		echo "  📍 Database path: $(DB_PATH)"; \
