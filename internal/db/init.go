@@ -269,12 +269,16 @@ func isCriticalMigrationError(err error) bool {
 	// Critical errors that indicate structural problems that won't be fixed by retrying
 	criticalPatterns := []string{
 		"syntax error",
-		"no such table",
 		"duplicate column name",
 		"constraint failed",
 		"database is locked", // This might be retryable in some cases, but often indicates a deeper issue
 		"rollback failed",
 		"backup failed",
+	}
+	
+	// Special case: "no such table: goose_db_version" is expected on fresh databases
+	if strings.Contains(errorStr, "no such table: goose_db_version") {
+		return false
 	}
 	
 	for _, pattern := range criticalPatterns {
