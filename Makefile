@@ -62,6 +62,15 @@ railway-start:
 	@echo "📁 Data directory setup:"
 	@mkdir -p /data || echo "  ⚠️ Warning: Could not create /data directory (this is normal in some environments)"
 	@ls -la /data 2>/dev/null || echo "  📂 /data directory status: not accessible or doesn't exist yet"
+	@echo "🌱 Database seeding for development branches..."
+	@CURRENT_BRANCH=$$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown'); \
+	if [ "$$CURRENT_BRANCH" != "main" ] && [ "$$CURRENT_BRANCH" != "unknown" ]; then \
+		echo "  🌱 Seeding database for branch: $$CURRENT_BRANCH"; \
+		echo "  📍 Database path: $(DB_PATH)"; \
+		go run cmd/seed/main.go -db "$(DB_PATH)" || echo "  ⚠️ Seeding failed - continuing without seed data"; \
+	else \
+		echo "  ⏭️ Skipping seed for main branch (production)"; \
+	fi
 	@echo "🎯 Starting server binary..."
 	@echo "  Binary: ./bin/server"
 	@echo "  Ready to serve requests!"
