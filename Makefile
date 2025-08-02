@@ -31,7 +31,17 @@ railway-build:
 	mkdir -p bin
 	echo "  Working directory: $$(pwd)"
 	echo "  Checking main.go: $$(ls -la cmd/server/main.go 2>/dev/null || echo 'not found')"
-	go build -ldflags="-w -s" -o bin/server ./cmd/server
+	echo "🔍 DEBUGGING GO ENVIRONMENT..."
+	echo "  GOROOT: $$(go env GOROOT)"
+	echo "  GOPATH: $$(go env GOPATH)"
+	echo "  GOMOD: $$(go env GOMOD)"
+	echo "  PWD: $$(pwd)"
+	echo "  Go version: $$(go version)"
+	ls -la go.* || echo "No go files found"
+	echo "🏗️ BUILDING WITH MODULE MODE..."
+	GOWORK=off go build -ldflags="-w -s" -o bin/server ./cmd/server || \
+	(echo "⚠️ FALLBACK: Building without workspace..." && \
+	 cd cmd/server && go build -ldflags="-w -s" -o ../../bin/server .)
 	@echo "==============================================="
 	@echo "✅ RAILWAY BUILD COMPLETED SUCCESSFULLY"
 	@echo "==============================================="
