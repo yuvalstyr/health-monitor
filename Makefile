@@ -12,7 +12,12 @@ build-prod: generate
 # Railway-specific build target (called by Railway)
 railway-build:
 	@echo "🚀 Starting Railway build process..."
-	@echo "✅ Using pre-generated code files (committed to repository)"
+	@echo "📦 Installing required tools..."
+	go install github.com/a-h/templ/cmd/templ@latest
+	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+	@echo "🔧 Generating template and database code..."
+	@GOBIN=$$(go env GOBIN); if [ -z "$$GOBIN" ]; then GOBIN=$$(go env GOPATH)/bin; fi; $$GOBIN/templ generate
+	@GOBIN=$$(go env GOBIN); if [ -z "$$GOBIN" ]; then GOBIN=$$(go env GOPATH)/bin; fi; $$GOBIN/sqlc generate
 	@echo "🏗️ Building Go application..."
 	@mkdir -p bin
 	go build -ldflags="-w -s" -o bin/server cmd/server/main.go
