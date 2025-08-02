@@ -11,25 +11,30 @@ build-prod: generate
 
 # Railway-specific build target (called by Railway)
 railway-build:
-	@echo "🚀 Starting Railway build process..."
-	@echo "📋 Git Information:"
+	@echo "==============================================="
+	@echo "� GRAILWAY BUILD STARTING"
+	@echo "==============================================="
+	@echo "📋 GIT INFORMATION:"
 	@echo "  Branch: $$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')"
 	@echo "  Commit: $$(git rev-parse --short HEAD 2>/dev/null || echo 'unknown')"
 	@echo "  Author: $$(git log -1 --pretty=format:'%an' 2>/dev/null || echo 'unknown')"
 	@echo "  Message: $$(git log -1 --pretty=format:'%s' 2>/dev/null || echo 'unknown')"
 	@echo "  Date: $$(git log -1 --pretty=format:'%ci' 2>/dev/null || echo 'unknown')"
-	@echo "📦 Installing required tools..."
+	@echo "==============================================="
+	echo "📦 INSTALLING REQUIRED TOOLS..."
 	go install github.com/a-h/templ/cmd/templ@latest
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-	@echo "🔧 Generating template and database code..."
+	echo "� GENERATINnG TEMPLATE AND DATABASE CODE..."
 	@GOBIN=$$(go env GOBIN); if [ -z "$$GOBIN" ]; then GOBIN=$$(go env GOPATH)/bin; fi; $$GOBIN/templ generate
 	@GOBIN=$$(go env GOBIN); if [ -z "$$GOBIN" ]; then GOBIN=$$(go env GOPATH)/bin; fi; $$GOBIN/sqlc generate
-	@echo "🏗️ Building Go application..."
-	@mkdir -p bin
-	@echo "  Working directory: $$(pwd)"
-	@echo "  Checking main.go: $$(ls -la cmd/server/main.go 2>/dev/null || echo 'not found')"
+	echo "🏗️ BUILDING GO APPLICATION..."
+	mkdir -p bin
+	echo "  Working directory: $$(pwd)"
+	echo "  Checking main.go: $$(ls -la cmd/server/main.go 2>/dev/null || echo 'not found')"
 	go build -ldflags="-w -s" -o bin/server ./cmd/server
-	@echo "✅ Railway build completed successfully"
+	@echo "==============================================="
+	@echo "✅ RAILWAY BUILD COMPLETED SUCCESSFULLY"
+	@echo "==============================================="
 
 # Railway-specific start target
 railway-start:
