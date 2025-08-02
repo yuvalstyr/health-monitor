@@ -51,10 +51,6 @@ railway-start:
 	@echo "  Binary: ./bin/server"
 	@echo "  Ready to serve requests!"
 	./bin/server
-	@ls -la /data || echo "  ⚠️ Warning: Could not list /data directory"
-	@echo "✅ Pre-start checks completed"
-	@echo "🔄 Starting application..."
-	./bin/server
 
 run: generate
 	go run cmd/server/main.go
@@ -69,7 +65,7 @@ generate:
 	@GOBIN=$$(go env GOBIN); if [ -z "$$GOBIN" ]; then GOBIN=$$(go env GOPATH)/bin; fi; $$GOBIN/sqlc generate
 
 dev-restart: clean
-	lsof -i :3000 | awk 'NR!=1 {print $$2}' | xargs kill -9 2>/dev/null || true
+	lsof -i :3000 | awk 'NR!=1 {print $2}' | xargs kill -9 2>/dev/null || true
 	make dev
 
 dev:
