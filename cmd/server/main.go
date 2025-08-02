@@ -1,5 +1,6 @@
 package main
 
+// Force Railway deployment - updated Makefile with seeding fixes
 import (
 	"log"
 	"os"
