@@ -3,10 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"health-monitor/internal/db"
+	"health-monitor/internal/logger"
 	"health-monitor/internal/timeutil"
 )
 
@@ -50,7 +50,7 @@ func (s *schedulingService) CreateInstancesForActiveTemplates(ctx context.Contex
 			PeriodStart: nextPeriodStart,
 		})
 		if err != nil {
-			log.Printf("Error checking if instance exists for template %d: %v", template.ID, err)
+			logger.Error().Err(err).Int64("template_id", template.ID).Msg("Error checking if instance exists for template")
 			continue // Skip this template and continue with others
 		}
 
@@ -61,18 +61,21 @@ func (s *schedulingService) CreateInstancesForActiveTemplates(ctx context.Contex
 				PeriodStart: nextPeriodStart,
 			})
 			if err != nil {
-				log.Printf("Error creating gauge instance for template %d: %v", template.ID, err)
+				logger.Error().Err(err).Int64("template_id", template.ID).Msg("Error creating gauge instance for template")
 				continue // Skip this template and continue with others
 			}
 
 			createdCount++
-			log.Printf("Created gauge instance for template '%s' (ID: %d) for period starting %s",
-				template.Name, template.ID, nextPeriodStart.Format("2006-01-02"))
+			logger.Info().
+				Str("template_name", template.Name).
+				Int64("template_id", template.ID).
+				Str("period_start", nextPeriodStart.Format("2006-01-02")).
+				Msg("Created gauge instance for template")
 		}
 	}
 
 	if createdCount > 0 {
-		log.Printf("Scheduling service created %d new gauge instances", createdCount)
+		logger.Info().Int("created_count", createdCount).Msg("Scheduling service created new gauge instances")
 	}
 
 	return nil

@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"math/rand"
 	"time"
 
+	"health-monitor/internal/logger"
 	"health-monitor/internal/timeutil"
 )
 
@@ -25,7 +25,7 @@ func NewSeedData(db *sql.DB) *SeedData {
 
 // SeedDatabase populates the database with sample gauge templates and instances
 func (s *SeedData) SeedDatabase(ctx context.Context) error {
-	log.Println("Starting database seeding...")
+	logger.Info().Msg("Starting database seeding...")
 
 	// Seed the random number generator for varied sample data
 	rand.Seed(time.Now().UnixNano())
@@ -51,13 +51,13 @@ func (s *SeedData) SeedDatabase(ctx context.Context) error {
 		return fmt.Errorf("failed to add sample values: %w", err)
 	}
 
-	log.Println("Database seeding completed successfully!")
+	logger.Info().Msg("Database seeding completed successfully!")
 	return nil
 }
 
 // clearExistingData removes all existing gauge data within a transaction
 func (s *SeedData) clearExistingData(ctx context.Context) error {
-	log.Println("Clearing existing data...")
+	logger.Info().Msg("Clearing existing data...")
 	
 	// Get the underlying *sql.DB from the queries
 	db, ok := s.queries.db.(*sql.DB)
@@ -74,7 +74,7 @@ func (s *SeedData) clearExistingData(ctx context.Context) error {
 	// Ensure transaction is rolled back if we don't commit
 	defer func() {
 		if err := tx.Rollback(); err != nil && err != sql.ErrTxDone {
-			log.Printf("Warning: failed to rollback transaction: %v", err)
+			logger.Warn().Err(err).Msg("Failed to rollback transaction")
 		}
 	}()
 	
@@ -99,13 +99,13 @@ func (s *SeedData) clearExistingData(ctx context.Context) error {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 	
-	log.Println("Successfully cleared existing data")
+	logger.Info().Msg("Successfully cleared existing data")
 	return nil
 }
 
 // createSampleTemplates creates a variety of gauge templates with different frequencies
 func (s *SeedData) createSampleTemplates(ctx context.Context) ([]GaugeTemplate, error) {
-	log.Println("Creating sample gauge templates...")
+	logger.Info().Msg("Creating sample gauge templates...")
 
 	sampleTemplates := []struct {
 		name        string
@@ -244,7 +244,7 @@ func (s *SeedData) createSampleTemplates(ctx context.Context) ([]GaugeTemplate, 
 		if created.Active {
 			status = "active"
 		}
-		log.Printf("Created template: %s (%s, %s)", created.Name, created.Frequency, status)
+		logger.Info().Str("name", created.Name).Str("frequency", created.Frequency).Str("status", status).Msg("Created template")
 	}
 
 	return templates, nil
@@ -252,7 +252,7 @@ func (s *SeedData) createSampleTemplates(ctx context.Context) ([]GaugeTemplate, 
 
 // createCurrentPeriodInstances creates gauge instances for the current time period
 func (s *SeedData) createCurrentPeriodInstances(ctx context.Context, templates []GaugeTemplate) error {
-	log.Println("Creating current period gauge instances...")
+	logger.Info().Msg("Creating current period gauge instances...")
 
 	currentTime := time.Now()
 	
@@ -273,7 +273,7 @@ func (s *SeedData) createCurrentPeriodInstances(ctx context.Context, templates [
 		}
 		
 		if existsResult > 0 {
-			log.Printf("Instance already exists for template %s, period %s", template.Name, periodStart.Format("2006-01-02"))
+			logger.Debug().Str("template_name", template.Name).Str("period", periodStart.Format("2006-01-02")).Msg("Instance already exists for template")
 			continue
 		}
 
@@ -286,11 +286,11 @@ func (s *SeedData) createCurrentPeriodInstances(ctx context.Context, templates [
 			return fmt.Errorf("failed to create instance for template %s: %w", template.Name, err)
 		}
 
-		log.Printf("Created instance for %s: period %s", template.Name, periodStart.Format("2006-01-02"))
+		logger.Info().Str("template_name", template.Name).Str("period", periodStart.Format("2006-01-02")).Msg("Created instance for template")
 		
 		// Add some realistic sample progress
 		if err := s.addSampleProgressToInstance(ctx, instance, template); err != nil {
-			log.Printf("Warning: failed to add sample progress to instance %d: %v", instance.ID, err)
+			logger.Warn().Err(err).Int64("instance_id", instance.ID).Msg("Failed to add sample progress to instance")
 		}
 	}
 
@@ -376,7 +376,7 @@ func (s *SeedData) addSampleProgressToInstance(ctx context.Context, instance Gau
 
 // addSampleValues adds some additional sample values for demonstration
 func (s *SeedData) addSampleValues(ctx context.Context) error {
-	log.Println("Adding sample gauge values...")
+	logger.Info().Msg("Adding sample gauge values...")
 	
 	// Get all current instances
 	instances, err := s.queries.ListGaugeInstances(ctx)
@@ -397,7 +397,7 @@ func (s *SeedData) addSampleValues(ctx context.Context) error {
 				Date:    yesterday,
 			})
 			if err != nil {
-				log.Printf("Warning: failed to add yesterday value for instance %d: %v", instance.ID, err)
+				logger.Warn().Err(err).Int64("instance_id", instance.ID).Msg("Failed to add yesterday value for instance")
 			}
 		}
 	}

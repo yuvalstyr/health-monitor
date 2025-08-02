@@ -107,13 +107,385 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Deploy to Railway
+    - name: Install Railway CLI
       run: |
-        echo "🚀 Deployment to Railway will be configured in task 7"
-        echo "✅ Tests passed, ready for deployment"
+        curl -fsSL https://railway.app/install.sh | sh
+        echo "$HOME/.railway/bin" >> $GITHUB_PATH
         
-    - name: Deployment status
+    - name: Verify Railway CLI installation
       run: |
-        echo "Deployment job executed successfully"
-        echo "Main branch: ${{ github.ref }}"
-        echo "Event: ${{ github.event_name }}"
+        railway --version
+        echo "✅ Railway CLI installed successfully"
+        
+    - name: Deploy to Railway
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      run: |
+        echo "🚀 Starting deployment to Railway..."
+        
+        # Deploy to Railway
+        railway deploy --detach
+        
+        echo "✅ Deployment initiated successfully"
+        
+    - name: Install jq for JSON parsing
+      run: |
+        sudo apt-get update && sudo apt-get install -y jq
+        
+    - name: Wait for deployment to complete
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      run: |
+        echo "⏳ Waiting for deployment to complete..."
+        
+        # Wait up to 5 minutes for deployment
+        timeout=300
+        interval=10
+        elapsed=0
+        
+        while [ $elapsed -lt $timeout ]; do
+          # Get deployment status using JSON output
+          status_json=$(railway status --json 2>/dev/null || echo '{"status":"unknown"}')
+          deployment_status=$(echo "$status_json" | jq -r '.status // "unknown"')
+          
+          echo "📊 Current deployment status: $deployment_status"
+          
+          case "$deployment_status" in
+            "Deployed"|"Success"|"Running")
+              echo "✅ Deployment completed successfully"
+              break
+              ;;
+            "Failed"|"Error"|"Crashed")
+              echo "❌ Deployment failed with status: $deployment_status"
+              echo "📋 Full status info:"
+              echo "$status_json" | jq '.'
+              exit 1
+              ;;
+            *)
+              echo "⏳ Deployment in progress... (${elapsed}s elapsed)"
+              sleep $interval
+              elapsed=$((elapsed + interval))
+              ;;
+          esac
+        done
+        
+        if [ $elapsed -ge $timeout ]; then
+          echo "❌ Deployment timeout after ${timeout} seconds"
+          echo "📋 Final status:"
+          railway status --json | jq '.'
+          exit 1
+        fi
+        
+    - name: Get deployment URL
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      id: deployment-url
+      run: |
+        # Get deployment info using Railway JSON API
+        deployment_json=$(railway status --json 2>/dev/null || echo '{}')
+        
+        # Extract primary domain from deployment info
+        DEPLOY_URL=$(echo "$deployment_json" | jq -r '.domains[0] // empty')
+        
+        # Fallback to railway domain if JSON doesn't contain domains
+        if [ -z "$DEPLOY_URL" ] || [ "$DEPLOY_URL" = "null" ]; then
+          echo "⚠️ No domain found in status JSON, trying railway domain command..."
+          DEPLOY_URL=$(railway domain 2>/dev/null | head -n1 | awk '{print $1}' | sed 's/https\?:\/\///')
+        fi
+        
+        # Final validation
+        if [ -z "$DEPLOY_URL" ] || [ "$DEPLOY_URL" = "null" ]; then
+          echo "❌ Could not retrieve deployment URL from Railway"
+          echo "📋 Available deployment info:"
+          echo "$deployment_json" | jq '.'
+          exit 1
+        fi
+        
+        # Ensure URL doesn't already have protocol and add https://
+        DEPLOY_URL=$(echo "$DEPLOY_URL" | sed 's/https\?:\/\///')
+        FULL_URL="https://$DEPLOY_URL"
+        
+        echo "🌐 Deployment URL: $FULL_URL"
+        echo "url=$FULL_URL" >> $GITHUB_OUTPUT
+        
+    - name: Health check verification
+      run: |
+        DEPLOY_URL="${{ steps.deployment-url.outputs.url }}"
+        echo "🔍 Performing health check on: $DEPLOY_URL/health"
+        
+        # Wait a bit for the service to be ready
+        sleep 30
+        
+        # Perform health check with retries
+        max_attempts=6
+        attempt=1
+        
+        while [ $attempt -le $max_attempts ]; do
+          echo "🔍 Health check attempt $attempt/$max_attempts..."
+          
+          if curl -f -s --max-time 30 "$DEPLOY_URL/health" > /tmp/health_response.json; then
+            echo "✅ Health check passed!"
+            echo "📋 Health check response:"
+            cat /tmp/health_response.json | jq '.' || cat /tmp/health_response.json
+            
+            # Verify the response contains expected fields
+            if cat /tmp/health_response.json | jq -e '.status == "healthy"' > /dev/null; then
+              echo "✅ Application is healthy and ready"
+              break
+            else
+              echo "⚠️ Health check returned non-healthy status"
+              cat /tmp/health_response.json
+            fi
+          else
+            echo "❌ Health check failed (attempt $attempt/$max_attempts)"
+            
+            if [ $attempt -eq $max_attempts ]; then
+              echo "❌ All health check attempts failed"
+              echo "🔄 Initiating rollback..."
+              exit 1
+            fi
+            
+            echo "⏳ Waiting 30 seconds before retry..."
+            sleep 30
+          fi
+          
+          attempt=$((attempt + 1))
+        done
+        
+    - name: Deployment success notification
+      if: success()
+      run: |
+        DEPLOY_URL="${{ steps.deployment-url.outputs.url }}"
+        echo "🎉 Deployment completed successfully!"
+        echo "🌐 Application URL: $DEPLOY_URL"
+        echo "🔍 Health endpoint: $DEPLOY_URL/health"
+        echo "📊 Railway dashboard: https://railway.app/dashboard"
+        
+        # Create deployment summary
+        cat >> $GITHUB_STEP_SUMMARY << EOF
+        ## 🚀 Deployment Successful
+        
+        - **Application URL**: [$DEPLOY_URL]($DEPLOY_URL)
+        - **Health Check**: [$DEPLOY_URL/health]($DEPLOY_URL/health)
+        - **Commit**: \`${{ github.sha }}\`
+        - **Branch**: \`${{ github.ref_name }}\`
+        - **Deployed at**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+        
+        ### ✅ Verification Steps Completed
+        - [x] Build successful
+        - [x] Tests passed
+        - [x] Railway deployment completed
+        - [x] Health check passed
+        - [x] Application ready to serve traffic
+        EOF
+
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: failure() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Railway CLI
+      run: |
+        curl -fsSL https://railway.app/install.sh | sh
+        echo "$HOME/.railway/bin" >> $GITHUB_PATH
+        
+    - name: Perform rollback
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      run: |
+        echo "🔄 Deployment failed, initiating rollback..."
+        
+        # Get the list of recent deployments
+        echo "📋 Getting deployment history..."
+        railway deployments --json > deployments.json || {
+          echo "❌ Failed to get deployment history"
+          exit 1
+        }
+        
+        # Get successful deployments and check count
+        SUCCESSFUL_DEPLOYMENTS=$(cat deployments.json | jq -r '[.[] | select(.status == "SUCCESS")] | sort_by(.createdAt) | reverse')
+        DEPLOYMENT_COUNT=$(echo "$SUCCESSFUL_DEPLOYMENTS" | jq 'length')
+        
+        echo "📊 Found $DEPLOYMENT_COUNT successful deployments"
+        
+        if [ "$DEPLOYMENT_COUNT" -lt 2 ]; then
+          echo "⚠️ Need at least 2 successful deployments for rollback (found $DEPLOYMENT_COUNT)"
+          echo "🔍 Available deployments:"
+          cat deployments.json | jq -r '.[] | "\(.id) - \(.status) - \(.createdAt)"'
+          
+          # Try to redeploy the previous commit using Railway CLI
+          echo "🔄 Attempting to redeploy previous commit..."
+          PREVIOUS_COMMIT=$(git rev-parse HEAD~1)
+          echo "📝 Previous commit: $PREVIOUS_COMMIT"
+          
+          # Use railway deploy with --commit option to avoid workspace mutation
+          railway deploy --detach --commit $PREVIOUS_COMMIT || {
+            echo "❌ Failed to deploy previous commit via Railway CLI"
+            echo "🔄 Fallback: manual deployment trigger"
+            exit 1
+          }
+          
+          echo "✅ Rollback deployment initiated with previous commit: $PREVIOUS_COMMIT"
+        else
+          # Safe to access second deployment (index 1)
+          PREVIOUS_DEPLOYMENT=$(echo "$SUCCESSFUL_DEPLOYMENTS" | jq -r '.[1].id')
+          
+          echo "🔄 Rolling back to deployment: $PREVIOUS_DEPLOYMENT"
+          
+          # Rollback to the previous successful deployment
+          railway rollback $PREVIOUS_DEPLOYMENT || {
+            echo "❌ Rollback command failed"
+            exit 1
+          }
+          
+          echo "✅ Rollback completed successfully"
+        fi
+        
+    - name: Verify rollback health
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      run: |
+        echo "🔍 Verifying rollback health..."
+        
+        # Get the deployment URL
+        DEPLOY_URL=$(railway domain | head -n1 | awk '{print $1}')
+        if [ -z "$DEPLOY_URL" ]; then
+          echo "❌ Could not retrieve deployment URL for verification"
+          exit 1
+        fi
+        
+        # Wait for rollback to be ready
+        sleep 60
+        
+        # Perform health check
+        max_attempts=5
+        attempt=1
+        
+        while [ $attempt -le $max_attempts ]; do
+          echo "🔍 Rollback health check attempt $attempt/$max_attempts..."
+          
+          if curl -f -s --max-time 30 "https://$DEPLOY_URL/health" > /tmp/rollback_health.json; then
+            echo "✅ Rollback health check passed!"
+            cat /tmp/rollback_health.json | jq '.' || cat /tmp/rollback_health.json
+            break
+          else
+            echo "❌ Rollback health check failed (attempt $attempt/$max_attempts)"
+            
+            if [ $attempt -eq $max_attempts ]; then
+              echo "❌ Rollback verification failed - manual intervention required"
+              exit 1
+            fi
+            
+            sleep 30
+          fi
+          
+          attempt=$((attempt + 1))
+        done
+        
+    - name: Rollback notification
+      if: always()
+      run: |
+        if [ "${{ job.status }}" = "success" ]; then
+          echo "✅ Rollback completed successfully"
+          STATUS="🔄 **Rollback Successful**"
+          DETAILS="The failed deployment has been rolled back to the previous working version."
+        else
+          echo "❌ Rollback failed - manual intervention required"
+          STATUS="❌ **Rollback Failed**"
+          DETAILS="Automatic rollback failed. Manual intervention is required to restore service."
+        fi
+        
+        # Create rollback summary
+        cat >> $GITHUB_STEP_SUMMARY << EOF
+        ## $STATUS
+        
+        $DETAILS
+        
+        ### 📋 Rollback Details
+        - **Failed Commit**: \`${{ github.sha }}\`
+        - **Branch**: \`${{ github.ref_name }}\`
+        - **Rollback Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+        - **Railway Dashboard**: [View Deployments](https://railway.app/dashboard)
+        
+        ### 🔧 Next Steps
+        - Review the failed deployment logs
+        - Fix the issues in the codebase
+        - Test locally before pushing again
+        - Monitor the application after rollback
+        EOF
+        
+        # Set exit code based on rollback success
+        if [ "${{ job.status }}" != "success" ]; then
+          exit 1
+        fi
+
+  notify:
+    name: Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [deploy, rollback]
+    if: always() && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Determine deployment status
+      id: status
+      run: |
+        DEPLOY_STATUS="${{ needs.deploy.result }}"
+        ROLLBACK_STATUS="${{ needs.rollback.result }}"
+        
+        echo "Deploy status: $DEPLOY_STATUS"
+        echo "Rollback status: $ROLLBACK_STATUS"
+        
+        if [ "$DEPLOY_STATUS" = "success" ]; then
+          echo "status=success" >> $GITHUB_OUTPUT
+          echo "message=Deployment completed successfully" >> $GITHUB_OUTPUT
+          echo "emoji=🎉" >> $GITHUB_OUTPUT
+        elif [ "$ROLLBACK_STATUS" = "success" ]; then
+          echo "status=rollback" >> $GITHUB_OUTPUT
+          echo "message=Deployment failed but rollback was successful" >> $GITHUB_OUTPUT
+          echo "emoji=🔄" >> $GITHUB_OUTPUT
+        else
+          echo "status=failure" >> $GITHUB_OUTPUT
+          echo "message=Deployment and rollback both failed - manual intervention required" >> $GITHUB_OUTPUT
+          echo "emoji=❌" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Create deployment report
+      run: |
+        STATUS="${{ steps.status.outputs.status }}"
+        MESSAGE="${{ steps.status.outputs.message }}"
+        EMOJI="${{ steps.status.outputs.emoji }}"
+        
+        echo "$EMOJI $MESSAGE"
+        
+        # Create comprehensive deployment report
+        cat >> $GITHUB_STEP_SUMMARY << EOF
+        # $EMOJI Deployment Report
+        
+        **Status**: $MESSAGE
+        
+        ## 📊 Pipeline Summary
+        - **Repository**: ${{ github.repository }}
+        - **Branch**: ${{ github.ref_name }}
+        - **Commit**: [\`${{ github.sha }}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+        - **Author**: ${{ github.actor }}
+        - **Trigger**: ${{ github.event_name }}
+        - **Workflow**: [\`${{ github.run_id }}\`](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+        
+        ## 🔗 Quick Links
+        - [Railway Dashboard](https://railway.app/dashboard)
+        - [Repository](https://github.com/${{ github.repository }})
+        - [Commit Changes](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+        
+        ---
+        *Generated at $(date -u '+%Y-%m-%d %H:%M:%S UTC')*
+        EOF
+        
+        # Set appropriate exit code
+        if [ "$STATUS" = "failure" ]; then
+          exit 1
+        fi

@@ -88,7 +88,7 @@ func TestNew(t *testing.T) {
 			server := New(tt.port, handler)
 			
 			if !tt.expectPanic {
-				expectedAddr := ":" + tt.port
+				expectedAddr := "0.0.0.0:" + tt.port
 				if server.Addr != expectedAddr {
 					t.Errorf("Expected server address %s, got %s", expectedAddr, server.Addr)
 				}

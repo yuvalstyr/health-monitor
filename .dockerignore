@@ -1,0 +1,33 @@
+# Go workspace files that can interfere with Railway builds
+go.work
+go.work.sum
+
+# Development files
+.env
+.env.local
+*.log
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Testing
+coverage.out
+coverage.html
+
+# Build artifacts
+bin/
+tmp/
+
+# Database files (use Railway volume instead)
+*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
